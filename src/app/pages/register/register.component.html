@@ -1,0 +1,105 @@
+<div class="register-container">
+  <p-toast></p-toast>
+
+  <p-card header="Créer un compte" class="register-card">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <div class="form-row">
+        <div class="form-field">
+          <label for="firstName" class="form-label">Prénom *</label>
+          <input
+            pInputText
+            id="firstName"
+            formControlName="firstName"
+            placeholder="Entrez votre prénom"
+            [class.p-invalid]="hasFirstNameError"
+            class="form-input" />
+          @if (hasFirstNameError) {
+            <small class="p-error">
+              {{ firstNameError }}
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="lastName" class="form-label">Nom *</label>
+          <input
+            pInputText
+            id="lastName"
+            formControlName="lastName"
+            placeholder="Entrez votre nom"
+            [class.p-invalid]="hasLastNameError"
+            class="form-input" />
+          @if (hasLastNameError) {
+            <small class="p-error">
+              {{ lastNameError }}
+            </small>
+          }
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="email" class="form-label">Email *</label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Entrez votre adresse email"
+          [class.p-invalid]="hasEmailError"
+          class="form-input" />
+        @if (hasEmailError) {
+          <small class="p-error">
+            {{ emailError }}
+          </small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="password" class="form-label">Mot de passe *</label>
+        <p-password
+          formControlName="password"
+          [toggleMask]="true"
+          placeholder="Entrez votre mot de passe"
+          [class.p-invalid]="hasPasswordError"
+          class="form-input"
+          [feedback]="true"
+          promptLabel="Entrez un mot de passe"
+          weakLabel="Faible"
+          mediumLabel="Moyen"
+          strongLabel="Fort"></p-password>
+        @if (hasPasswordError) {
+          <small class="p-error">
+            {{ passwordError }}
+          </small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="confirmPassword" class="form-label">Confirmer le mot de passe *</label>
+        <p-password
+          formControlName="confirmPassword"
+          [toggleMask]="true"
+          [feedback]="false"
+          placeholder="Confirmez votre mot de passe"
+          [class.p-invalid]="hasConfirmPasswordError"
+          class="form-input"></p-password>
+        @if (hasConfirmPasswordError) {
+          <small class="p-error">
+            {{ confirmPasswordError }}
+          </small>
+        }
+      </div>
+
+      <div class="form-actions">
+        <p-button
+          type="submit"
+          label="Créer le compte"
+          icon="pi pi-user-plus"
+          [loading]="isLoading"
+          loadingIcon="pi pi-spin pi-spinner"
+          class="submit-button"
+          [disabled]="isLoading"></p-button>
+      </div>
+    </form>
+  </p-card>
+</div>

@@ -1,0 +1,23 @@
+<div class="quest-list">
+  <h1>VUE D'ENSEMBLE</h1>
+  <div class="quest-tabs">
+    <p-tabMenu [model]="menuItems" [activeItem]="activeItem" (activeItemChange)="navigateOnMenu($event)" />
+  </div>
+  @if (this.activeItem === this.menuItems[0]) {
+    <div class="active-quests">
+      @for (pendingQuest of pendingQuests; track pendingQuest.id) {
+        <app-quest-card [quest]="pendingQuest"> </app-quest-card>
+      }
+    </div>
+  } @else if (this.activeItem === this.menuItems[1]) {
+    <div class="completed-quests">
+      @for (completedQuest of completedQuests; track completedQuest.id) {
+        <app-quest-card [quest]="completedQuest"> </app-quest-card>
+      }
+    </div>
+  }
+</div>
+
+<app-menu></app-menu>
+
+<p-toast position="top-center" [baseZIndex]="1100" styleClass="done-toast"> </p-toast>

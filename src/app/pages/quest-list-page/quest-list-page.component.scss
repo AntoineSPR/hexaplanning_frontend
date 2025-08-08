@@ -1,0 +1,49 @@
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.active-quests,
+.completed-quests {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: normal;
+}
+
+:host ::ng-deep {
+  .p-tabmenu {
+    .p-tabmenu-nav {
+      background-color: var(--background-color);
+      border: none;
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+      overflow: visible;
+      width: 100%;
+      gap: 0.5rem;
+
+      .p-tabmenuitem {
+        box-shadow: var(--theme-color) 0 0 5px 2px;
+        border-radius: 8px;
+        border-bottom: none;
+
+        .p-menuitem-link {
+          background-color: transparent;
+          border: none;
+          color: var(--text-color);
+        }
+      }
+      .p-tabmenuitem-active {
+        background-color: var(--theme-color);
+      }
+    }
+  }
+}

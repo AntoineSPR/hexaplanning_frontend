@@ -1,0 +1,98 @@
+<form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
+  <div class="flex gap-2 justify-content-start align-content-start">
+    <!-- BOUTON RETOUR -->
+    <button type="button" class="pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
+    <!-- TITRE -->
+    <div>
+      <label for="title" class="visually-hidden">Titre</label>
+      <textarea id="title" formControlName="title" pTextarea [autoResize]="true" [readonly]="!isEdit" [ngClass]="{ 'quest-readonly': !isEdit }">
+      </textarea>
+    </div>
+  </div>
+
+  <div>
+    <label for="toggleStatus">Marquer comme terminée</label>
+    <input
+      id="toggleStatus"
+      type="checkbox"
+      class="quest-checkbox"
+      [checked]="quest.isDone"
+      (change)="toggleStatus()"
+      (click)="$event.stopPropagation()"
+      aria-label="Marquer cette tâche comme terminée" />
+  </div>
+
+  <div class="flex flex-column align-content-center">
+    <!-- PRIORITE -->
+    <div>
+      <label for="priority" class="visually-hidden">Priorité</label>
+      <p-select
+        id="priority"
+        formControlName="priority"
+        [options]="priorityOptions"
+        [readonly]="!isEdit"
+        [ngClass]="{ 'quest-readonly': !isEdit }"></p-select>
+    </div>
+  </div>
+
+  <!-- TEMPS ESTIME -->
+  <div class="quest-field py-2">
+    <label for="estimatedTime" class="font-bold">Temps estimé : </label>
+    @if (isEdit) {
+      <p-calendar
+        id="estimatedTime"
+        formControlName="estimatedTime"
+        [timeOnly]="true"
+        hourFormat="24"
+        [inputStyle]="{ width: '4rem' }"
+        [stepMinute]="5"
+        [showIcon]="false"
+        [appendTo]="'body'"
+        [baseZIndex]="1000"
+        [showButtonBar]="false">
+      </p-calendar>
+    } @else {
+      <span class="pr-4">
+        {{ this.questForm.get('estimatedTime')?.value | time }}
+      </span>
+    }
+  </div>
+
+  <!-- DETAILS -->
+  <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
+    <label for="description" class="text-center font-bold">Details :</label>
+    <textarea
+      id="description"
+      formControlName="description"
+      pTextarea
+      [autoResize]="true"
+      [readonly]="!isEdit"
+      [ngClass]="{ 'quest-readonly': !isEdit }"></textarea>
+  </div>
+
+  <!-- BOUTONS -->
+  @if (isEdit) {
+    <div class="button-group">
+      <button type="button" (click)="onCancel()" class="quest-button">ANNULER</button>
+      <button type="submit" class="quest-button">VALIDER</button>
+    </div>
+  } @else {
+    <div class="button-group">
+      <button type="button" (click)="onDelete()" class="quest-button">SUPPRIMER</button>
+      <button type="button" (click)="onEdit()" class="quest-button">EDITER</button>
+    </div>
+  }
+</form>
+
+<!-- Confirmation de supression -->
+<p-confirmdialog #cd>
+  <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
+    <div class="confirmation-dialog">
+      <p>{{ message.message }}</p>
+      <div class="flex items-center gap-2">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Supprimer</button>
+      </div>
+    </div>
+  </ng-template>
+</p-confirmdialog>

@@ -1,0 +1,107 @@
+.quest-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  width: 18rem;
+  margin: auto;
+  box-shadow: var(--theme-color) 0px 0px 5px 5px;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.quest-field {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+input {
+  font-family: inherit;
+}
+
+.button-group {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+
+  button {
+    width: 6rem;
+    background-color: var(--theme-color);
+    color: var(--text-color);
+    box-shadow: var(--theme-color) 0px 0px 5px 5px;
+    border: none;
+    border-radius: 2px;
+    padding: 0.5rem;
+    cursor: pointer;
+  }
+}
+
+.pi-chevron-left {
+  background-color: var(--background-color);
+  border: none;
+  color: var(--theme-color);
+  text-shadow: var(--theme-color) 0px 0px 5px;
+  cursor: pointer;
+  font-size: 2rem;
+}
+
+:host ::ng-deep {
+  div:has(p-slider) {
+    margin-top: -0.5rem;
+  }
+
+  .p-slider {
+    .p-slider-range {
+      background: var(--theme-color) !important;
+    }
+  }
+
+  textarea {
+    min-height: 3.2rem;
+  }
+
+  .p-datepicker-panel,
+  .p-datepicker-time-picker {
+    &.p-datepicker-overflowing-bottom {
+      transform: translateY(-100%) !important;
+    }
+
+    &.p-datepicker-overflowing-right {
+      transform: translateX(-100%) !important;
+    }
+  }
+
+  .quest-readonly {
+    border: none !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    cursor: default !important;
+
+    *,
+    *::before,
+    *::after {
+      cursor: default !important;
+    }
+
+    .p-select-dropdown {
+      display: none;
+    }
+
+    &.p-inputnumber,
+    .p-inputnumber {
+      .p-inputnumber-button-group {
+        display: none !important;
+      }
+
+      .p-inputnumber-input {
+        border: none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+    }
+  }
+}

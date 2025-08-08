@@ -1,0 +1,5 @@
+<p-dialog modal headless [dismissableMask]="true" [visible]="isVisible" (visibleChange)="handleVisibilityChange($event)">
+  @if (isVisible) {
+    <app-quest-details [quest]="quest" [isNew]="isNew" (closeDialog)="_questModalService.closeQuestModal()"></app-quest-details>
+  }
+</p-dialog>

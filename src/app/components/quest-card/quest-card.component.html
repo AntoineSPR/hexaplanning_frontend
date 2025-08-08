@@ -1,0 +1,36 @@
+<button type="button" class="quest-card" (click)="openDetails()" (keydown.enter)="openDetails()">
+  <!-- Case à cocher -->
+  <input
+    type="checkbox"
+    class="quest-checkbox"
+    [checked]="quest.isDone"
+    (change)="toggleStatus()"
+    (click)="$event.stopPropagation()"
+    aria-label="Marquer cette tâche comme terminée" />
+
+  <!-- Titre de la quête -->
+  <span class="quest-title">
+    {{ quest.title }}
+  </span>
+
+  <!-- Sélecteur de priorité avec formControl -->
+  <!-- <select class="quest-priority-select" [formControl]="priorityControl" (change)="updatePriority()">
+    <ng-container *ngIf="priorityOptions.length > 0">
+      <option *ngFor="let p of priorityOptions" [value]="p" [selected]="quest.priority === p">
+        {{ p }}
+      </option>
+    </ng-container>
+  </select> -->
+  <img
+    class="priority-icon"
+    [src]="priorityImagePath"
+    [alt]="priorityAltText"
+    tabindex="0"
+    (click)="$event.stopPropagation()"
+    (keydown.enter)="$event.stopPropagation()" />
+</button>
+
+<!-- Icône de répétabilité -->
+<!-- <ng-container *ngIf="quest.isRepeatable">
+  <span>♻️</span>
+</ng-container> -->

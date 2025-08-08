@@ -1,0 +1,50 @@
+.menubar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: 1fr;
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  background: var(--background-color);
+  padding: 1.5rem 0;
+
+  div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    i {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+.icon {
+  text-shadow: 0px 0px 6px var(--theme-color);
+  color: black;
+  cursor: pointer;
+}
+
+.icon.active {
+  filter: drop-shadow(0 0 2px var(--theme-color));
+  color: var(--theme-color);
+}
+
+.losange {
+  position: relative;
+  cursor: pointer;
+}
+
+.losange::before {
+  content: '';
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: var(--theme-color);
+  transform: rotate(45deg);
+  z-index: -1;
+  border-radius: 8px;
+}
