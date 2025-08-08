@@ -3,12 +3,17 @@ import { SettingsPageComponent } from './pages/settings-page/settings-page.compo
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
 import { QuestListPageComponent } from './pages/quest-list-page/quest-list-page.component';
 import { RegisterComponent } from './pages/register/register.component';
+import { LoginComponent } from './pages/login/login.component';
 import { MapComponent } from './components/map/map.component';
 
 export const routes: Routes = [
   {
     path: '',
     component: DashboardPageComponent,
+  },
+  {
+    path: 'login',
+    component: LoginComponent,
   },
   {
     path: 'register',

@@ -1,0 +1,55 @@
+<div class="login-container">
+  <p-toast></p-toast>
+
+  <p-card header="Se connecter" class="login-card">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-field">
+        <label for="email" class="form-label">Email *</label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Entrez votre adresse email"
+          [class.p-invalid]="hasEmailError"
+          class="form-input" />
+        @if (hasEmailError) {
+        <small class="p-error">
+          {{ emailError }}
+        </small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="password" class="form-label">Mot de passe *</label>
+        <p-password
+          formControlName="password"
+          [toggleMask]="true"
+          placeholder="Entrez votre mot de passe"
+          [class.p-invalid]="hasPasswordError"
+          class="form-input"
+          [feedback]="false"></p-password>
+        @if (hasPasswordError) {
+        <small class="p-error">
+          {{ passwordError }}
+        </small>
+        }
+      </div>
+
+      <div class="form-actions">
+        <p-button
+          type="submit"
+          label="Se connecter"
+          icon="pi pi-sign-in"
+          [loading]="isLoading"
+          loadingIcon="pi pi-spin pi-spinner"
+          class="submit-button"
+          [disabled]="isLoading"></p-button>
+      </div>
+
+      <div class="form-footer">
+        <p>Pas encore de compte ? <a routerLink="/register" class="register-link">Créer un compte</a></p>
+      </div>
+    </form>
+  </p-card>
+</div>

@@ -14,9 +14,9 @@
             [class.p-invalid]="hasFirstNameError"
             class="form-input" />
           @if (hasFirstNameError) {
-            <small class="p-error">
-              {{ firstNameError }}
-            </small>
+          <small class="p-error">
+            {{ firstNameError }}
+          </small>
           }
         </div>
 
@@ -30,9 +30,9 @@
             [class.p-invalid]="hasLastNameError"
             class="form-input" />
           @if (hasLastNameError) {
-            <small class="p-error">
-              {{ lastNameError }}
-            </small>
+          <small class="p-error">
+            {{ lastNameError }}
+          </small>
           }
         </div>
       </div>
@@ -48,9 +48,9 @@
           [class.p-invalid]="hasEmailError"
           class="form-input" />
         @if (hasEmailError) {
-          <small class="p-error">
-            {{ emailError }}
-          </small>
+        <small class="p-error">
+          {{ emailError }}
+        </small>
         }
       </div>
 
@@ -68,9 +68,9 @@
           mediumLabel="Moyen"
           strongLabel="Fort"></p-password>
         @if (hasPasswordError) {
-          <small class="p-error">
-            {{ passwordError }}
-          </small>
+        <small class="p-error">
+          {{ passwordError }}
+        </small>
         }
       </div>
 
@@ -84,9 +84,9 @@
           [class.p-invalid]="hasConfirmPasswordError"
           class="form-input"></p-password>
         @if (hasConfirmPasswordError) {
-          <small class="p-error">
-            {{ confirmPasswordError }}
-          </small>
+        <small class="p-error">
+          {{ confirmPasswordError }}
+        </small>
         }
       </div>
 
@@ -99,6 +99,10 @@
           loadingIcon="pi pi-spin pi-spinner"
           class="submit-button"
           [disabled]="isLoading"></p-button>
+      </div>
+
+      <div class="form-footer">
+        <p>Déjà un compte ? <a routerLink="/login" class="login-link">Se connecter</a></p>
       </div>
     </form>
   </p-card>
