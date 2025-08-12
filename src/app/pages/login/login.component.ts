@@ -53,7 +53,6 @@ export class LoginComponent {
             detail: 'Connexion réussie!',
           });
           this.isLoading = false;
-          // Navigate to dashboard after successful login
           this._router.navigate(['/']);
         },
         error: (error: any) => {

@@ -84,8 +84,7 @@ export class RegisterComponent {
             detail: 'Votre compte a été créé avec succès!',
           });
           this.isLoading = false;
-          // Navigate to login or dashboard after successful registration
-          // this._router.navigate(['/login']);
+          this._router.navigate(['/login']);
         },
         error: error => {
           this._messageService.add({
