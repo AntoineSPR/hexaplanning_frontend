@@ -26,7 +26,7 @@ export class UserService {
         this.user.set(response.user);
         this.token.set(response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
-        localStorage.setItem('token', JSON.stringify(response.token));
+        localStorage.setItem('token', response.token);
       })
     );
   }
