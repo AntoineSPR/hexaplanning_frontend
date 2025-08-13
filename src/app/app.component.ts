@@ -12,6 +12,7 @@ import { UserService } from './services/user.service';
 })
 export class AppComponent implements OnInit {
   private readonly _userService = inject(UserService);
+
   ngOnInit() {
     localStorage.getItem('user');
     localStorage.getItem('token');
