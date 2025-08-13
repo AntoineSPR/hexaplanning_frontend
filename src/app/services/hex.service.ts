@@ -2,13 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, Observable, of, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment.development';
-
-export type HexAssignment = {
-  q: number;
-  r: number;
-  s: number;
-  questId: number;
-};
+import { HexAssignment } from '../models/hexAssignment.model';
 
 @Injectable({ providedIn: 'root' })
 export class HexService {
