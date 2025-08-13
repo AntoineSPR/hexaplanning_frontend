@@ -30,4 +30,11 @@ export class UserService {
       })
     );
   }
+
+  logoutUser(): void {
+    this.user.set(null);
+    this.token.set(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  }
 }
