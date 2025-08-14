@@ -153,6 +153,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     if (this.quest) {
       this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe();
     }
+    this.closeDialog.emit();
   }
   //#endregion
 
