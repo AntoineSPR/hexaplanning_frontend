@@ -12,6 +12,14 @@
   align-items: center;
 }
 
+.done_checkbox {
+  display: flex;
+  flex-direction: column;
+  input.quest-checkbox[type='checkbox'] {
+    align-self: center;
+  }
+}
+
 .quest-field {
   width: 100%;
   display: flex;
