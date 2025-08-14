@@ -18,4 +18,4 @@ export type Quest = QuestBase & {
 };
 
 export const DEFAULT_ESTIMATED_TIME = 0;
-export const DEFAULT_PRIORITY: keyof typeof QuestPriority = 'PRIMARY';
+export const DEFAULT_PRIORITY: keyof typeof QuestPriority = 'TERTIARY';

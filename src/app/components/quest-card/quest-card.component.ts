@@ -26,7 +26,7 @@ export class QuestCardComponent implements OnInit {
 
   ngOnInit(): void {
     this.priorityOptions = Object.values(QuestPriority);
-    this.priorityControl.setValue(this.quest?.priority ?? QuestPriority.PRIMARY);
+    this.priorityControl.setValue(this.quest?.priority ?? QuestPriority.TERTIARY);
   }
 
   toggleStatus(): void {

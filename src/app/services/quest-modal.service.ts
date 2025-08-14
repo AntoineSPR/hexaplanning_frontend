@@ -14,7 +14,7 @@ export class QuestModalService {
     title: '',
     estimatedTime: 0,
     description: '',
-    priority: QuestPriority.PRIMARY,
+    priority: QuestPriority.TERTIARY,
     isDone: false,
     isAssigned: false,
   };
