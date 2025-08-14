@@ -1,7 +1,7 @@
 <div class="login-container">
   <p-toast></p-toast>
 
-  <p-card header="Se connecter" class="login-card">
+  <p-card header="Hexaplanning - Se connecter" class="login-card">
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-field">
         <label for="email" class="form-label">Email *</label>
@@ -40,7 +40,6 @@
         <p-button
           type="submit"
           label="Se connecter"
-          icon="pi pi-sign-in"
           [loading]="isLoading"
           loadingIcon="pi pi-spin pi-spinner"
           class="submit-button"

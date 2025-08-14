@@ -5,11 +5,17 @@
   gap: 1rem;
   width: 18rem;
   margin: auto;
-  box-shadow: var(--theme-color) 0px 0px 5px 5px;
-  border-radius: 0.5rem;
   padding: 1rem;
   justify-content: center;
   align-items: center;
+}
+
+.done_checkbox {
+  display: flex;
+  flex-direction: column;
+  input.quest-checkbox[type='checkbox'] {
+    align-self: center;
+  }
 }
 
 .quest-field {
@@ -62,6 +68,7 @@ input {
 
   textarea {
     min-height: 3.2rem;
+    width: 100%;
   }
 
   .p-datepicker-panel,

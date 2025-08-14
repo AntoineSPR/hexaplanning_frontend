@@ -1,17 +1,17 @@
 <div class="menubar">
   <div [routerLink]="['/']" tabindex="0">
-    <i class="pi pi-th-large icon" [ngClass]="{ active: activeIcon === 'home' }"></i>
+    <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'home' }">home</i>
   </div>
   <div [routerLink]="['/quest-list']" tabindex="0">
-    <i class="pi pi-list icon" [ngClass]="{ active: activeIcon === 'quest-list' }"></i>
+    <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'quest-list' }">format_list_bulleted</i>
   </div>
   <div class="losange" (click)="showNewQuestDialog()" (keydown.enter)="showNewQuestDialog()" (keydown.space)="showNewQuestDialog()" tabindex="0">
     <i class="pi pi-plus icon" [ngClass]="{ active: activeIcon === 'plus' }"></i>
   </div>
   <div [routerLink]="['/map']" tabindex="0">
-    <i class="pi pi-box icon" [ngClass]="{ active: activeIcon === 'map' }"></i>
+    <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'map' }">hexagon</i>
   </div>
   <div [routerLink]="['/settings']" tabindex="0">
-    <i class="pi pi-cog icon" [ngClass]="{ active: activeIcon === 'settings' }"></i>
+    <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'settings' }">settings</i>
   </div>
 </div>

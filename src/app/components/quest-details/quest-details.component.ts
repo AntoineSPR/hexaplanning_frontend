@@ -153,6 +153,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     if (this.quest) {
       this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe();
     }
+    this.closeDialog.emit();
   }
   //#endregion
 
@@ -185,7 +186,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   private _createFormGroup(): void {
     this.questForm = this._formBuilder.group({
-      title: new FormControl('', Validators.required),
+      title: new FormControl('', [Validators.required, Validators.maxLength(100)]),
       description: new FormControl(''),
       estimatedTime: new FormControl(''),
       priority: new FormControl('', Validators.required),
@@ -217,4 +218,45 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   }
 
   //#endregion
+
+  getPriorityKey(priority: QuestPriority | string): string {
+    const priorityString = typeof priority === 'string' ? priority : priority;
+
+    switch (priorityString) {
+      case QuestPriority.PRIMARY:
+      case 'PRIMARY':
+        return 'primary';
+      case QuestPriority.SECONDARY:
+      case 'SECONDARY':
+        return 'secondary';
+      case QuestPriority.TERTIARY:
+      case 'TERTIARY':
+        return 'tertiary';
+      default:
+        return 'tertiary';
+    }
+  }
+
+  get currentPriorityClass(): string {
+    const currentPriority = this.questForm?.get('priority')?.value || this.quest?.priority;
+    if (!currentPriority) return 'priority-tertiary';
+    return `priority-${this.getPriorityKey(currentPriority)}`;
+  }
+
+  get selectClasses() {
+    return {
+      'quest-readonly': !this.isEdit,
+      [this.currentPriorityClass]: true,
+    };
+  }
+
+  get hasEstimatedTime(): boolean {
+    const estimatedTime = this.quest?.estimatedTime ?? 0;
+    return estimatedTime > 0;
+  }
+
+  get hasDescription(): boolean {
+    const description = this.quest?.description ?? '';
+    return description.trim().length > 0;
+  }
 }

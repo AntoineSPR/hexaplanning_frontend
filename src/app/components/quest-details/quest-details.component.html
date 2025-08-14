@@ -3,15 +3,22 @@
     <!-- BOUTON RETOUR -->
     <button type="button" class="pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
     <!-- TITRE -->
-    <div>
+    <div class="title">
       <label for="title" class="visually-hidden">Titre</label>
-      <textarea id="title" formControlName="title" pTextarea [autoResize]="true" [readonly]="!isEdit" [ngClass]="{ 'quest-readonly': !isEdit }">
-      </textarea>
+      <textarea
+        id="title"
+        formControlName="title"
+        pTextarea
+        [autoResize]="true"
+        [readonly]="!isEdit"
+        [ngClass]="{ 'quest-readonly': !isEdit }"
+        maxlength="100"
+        placeholder="Titre de la quête"></textarea>
     </div>
   </div>
 
-  <div>
-    <label for="toggleStatus">Marquer comme terminée</label>
+  <!-- CHECKBOX -->
+  <div class="done_checkbox">
     <input
       id="toggleStatus"
       type="checkbox"
@@ -20,6 +27,7 @@
       (change)="toggleStatus()"
       (click)="$event.stopPropagation()"
       aria-label="Marquer cette tâche comme terminée" />
+    <label for="toggleStatus" style="font-style: italic">{{ quest.isDone ? 'Terminé' : 'À terminer' }} </label>
   </div>
 
   <div class="flex flex-column align-content-center">
@@ -31,34 +39,45 @@
         formControlName="priority"
         [options]="priorityOptions"
         [readonly]="!isEdit"
-        [ngClass]="{ 'quest-readonly': !isEdit }"></p-select>
+        [ngClass]="selectClasses"
+        optionLabel="label"
+        optionValue="value">
+        <ng-template let-option pTemplate="item">
+          <span [class]="'priority-' + getPriorityKey(option.value)">
+            {{ option.label }}
+          </span>
+        </ng-template></p-select
+      >
     </div>
   </div>
 
   <!-- TEMPS ESTIME -->
+  @if (isEdit || hasEstimatedTime) {
   <div class="quest-field py-2">
     <label for="estimatedTime" class="font-bold">Temps estimé : </label>
     @if (isEdit) {
-      <p-calendar
-        id="estimatedTime"
-        formControlName="estimatedTime"
-        [timeOnly]="true"
-        hourFormat="24"
-        [inputStyle]="{ width: '4rem' }"
-        [stepMinute]="5"
-        [showIcon]="false"
-        [appendTo]="'body'"
-        [baseZIndex]="1000"
-        [showButtonBar]="false">
-      </p-calendar>
+    <p-calendar
+      id="estimatedTime"
+      formControlName="estimatedTime"
+      [timeOnly]="true"
+      hourFormat="24"
+      [inputStyle]="{ width: '4.4rem' }"
+      [stepMinute]="5"
+      [showIcon]="false"
+      [appendTo]="'body'"
+      [baseZIndex]="1000"
+      [showButtonBar]="false">
+    </p-calendar>
     } @else {
-      <span class="pr-4">
-        {{ this.questForm.get('estimatedTime')?.value | time }}
-      </span>
+    <span class="pr-4">
+      {{ this.questForm.get('estimatedTime')?.value | time }}
+    </span>
     }
   </div>
+  }
 
   <!-- DETAILS -->
+  @if (isEdit || hasDescription) {
   <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
     <label for="description" class="text-center font-bold">Details :</label>
     <textarea
@@ -69,18 +88,19 @@
       [readonly]="!isEdit"
       [ngClass]="{ 'quest-readonly': !isEdit }"></textarea>
   </div>
+  }
 
   <!-- BOUTONS -->
   @if (isEdit) {
-    <div class="button-group">
-      <button type="button" (click)="onCancel()" class="quest-button">ANNULER</button>
-      <button type="submit" class="quest-button">VALIDER</button>
-    </div>
+  <div class="button-group">
+    <button type="button" (click)="onCancel()" class="quest-button">ANNULER</button>
+    <button type="submit" class="quest-button">VALIDER</button>
+  </div>
   } @else {
-    <div class="button-group">
-      <button type="button" (click)="onDelete()" class="quest-button">SUPPRIMER</button>
-      <button type="button" (click)="onEdit()" class="quest-button">EDITER</button>
-    </div>
+  <div class="button-group">
+    <button type="button" (click)="onDelete()" class="quest-button">SUPPRIMER</button>
+    <button type="button" (click)="onEdit()" class="quest-button">EDITER</button>
+  </div>
   }
 </form>
 

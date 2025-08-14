@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuComponent } from 'src/app/components/menu/menu.component';
 import { UserService } from 'src/app/services/user.service';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [MenuComponent],
+  imports: [MenuComponent, ButtonModule],
   templateUrl: './settings-page.component.html',
   styleUrls: ['./settings-page.component.scss'],
 })

@@ -1,42 +1,56 @@
 <svg id="hexmap" [attr.width]="mapWidth" [attr.height]="mapHeight">
   @for (h of hexes; track $index) {
-    <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
-    <foreignObject class="hex_text_wrapper" [attr.x]="h.cx - size * 0.75" [attr.y]="h.cy - size * 0.5" [attr.width]="size * 1.5" [attr.height]="size">
-      <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
-        @if (!h.quest) {
-          <div class="hex_priority">{{ h.priority }}</div>
-        }
-        <div class="hex_quest_title">
-          {{ h.quest?.title || '' }}
-        </div>
-        @if (h.quest) {
-          <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)">X</button>
-        }
-      </xhtml:div>
-    </foreignObject>
+  <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
+  <polygon
+    [attr.points]="getHexPoints(h.cx, h.cy, -2)"
+    [attr.stroke]="getHexBorderColor(h)"
+    [attr.stroke-width]="2"
+    fill="none"
+    (click)="handleHexClick(h)" />
+  <foreignObject
+    class="hex_text_wrapper"
+    [attr.x]="h.cx - size * 0.75"
+    [attr.y]="h.cy - size * 0.75"
+    [attr.width]="size * 1.5"
+    [attr.height]="size * 1.2">
+    @if (h.quest) {
+    <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)">X</button>
+    }
+    <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
+      <div class="hex_quest_title">
+        {{ h.quest?.title || '' }}
+      </div>
+    </xhtml:div>
+  </foreignObject>
   }
 </svg>
 
-<p-dialog class="select-dialog" header="Select a Quest" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
-  <div class="quest-selection">
-    <h3>Assigner une quête (priorité {{ selectedHex?.priority }})</h3>
+<p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
+  <ng-template #header>
+    @if (selectedHex) {
+    <h3>Assigner une quête en cours</h3>
+    }
+  </ng-template>
 
+  <div class="quest-selection">
     <div class="quest-list">
       @if (unassignedPendingQuests.length === 0) {
-        <p>Aucune nouvelle quête à accomplir !</p>
-      } @else {
-        @for (quest of unassignedPendingQuests; track quest.id) {
-          <div class="quest-item">
-            <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
-            <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
-          </div>
-        }
-      }
+      <p>Aucune nouvelle quête à accomplir !</p>
+      } @else { @for (quest of unassignedPendingQuests; track quest.id) {
+      <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
+        <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
+        <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
+        <img
+          class="priority-icon"
+          [src]="getPriorityImagePath(quest)"
+          [alt]="getPriorityAltText(quest)"
+          [class]="'priority-' + getPriorityKey(quest.priority).toLowerCase()" />
+      </div>
+      } }
     </div>
   </div>
-  <ng-template pTemplate="footer">
+  <ng-template #footer>
     <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
-    <!-- <p-button label="Supprimer" icon="pi pi-trash" (click)="deleteQuestFromHex()" [disabled]="!selectedQuest"> </p-button> -->
     <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
   </ng-template>
 </p-dialog>

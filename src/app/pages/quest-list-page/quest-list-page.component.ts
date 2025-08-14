@@ -40,13 +40,11 @@ export class QuestListPageComponent implements OnInit {
     this._questService.loadPendingQuests();
 
     this.menuItems = [{ label: 'Quêtes à accomplir' }, { label: 'Quêtes accomplies' }];
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     this.activeItem = this.menuItems[0];
   }
 
   navigateOnMenu(event: MenuItem): void {
     this.activeItem = event;
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     if (this.activeItem === this.menuItems[1] && !this._completedQuestsLoaded) {
       this._questService.loadCompletedQuests();
       this._completedQuestsLoaded = true;

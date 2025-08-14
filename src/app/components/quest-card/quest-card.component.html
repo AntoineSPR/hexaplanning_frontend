@@ -13,24 +13,12 @@
     {{ quest.title }}
   </span>
 
-  <!-- Sélecteur de priorité avec formControl -->
-  <!-- <select class="quest-priority-select" [formControl]="priorityControl" (change)="updatePriority()">
-    <ng-container *ngIf="priorityOptions.length > 0">
-      <option *ngFor="let p of priorityOptions" [value]="p" [selected]="quest.priority === p">
-        {{ p }}
-      </option>
-    </ng-container>
-  </select> -->
   <img
     class="priority-icon"
     [src]="priorityImagePath"
     [alt]="priorityAltText"
     tabindex="0"
     (click)="$event.stopPropagation()"
-    (keydown.enter)="$event.stopPropagation()" />
+    (keydown.enter)="$event.stopPropagation()"
+    [class]="'priority-' + getPriorityKey(quest.priority).toLowerCase()" />
 </button>
-
-<!-- Icône de répétabilité -->
-<!-- <ng-container *ngIf="quest.isRepeatable">
-  <span>♻️</span>
-</ng-container> -->

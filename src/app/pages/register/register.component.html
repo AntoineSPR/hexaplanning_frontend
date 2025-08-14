@@ -1,7 +1,7 @@
 <div class="register-container">
   <p-toast></p-toast>
 
-  <p-card header="Créer un compte" class="register-card">
+  <p-card header="Hexaplanning - Créer un compte" class="register-card">
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
       <div class="form-row">
         <div class="form-field">
@@ -94,7 +94,6 @@
         <p-button
           type="submit"
           label="Créer le compte"
-          icon="pi pi-user-plus"
           [loading]="isLoading"
           loadingIcon="pi pi-spin pi-spinner"
           class="submit-button"
