@@ -21,7 +21,7 @@ type Hex = {
 };
 
 const MAP_WIDTH = 400;
-const MAP_HEIGHT = 500;
+const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
 const MAX_PRIORITY_LEVEL = 3;
 
