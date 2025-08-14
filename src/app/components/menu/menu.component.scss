@@ -18,6 +18,10 @@
 
     i {
       font-size: 1.5rem;
+
+      &.material-icons {
+        font-size: 2rem;
+      }
     }
   }
 }
@@ -29,7 +33,7 @@
 }
 
 .icon.active {
-  filter: drop-shadow(0 0 2px var(--theme-color));
+  filter: drop-shadow(0 0 1px var(--theme-color));
   color: var(--theme-color);
 }
 
