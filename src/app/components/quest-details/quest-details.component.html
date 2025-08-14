@@ -3,10 +3,17 @@
     <!-- BOUTON RETOUR -->
     <button type="button" class="pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
     <!-- TITRE -->
-    <div>
+    <div class="title">
       <label for="title" class="visually-hidden">Titre</label>
-      <textarea id="title" formControlName="title" pTextarea [autoResize]="true" [readonly]="!isEdit" [ngClass]="{ 'quest-readonly': !isEdit }">
-      </textarea>
+      <textarea
+        id="title"
+        formControlName="title"
+        pTextarea
+        [autoResize]="true"
+        [readonly]="!isEdit"
+        [ngClass]="{ 'quest-readonly': !isEdit }"
+        maxlength="100"
+        placeholder="Titre de la quête"></textarea>
     </div>
   </div>
 
@@ -44,7 +51,7 @@
       formControlName="estimatedTime"
       [timeOnly]="true"
       hourFormat="24"
-      [inputStyle]="{ width: '4rem' }"
+      [inputStyle]="{ width: '4.4rem' }"
       [stepMinute]="5"
       [showIcon]="false"
       [appendTo]="'body'"

@@ -186,7 +186,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   private _createFormGroup(): void {
     this.questForm = this._formBuilder.group({
-      title: new FormControl('', Validators.required),
+      title: new FormControl('', [Validators.required, Validators.maxLength(100)]),
       description: new FormControl(''),
       estimatedTime: new FormControl(''),
       priority: new FormControl('', Validators.required),
