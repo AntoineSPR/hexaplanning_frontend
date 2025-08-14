@@ -51,6 +51,7 @@
   </div>
 
   <!-- TEMPS ESTIME -->
+  @if (isEdit || hasEstimatedTime) {
   <div class="quest-field py-2">
     <label for="estimatedTime" class="font-bold">Temps estimé : </label>
     @if (isEdit) {
@@ -72,8 +73,10 @@
     </span>
     }
   </div>
+  }
 
   <!-- DETAILS -->
+  @if (isEdit || hasDescription) {
   <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
     <label for="description" class="text-center font-bold">Details :</label>
     <textarea
@@ -84,6 +87,7 @@
       [readonly]="!isEdit"
       [ngClass]="{ 'quest-readonly': !isEdit }"></textarea>
   </div>
+  }
 
   <!-- BOUTONS -->
   @if (isEdit) {

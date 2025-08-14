@@ -249,4 +249,14 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       [this.currentPriorityClass]: true,
     };
   }
+
+  get hasEstimatedTime(): boolean {
+    const estimatedTime = this.quest?.estimatedTime ?? 0;
+    return estimatedTime > 0;
+  }
+
+  get hasDescription(): boolean {
+    const description = this.quest?.description ?? '';
+    return description.trim().length > 0;
+  }
 }
