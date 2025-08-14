@@ -218,4 +218,35 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   }
 
   //#endregion
+
+  getPriorityKey(priority: QuestPriority | string): string {
+    const priorityString = typeof priority === 'string' ? priority : priority;
+
+    switch (priorityString) {
+      case QuestPriority.PRIMARY:
+      case 'PRIMARY':
+        return 'primary';
+      case QuestPriority.SECONDARY:
+      case 'SECONDARY':
+        return 'secondary';
+      case QuestPriority.TERTIARY:
+      case 'TERTIARY':
+        return 'tertiary';
+      default:
+        return 'tertiary';
+    }
+  }
+
+  get currentPriorityClass(): string {
+    const currentPriority = this.questForm?.get('priority')?.value || this.quest?.priority;
+    if (!currentPriority) return 'priority-tertiary';
+    return `priority-${this.getPriorityKey(currentPriority)}`;
+  }
+
+  get selectClasses() {
+    return {
+      'quest-readonly': !this.isEdit,
+      [this.currentPriorityClass]: true,
+    };
+  }
 }

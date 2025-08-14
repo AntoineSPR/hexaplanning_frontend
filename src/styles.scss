@@ -238,3 +238,31 @@ input.quest-checkbox[type='checkbox'] {
     --icon-bg-color: rgb(94, 91, 91);
   }
 }
+
+.p-select-panel {
+  .p-select-option {
+    &.priority-primary {
+      color: var(--primary-priority-color);
+    }
+
+    &.priority-secondary {
+      color: var(--theme-color);
+    }
+
+    &.priority-tertiary {
+      color: rgb(94, 91, 91);
+    }
+  }
+}
+
+.p-select.priority-primary .p-select-label {
+  color: var(--primary-priority-color) !important;
+}
+
+.p-select.priority-secondary .p-select-label {
+  color: var(--theme-color) !important;
+}
+
+.p-select.priority-tertiary .p-select-label {
+  color: rgb(94, 91, 91) !important;
+}

@@ -38,7 +38,15 @@
         formControlName="priority"
         [options]="priorityOptions"
         [readonly]="!isEdit"
-        [ngClass]="{ 'quest-readonly': !isEdit }"></p-select>
+        [ngClass]="selectClasses"
+        optionLabel="label"
+        optionValue="value">
+        <ng-template let-option pTemplate="item">
+          <span [class]="'priority-' + getPriorityKey(option.value)">
+            {{ option.label }}
+          </span>
+        </ng-template></p-select
+      >
     </div>
   </div>
 
