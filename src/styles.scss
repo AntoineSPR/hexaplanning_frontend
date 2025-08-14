@@ -221,8 +221,20 @@ input.quest-checkbox[type='checkbox'] {
     height: 32px;
     padding: 4px;
     box-shadow: inset 0 0 5px black;
-    background-color: var(--theme-color);
+    background-color: var(--icon-bg-color, var(--theme-color));
     cursor: default;
     border-radius: 2px;
+  }
+
+  .priority-primary {
+    --icon-bg-color: var(--primary-priority-color);
+  }
+
+  .priority-secondary {
+    --icon-bg-color: lightgrey;
+  }
+
+  .priority-tertiary {
+    --icon-bg-color: rgb(94, 91, 91);
   }
 }
