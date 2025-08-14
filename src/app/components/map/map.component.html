@@ -37,9 +37,10 @@
       @if (unassignedPendingQuests.length === 0) {
       <p>Aucune nouvelle quête à accomplir !</p>
       } @else { @for (quest of unassignedPendingQuests; track quest.id) {
-      <div class="quest-item">
+      <div class="quest-item quest-card">
         <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
         <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
+        <img class="priority-icon" [src]="getPriorityImagePath(quest)" [alt]="getPriorityAltText(quest)" />
       </div>
       } }
     </div>

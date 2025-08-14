@@ -91,9 +91,8 @@ polygon {
   .quest-item {
     margin-top: 0.7rem;
     margin-bottom: 0.7rem;
-    box-shadow: var(--theme-color) 0px 0px 5px 1px;
     padding: 1rem;
-    border-radius: 8px;
+    justify-content: space-between;
   }
   .p-dialog-footer {
     padding-top: 1rem;

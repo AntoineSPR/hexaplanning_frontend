@@ -46,6 +46,7 @@ export class MapComponent implements OnInit {
   get unassignedPendingQuests(): Quest[] {
     return this._questService.unassignedPendingQuests();
   }
+
   selectedQuest: Quest | null = null;
   dialogVisible = false;
   selectedHex: Hex | null = null;
@@ -236,5 +237,21 @@ export class MapComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  getPriorityKey(priorityValue: string): string {
+    if (priorityValue && typeof priorityValue === 'string') {
+      return priorityValue.toLowerCase();
+    }
+    return 'primary';
+  }
+
+  getPriorityImagePath(quest: Quest): string {
+    const priorityKey = this.getPriorityKey(quest.priority);
+    return `/icons/${priorityKey}.png`;
+  }
+
+  getPriorityAltText(quest: Quest): string {
+    return quest.priority || 'Icône de priorité';
   }
 }
