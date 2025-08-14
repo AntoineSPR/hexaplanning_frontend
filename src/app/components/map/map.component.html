@@ -1,6 +1,12 @@
 <svg id="hexmap" [attr.width]="mapWidth" [attr.height]="mapHeight">
   @for (h of hexes; track $index) {
-  <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
+  <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
+  <polygon
+    [attr.points]="getHexPoints(h.cx, h.cy, -2)"
+    [attr.stroke]="getHexBorderColor(h)"
+    [attr.stroke-width]="2"
+    fill="none"
+    (click)="handleHexClick(h)" />
   <foreignObject
     class="hex_text_wrapper"
     [attr.x]="h.cx - size * 0.75"
