@@ -254,4 +254,8 @@ export class MapComponent implements OnInit {
   getPriorityAltText(quest: Quest): string {
     return quest.priority || 'Icône de priorité';
   }
+
+  selectQuest(quest: Quest): void {
+    this.selectedQuest = quest;
+  }
 }

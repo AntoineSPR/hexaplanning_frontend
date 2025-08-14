@@ -93,6 +93,13 @@ polygon {
     margin-bottom: 0.7rem;
     padding: 1rem;
     justify-content: space-between;
+    cursor: pointer;
+  }
+  .priority-icon {
+    cursor: pointer;
+  }
+  label {
+    cursor: pointer;
   }
   .p-dialog-footer {
     padding-top: 1rem;
