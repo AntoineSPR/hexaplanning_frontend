@@ -17,6 +17,7 @@
     </div>
   </div>
 
+  <!-- CHECKBOX -->
   <div class="done_checkbox">
     <input
       id="toggleStatus"
@@ -26,7 +27,7 @@
       (change)="toggleStatus()"
       (click)="$event.stopPropagation()"
       aria-label="Marquer cette tâche comme terminée" />
-    <label for="toggleStatus">Marquer comme terminée</label>
+    <label for="toggleStatus" style="font-style: italic">{{ quest.isDone ? 'Terminé' : 'À terminer' }} </label>
   </div>
 
   <div class="flex flex-column align-content-center">
