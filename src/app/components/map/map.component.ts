@@ -2,7 +2,7 @@ import { Component, effect, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { DialogModule } from 'primeng/dialog';
+import { Dialog } from 'primeng/dialog';
 import { Quest, QuestPriority } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
@@ -28,7 +28,7 @@ const MAX_PRIORITY_LEVEL = 3;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [DialogModule, ButtonModule, FormsModule, RadioButtonModule, MenuComponent],
+  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })

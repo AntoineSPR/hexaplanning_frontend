@@ -25,12 +25,14 @@
   }
 </svg>
 
-<p-dialog class="select-dialog" header="Select a Quest" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
-  <div class="quest-selection">
+<p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
+  <ng-template #header>
     @if (selectedHex) {
-    <h3>Assigner une quête (priorité {{ selectedHex.priority + 1 }})</h3>
+    <h3>Assigner une quête en cours</h3>
     }
+  </ng-template>
 
+  <div class="quest-selection">
     <div class="quest-list">
       @if (unassignedPendingQuests.length === 0) {
       <p>Aucune nouvelle quête à accomplir !</p>
@@ -42,7 +44,7 @@
       } }
     </div>
   </div>
-  <ng-template pTemplate="footer">
+  <ng-template #footer>
     <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
     <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
   </ng-template>
