@@ -8,6 +8,9 @@
   --dark-theme-color: #521987;
   --primary-priority-color: #ffb300;
   --secondary-priority-color: #e1bee7;
+  --primary-priority-bg-color: #e28a2b;
+  --secondary-priority-bg-color: lightgrey;
+  --tertiary-priority-bg-color: #5e5b5b;
   font-family: 'Inter', sans-serif;
 }
 
@@ -227,22 +230,22 @@ input.quest-checkbox[type='checkbox'] {
   }
 
   .priority-primary {
-    --icon-bg-color: var(--primary-priority-color);
+    --icon-bg-color: var(--primary-priority-bg-color);
   }
 
   .priority-secondary {
-    --icon-bg-color: lightgrey;
+    --icon-bg-color: var(--secondary-priority-bg-color);
   }
 
   .priority-tertiary {
-    --icon-bg-color: rgb(94, 91, 91);
+    --icon-bg-color: var(--tertiary-priority-bg-color);
   }
 }
 
 .p-select-panel {
   .p-select-option {
     &.priority-primary {
-      color: var(--primary-priority-color);
+      color: var(--primary-priority-bg-color);
     }
 
     &.priority-secondary {
@@ -250,13 +253,13 @@ input.quest-checkbox[type='checkbox'] {
     }
 
     &.priority-tertiary {
-      color: rgb(94, 91, 91);
+      color: var(--tertiary-priority-bg-color);
     }
   }
 }
 
 .p-select.priority-primary .p-select-label {
-  color: var(--primary-priority-color) !important;
+  color: var(--primary-priority-bg-color) !important;
 }
 
 .p-select.priority-secondary .p-select-label {
@@ -264,5 +267,5 @@ input.quest-checkbox[type='checkbox'] {
 }
 
 .p-select.priority-tertiary .p-select-label {
-  color: rgb(94, 91, 91) !important;
+  color: var(--tertiary-priority-bg-color) !important;
 }
