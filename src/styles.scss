@@ -14,9 +14,19 @@
   font-family: 'Inter', sans-serif;
 }
 
+html,
+body {
+  height: 100vh;
+}
+
 body {
   background-color: var(--background-color);
   color: var(--text-color);
+}
+
+app-root {
+  min-height: 100vh;
+  width: 100%;
 }
 
 /** Style of all the PrimeNG inputs : */
@@ -268,10 +278,4 @@ input.quest-checkbox[type='checkbox'] {
 
 .p-select.priority-tertiary .p-select-label {
   color: var(--tertiary-priority-bg-color) !important;
-}
-
-app-map {
-  display: flex;
-  justify-content: center;
-  padding-right: 8px;
 }
