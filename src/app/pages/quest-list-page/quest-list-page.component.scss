@@ -24,16 +24,21 @@
       overflow: visible;
       width: 100%;
       gap: 0.5rem;
+      align-items: stretch;
 
       .p-tabmenuitem {
         box-shadow: var(--theme-color) 0 0 5px 2px;
         border-radius: 8px;
         border-bottom: none;
+        flex: 1 1 auto;
 
         .p-menuitem-link {
           background-color: transparent;
           border: none;
           color: var(--text-color);
+          text-align: center;
+          white-space: normal;
+          width: 100%;
         }
       }
       .p-tabmenuitem-active {

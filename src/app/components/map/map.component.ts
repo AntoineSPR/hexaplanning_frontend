@@ -20,7 +20,7 @@ type Hex = {
   quest?: Quest;
 };
 
-const MAP_WIDTH = 400;
+const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
 const MAX_PRIORITY_LEVEL = 3;
@@ -107,7 +107,7 @@ export class MapComponent implements OnInit {
     const x = size * Math.sqrt(3) * (q + r / 2);
     const y = ((size * 3) / 2) * r;
     return {
-      cx: x + 100, // left padding
+      cx: x + 45, // left padding
       cy: y + this.mapHeight / 2, // vertical centering
     };
   }

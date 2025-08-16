@@ -1,5 +1,9 @@
-#hexmap {
-  box-shadow: var(--theme-color) 0 0 5px 2px;
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  padding-right: 8px;
 }
 
 .hex_text_wrapper {
