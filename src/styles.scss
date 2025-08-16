@@ -269,3 +269,8 @@ input.quest-checkbox[type='checkbox'] {
 .p-select.priority-tertiary .p-select-label {
   color: var(--tertiary-priority-bg-color) !important;
 }
+
+app-map {
+  display: flex;
+  justify-content: center;
+}
