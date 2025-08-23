@@ -11,7 +11,7 @@ import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 const TIMEOUT_VALUE = 100;
 const ZERO = 0;
@@ -54,6 +54,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
   private readonly _confirmationService = inject(ConfirmationService);
+  _messageService = inject(MessageService);
 
   ngOnInit(): void {
     this._createFormGroup();
@@ -151,7 +152,16 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   toggleStatus(): void {
     if (this.quest) {
-      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe();
+      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe(result => {
+        if (result.isDone) {
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Quête terminée !',
+            detail: this.quest.title,
+            life: 1500,
+          });
+        }
+      });
     }
     this.closeDialog.emit();
   }

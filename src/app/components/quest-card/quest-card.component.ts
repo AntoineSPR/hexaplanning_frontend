@@ -15,7 +15,6 @@ import { MessageService } from 'primeng/api';
 })
 export class QuestCardComponent implements OnInit {
   @Input() quest!: Quest;
-  // @Output() priorityChange = new EventEmitter<{ id: number; priority: QuestPriority }>();
 
   _questModalService = inject(QuestModalService);
   _questService = inject(QuestService);

@@ -2,16 +2,20 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { QuestContainerComponent } from './components/quest-container/quest-container.component';
 import { UserService } from './services/user.service';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, QuestContainerComponent],
+  imports: [RouterModule, QuestContainerComponent, ToastModule],
+  providers: [MessageService],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   private readonly _userService = inject(UserService);
+  _messageService = inject(MessageService);
 
   ngOnInit() {
     localStorage.getItem('user');
