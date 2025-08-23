@@ -55,6 +55,15 @@ input {
   font-size: 2rem;
 }
 
+.p-error {
+  color: #e24c4c;
+  font-size: 0.875rem;
+}
+
+.p-invalid {
+  border-color: #e24c4c !important;
+}
+
 :host ::ng-deep {
   div:has(p-slider) {
     margin-top: -0.5rem;

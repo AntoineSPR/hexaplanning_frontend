@@ -6,21 +6,18 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { QuestCardComponent } from '../../components/quest-card/quest-card.component';
 import { QuestService } from 'src/app/services/quest.service';
-import { ToastModule } from 'primeng/toast';
 import { MenuItem, MessageService } from 'primeng/api';
 import { TabMenuModule } from 'primeng/tabmenu';
 
 @Component({
   standalone: true,
   selector: 'app-quest-list-page',
-  imports: [CommonModule, MenuComponent, DialogModule, ButtonModule, QuestCardComponent, ToastModule, TabMenuModule],
-  providers: [MessageService],
+  imports: [CommonModule, MenuComponent, DialogModule, ButtonModule, QuestCardComponent, TabMenuModule],
   templateUrl: './quest-list-page.component.html',
   styleUrls: ['./quest-list-page.component.scss'],
 })
 export class QuestListPageComponent implements OnInit {
   _questService = inject(QuestService);
-  _messageService = inject(MessageService);
 
   menuItems!: MenuItem[];
   activeItem!: MenuItem;

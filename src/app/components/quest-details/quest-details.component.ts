@@ -11,11 +11,7 @@ import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
-
-const TIMEOUT_VALUE = 100;
-const ZERO = 0;
-const SIXTY = 60;
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-quest-details',
@@ -54,6 +50,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
   private readonly _confirmationService = inject(ConfirmationService);
+  private readonly _messageService = inject(MessageService);
 
   ngOnInit(): void {
     this._createFormGroup();
@@ -67,11 +64,13 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         this.textareas.forEach(textarea => textarea.resize());
       }
       this._cdr.detectChanges();
-    }, TIMEOUT_VALUE);
+    }, 100);
   }
 
   //#region Buttons
   onSubmit(): void {
+    this.questForm.markAllAsTouched();
+
     if (this.questForm.invalid) return;
 
     const formValues = {
@@ -151,7 +150,16 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   toggleStatus(): void {
     if (this.quest) {
-      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe();
+      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe(result => {
+        if (result.isDone) {
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Quête terminée !',
+            detail: this.quest.title,
+            life: 1500,
+          });
+        }
+      });
     }
     this.closeDialog.emit();
   }
@@ -159,21 +167,20 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   //#region Date & Time
   /** Conversion des minutes en objet Date */
-  // TODO : Mettre dans un service de conversion
   minutesToDate(minutes: number): Date {
-    if (!minutes) return new Date(ZERO, ZERO, ZERO, ZERO, ZERO);
+    if (!minutes) return new Date(0, 0, 0, 0, 0);
 
     const date = new Date();
-    date.setHours(Math.floor(minutes / SIXTY));
-    date.setMinutes(minutes % SIXTY);
-    date.setSeconds(ZERO);
+    date.setHours(Math.floor(minutes / 60));
+    date.setMinutes(minutes % 60);
+    date.setSeconds(0);
     return date;
   }
 
   /** Conversion d'un objet Date en minutes */
   dateToMinutes(date: Date): number {
-    if (!date) return ZERO;
-    return date.getHours() * SIXTY + date.getMinutes();
+    if (!date) return 0;
+    return date.getHours() * 60 + date.getMinutes();
   }
 
   //#region Initialization
@@ -207,7 +214,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private _getPriorityKey(value: string): keyof typeof QuestPriority | null {
     const entryByValue = Object.entries(QuestPriority).find(([, val]) => val === value);
     if (entryByValue) {
-      return entryByValue[ZERO] as keyof typeof QuestPriority;
+      return entryByValue[0] as keyof typeof QuestPriority;
     }
 
     if (Object.keys(QuestPriority).includes(value)) {
