@@ -69,6 +69,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   //#region Buttons
   onSubmit(): void {
+    this.questForm.markAllAsTouched();
+
     if (this.questForm.invalid) return;
 
     const formValues = {

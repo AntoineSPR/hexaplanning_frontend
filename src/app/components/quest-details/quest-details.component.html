@@ -11,9 +11,15 @@
         pTextarea
         [autoResize]="true"
         [readonly]="!isEdit"
-        [ngClass]="{ 'quest-readonly': !isEdit }"
+        [ngClass]="{
+          'quest-readonly': !isEdit,
+          'p-invalid': questForm.get('title')?.invalid && questForm.get('title')?.touched
+        }"
         maxlength="100"
         placeholder="Titre de la quête"></textarea>
+      @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
+      <small class="p-error block mt-1"> Le titre est obligatoire </small>
+      }
     </div>
   </div>
 
