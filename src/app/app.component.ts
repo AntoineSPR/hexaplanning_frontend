@@ -15,7 +15,6 @@ import { MessageService } from 'primeng/api';
 })
 export class AppComponent implements OnInit {
   private readonly _userService = inject(UserService);
-  _messageService = inject(MessageService);
 
   ngOnInit() {
     localStorage.getItem('user');

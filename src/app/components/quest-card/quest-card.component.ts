@@ -16,9 +16,9 @@ import { MessageService } from 'primeng/api';
 export class QuestCardComponent implements OnInit {
   @Input() quest!: Quest;
 
-  _questModalService = inject(QuestModalService);
-  _questService = inject(QuestService);
-  _messageService = inject(MessageService);
+  private readonly _questModalService = inject(QuestModalService);
+  private readonly _questService = inject(QuestService);
+  private readonly _messageService = inject(MessageService);
 
   priorityOptions: string[] = [];
   priorityControl: FormControl = new FormControl();
@@ -42,12 +42,6 @@ export class QuestCardComponent implements OnInit {
       });
     }
   }
-
-  // updatePriority(): void {
-  //   if (this.quest) {
-  //     this.priorityChange.emit({ id: this.quest.id, priority: this.priorityControl.value });
-  //   }
-  // }
 
   openDetails(): void {
     if (this.quest) {
