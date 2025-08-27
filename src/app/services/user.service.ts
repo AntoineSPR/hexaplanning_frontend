@@ -6,6 +6,7 @@ import { Observable, tap } from 'rxjs';
 import { UserLoginDTO } from '../models/userLoginDTO.model';
 import { LoginResponseDTO } from '../models/loginResponseDTO.model';
 import { UserResponseDTO } from '../models/userResponseDTO.model';
+import { ChangePasswordDTO } from '../models/changePasswordDTO.model';
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +30,10 @@ export class UserService {
         localStorage.setItem('token', response.token);
       })
     );
+  }
+
+  changePassword(passwordData: ChangePasswordDTO): Observable<any> {
+    return this._http.put(`${this._apiUrl}/change-password`, passwordData);
   }
 
   logoutUser(): void {
