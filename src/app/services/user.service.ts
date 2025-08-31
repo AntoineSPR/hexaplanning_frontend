@@ -7,6 +7,8 @@ import { UserLoginDTO } from '../models/userLoginDTO.model';
 import { LoginResponseDTO } from '../models/loginResponseDTO.model';
 import { UserResponseDTO } from '../models/userResponseDTO.model';
 import { ChangePasswordDTO } from '../models/changePasswordDTO.model';
+import { ForgotPasswordDTO } from '../models/forgotPasswordDTO.model';
+import { ResetPasswordDTO } from '../models/resetPasswordDTO.model';
 
 @Injectable({
   providedIn: 'root',
@@ -34,6 +36,14 @@ export class UserService {
 
   changePassword(passwordData: ChangePasswordDTO): Observable<any> {
     return this._http.put(`${this._apiUrl}/change-password`, passwordData);
+  }
+
+  forgotPassword(forgotPasswordData: ForgotPasswordDTO): Observable<any> {
+    return this._http.post(`${this._apiUrl}/forgot-password`, forgotPasswordData);
+  }
+
+  resetPassword(resetPasswordData: ResetPasswordDTO): Observable<any> {
+    return this._http.post(`${this._apiUrl}/reset-password`, resetPasswordData);
   }
 
   logoutUser(): void {
