@@ -5,35 +5,40 @@ h1 {
 }
 
 // Password Modal Styling
-::ng-deep .password-dialog {
-  .p-dialog {
-    width: 90vw;
-    max-width: 450px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  }
+::ng-deep .p-dialog {
+  width: 90vw;
+  max-width: 450px;
+  border-radius: 12px;
+  box-shadow: var(--theme-color) 0px 0px 5px 5px;
 
   .p-dialog-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: block !important;
     color: white;
     text-align: center;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
+    position: relative;
 
     h3 {
       margin: 0;
       font-size: 1.25rem;
       font-weight: 600;
     }
+
+    .p-dialog-header-icon,
+    .p-dialog-close-button,
+    button {
+      display: none !important;
+    }
   }
 
   .p-dialog-content {
     padding: 2rem;
+    box-shadow: none !important;
   }
 
   .p-dialog-footer {
     padding: 1.5rem 2rem 2rem 2rem;
-    border-top: 1px solid #dee2e6;
     gap: 1rem;
     justify-content: flex-end;
   }

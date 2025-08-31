@@ -74,14 +74,7 @@
 
   <ng-template pTemplate="footer">
     <p-button label="Annuler" icon="pi pi-times" (click)="closePasswordModal()" styleClass="p-button-text"> </p-button>
-    <p-button
-      label="Modifier"
-      icon="pi pi-check"
-      (click)="onSubmitPasswordChange()"
-      [loading]="isLoading"
-      loadingIcon="pi pi-spin pi-spinner"
-      [disabled]="isLoading">
-    </p-button>
+    <p-button label="Modifier" icon="pi pi-check" (click)="onSubmitPasswordChange()" [disabled]="isLoading" [loading]="isLoading"> </p-button>
   </ng-template>
 </p-dialog>
 
