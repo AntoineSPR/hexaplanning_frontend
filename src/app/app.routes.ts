@@ -4,6 +4,7 @@ import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.co
 import { QuestListPageComponent } from './pages/quest-list-page/quest-list-page.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { LoginComponent } from './pages/login/login.component';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { MapComponent } from './components/map/map.component';
 import { isLoggedInGuard, isLoggedOutGuard } from './guards/is-logged-in.guard';
 
@@ -22,6 +23,11 @@ export const routes: Routes = [
     canActivate: [isLoggedOutGuard],
     path: 'register',
     component: RegisterComponent,
+  },
+  {
+    canActivate: [isLoggedOutGuard],
+    path: 'reset-password',
+    component: ResetPasswordComponent,
   },
   {
     canActivate: [isLoggedInGuard],

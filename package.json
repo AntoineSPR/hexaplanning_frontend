@@ -1,5 +1,5 @@
 {
-  "name": "to_rename",
+  "name": "hexaplanning",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -8,9 +8,9 @@
     "serve:development": "npm run serve --env=development",
     "serve:staging": "npm run serve --env=staging",
     "serve:production": "npm run serve --env=production",
-    "build": "./scripts/env-scripts/build-with-env.sh $npm_config_env",
-    "build:staging": "npm run build --env=staging",
-    "build:production": "npm run build --env=production",
+    "build" : "ng build",
+    "build:staging": "ng build --configuration staging",
+    "build:production": "ng build --configuration production",
     "test": "jest --verbose",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",

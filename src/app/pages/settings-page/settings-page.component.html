@@ -1,3 +1,81 @@
 <h1>Paramètres</h1>
+<p-button label="Modifier le mot de passe" (click)="openPasswordModal()" styleClass="p-button-text" />
 <p-button label="Se déconnecter" (click)="logout()" styleClass="p-button-text" />
+
+<!-- Password Change Modal -->
+<p-dialog
+  class="password-dialog"
+  [(visible)]="passwordModalVisible"
+  [modal]="true"
+  [dismissableMask]="true"
+  [closable]="true"
+  (onHide)="closePasswordModal()">
+  <ng-template pTemplate="header">
+    <h3>Modifier le mot de passe</h3>
+  </ng-template>
+
+  <p-toast></p-toast>
+
+  <div class="password-container">
+    <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPasswordChange()" class="password-form">
+      <div class="form-field">
+        <label for="currentPassword" class="form-label">Mot de passe actuel *</label>
+        <p-password
+          formControlName="currentPassword"
+          [toggleMask]="true"
+          placeholder="Entrez votre mot de passe actuel"
+          [class.p-invalid]="hasCurrentPasswordError"
+          class="form-input"
+          [feedback]="false"></p-password>
+        @if (hasCurrentPasswordError) {
+        <small class="p-error">
+          {{ currentPasswordError }}
+        </small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="newPassword" class="form-label">Nouveau mot de passe *</label>
+        <p-password
+          formControlName="newPassword"
+          [toggleMask]="true"
+          placeholder="Entrez votre nouveau mot de passe"
+          [class.p-invalid]="hasNewPasswordError"
+          class="form-input"
+          [feedback]="true"
+          promptLabel="Entrez un mot de passe"
+          weakLabel="Faible"
+          mediumLabel="Moyen"
+          strongLabel="Fort"></p-password>
+        @if (hasNewPasswordError) {
+        <small class="p-error">
+          {{ newPasswordError }}
+        </small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="confirmPassword" class="form-label">Confirmer le nouveau mot de passe *</label>
+        <p-password
+          formControlName="confirmPassword"
+          [toggleMask]="true"
+          [feedback]="false"
+          placeholder="Confirmez votre nouveau mot de passe"
+          [class.p-invalid]="hasConfirmPasswordError"
+          class="form-input"></p-password>
+        @if (hasConfirmPasswordError) {
+        <small class="p-error">
+          {{ confirmPasswordError }}
+        </small>
+        }
+      </div>
+    </form>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Annuler" icon="pi pi-times" (click)="closePasswordModal()" styleClass="p-button-text"> </p-button>
+    <p-button label="Modifier" icon="pi pi-check" (click)="onSubmitPasswordChange()" [disabled]="isLoading" [loading]="isLoading"> </p-button>
+  </ng-template>
+</p-dialog>
+
 <app-menu></app-menu>
