@@ -45,7 +45,4 @@ testem.log
 Thumbs.db
 .vscode/settings.json
 
-## Environment variables
-environments/
-
 .vscode/
