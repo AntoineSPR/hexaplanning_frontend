@@ -37,13 +37,13 @@
       </div>
 
       <div class="form-actions">
+        <p-button type="submit" label="Se connecter" [loading]="isLoading" class="submit-button" [disabled]="isLoading"></p-button>
+
         <p-button
-          type="submit"
-          label="Se connecter"
-          [loading]="isLoading"
-          loadingIcon="pi pi-spin pi-spinner"
-          class="submit-button"
-          [disabled]="isLoading"></p-button>
+          label="Mot de passe oublié ?"
+          (click)="openForgotPasswordModal()"
+          styleClass="p-button-text p-button-sm"
+          class="forgot-password-button"></p-button>
       </div>
 
       <div class="form-footer">
@@ -51,4 +51,46 @@
       </div>
     </form>
   </p-card>
+
+  <!-- Forgot Password Modal -->
+  <p-dialog
+    class="forgot-password-dialog"
+    [(visible)]="forgotPasswordModalVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [closable]="true"
+    (onHide)="closeForgotPasswordModal()">
+    <ng-template pTemplate="header">
+      <h3>Mot de passe oublié</h3>
+    </ng-template>
+
+    <div class="forgot-password-container">
+      <p class="forgot-password-description">Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+
+      <form [formGroup]="forgotPasswordForm" (ngSubmit)="onSubmitForgotPassword()" class="forgot-password-form">
+        <div class="form-field">
+          <label for="forgotEmail" class="form-label">Adresse email *</label>
+          <input
+            pInputText
+            id="forgotEmail"
+            type="email"
+            formControlName="email"
+            placeholder="Entrez votre adresse email"
+            [class.p-invalid]="hasForgotPasswordEmailError"
+            class="form-input" />
+          @if (hasForgotPasswordEmailError) {
+          <small class="p-error">
+            {{ forgotPasswordEmailError }}
+          </small>
+          }
+        </div>
+      </form>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Annuler" (click)="closeForgotPasswordModal()" styleClass="p-button-text"> </p-button>
+      <p-button label="Envoyer" (click)="onSubmitForgotPassword()" [loading]="isForgotPasswordLoading" [disabled]="isForgotPasswordLoading">
+      </p-button>
+    </ng-template>
+  </p-dialog>
 </div>

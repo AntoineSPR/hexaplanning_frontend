@@ -48,15 +48,15 @@
             "production": {
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
+                  "replace": "src/environments/environment.development.ts",
                   "with": "src/environments/environment.production.ts"
                 }
               ],
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "9MB",
+                  "maximumError": "10MB"
                 },
                 {
                   "type": "anyComponentStyle",

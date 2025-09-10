@@ -1,49 +1,58 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
-import { MenuComponent } from 'src/app/components/menu/menu.component';
-import { UserService } from 'src/app/services/user.service';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
-import { ChangePasswordDTO } from 'src/app/models/changePasswordDTO.model';
+import { UserService } from '../../services/user.service';
+import { ResetPasswordDTO } from '../../models/resetPasswordDTO.model';
 
 const MIN_PASSWORD_LENGTH = 6;
 
 @Component({
-  selector: 'app-settings-page',
+  selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MenuComponent, ButtonModule, DialogModule, CardModule, InputTextModule, PasswordModule, ToastModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, PasswordModule, ToastModule],
   providers: [MessageService],
-  templateUrl: './settings-page.component.html',
-  styleUrls: ['./settings-page.component.scss'],
+  templateUrl: './reset-password.component.html',
+  styleUrl: './reset-password.component.scss',
 })
-export class SettingsPageComponent {
+export class ResetPasswordComponent implements OnInit {
+  private readonly _formBuilder = inject(FormBuilder);
   private readonly _userService = inject(UserService);
   private readonly _router = inject(Router);
-  private readonly _formBuilder = inject(FormBuilder);
+  private readonly _route = inject(ActivatedRoute);
   private readonly _messageService = inject(MessageService);
 
-  user = this._userService.user;
-
-  passwordModalVisible = false;
-  passwordForm: FormGroup;
+  resetPasswordForm: FormGroup;
   isLoading = false;
+  token: string | null = null;
 
   constructor() {
-    this.passwordForm = this._formBuilder.group(
+    this.resetPasswordForm = this._formBuilder.group(
       {
-        currentPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
         newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
         confirmPassword: ['', [Validators.required]],
       },
       { validators: this.passwordMatchValidator }
     );
+  }
+
+  ngOnInit(): void {
+    // Get token from query parameters
+    this.token = this._route.snapshot.queryParamMap.get('token');
+
+    if (!this.token) {
+      this._messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Token de réinitialisation manquant ou invalide.',
+      });
+      this._router.navigate(['/login']);
+    }
   }
 
   passwordMatchValidator(form: FormGroup): any {
@@ -66,44 +75,37 @@ export class SettingsPageComponent {
     return null;
   }
 
-  openPasswordModal(): void {
-    this.passwordModalVisible = true;
-    this.passwordForm.reset();
-  }
-
-  closePasswordModal(): void {
-    this.passwordModalVisible = false;
-    this.passwordForm.reset();
-    this.isLoading = false;
-  }
-
-  onSubmitPasswordChange(): void {
-    if (this.passwordForm.valid) {
+  onSubmit(): void {
+    if (this.resetPasswordForm.valid && this.token) {
       this.isLoading = true;
 
-      const passwordData: ChangePasswordDTO = {
-        currentPassword: this.passwordForm.value.currentPassword,
-        newPassword: this.passwordForm.value.newPassword,
-        confirmPassword: this.passwordForm.value.confirmPassword,
+      const resetPasswordData: ResetPasswordDTO = {
+        token: this.token,
+        newPassword: this.resetPasswordForm.value.newPassword,
+        confirmPassword: this.resetPasswordForm.value.confirmPassword,
       };
 
-      this._userService.changePassword(passwordData).subscribe({
+      this._userService.resetPassword(resetPasswordData).subscribe({
         next: () => {
           this._messageService.add({
             severity: 'success',
             summary: 'Succès',
-            detail: 'Mot de passe modifié avec succès!',
+            detail: 'Mot de passe réinitialisé avec succès! Vous pouvez maintenant vous connecter.',
           });
-          this.closePasswordModal();
+          this.isLoading = false;
+          // Redirect to login after a delay
+          setTimeout(() => {
+            this._router.navigate(['/login']);
+          }, 2000);
         },
         error: (error: any) => {
           this._messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Erreur lors de la modification du mot de passe. Vérifiez votre mot de passe actuel.',
+            detail: 'Erreur lors de la réinitialisation. Le token pourrait être expiré.',
           });
           this.isLoading = false;
-          console.error('Password change error:', error);
+          console.error('Reset password error:', error);
         },
       });
     } else {
@@ -112,27 +114,15 @@ export class SettingsPageComponent {
   }
 
   private _markFormGroupTouched(): void {
-    Object.keys(this.passwordForm.controls).forEach(key => {
-      const control = this.passwordForm.get(key);
+    Object.keys(this.resetPasswordForm.controls).forEach(key => {
+      const control = this.resetPasswordForm.get(key);
       control?.markAsTouched();
     });
   }
 
   // Getter methods for error handling
-  get currentPasswordError(): string | null {
-    const field = this.passwordForm.get('currentPassword');
-    if (field?.touched && field?.errors) {
-      if (field.errors['required']) return 'Ce champ est requis';
-      if (field.errors['minlength']) {
-        const requiredLength = field.errors['minlength'].requiredLength;
-        return `Ce champ doit contenir au moins ${requiredLength} caractères`;
-      }
-    }
-    return null;
-  }
-
   get newPasswordError(): string | null {
-    const field = this.passwordForm.get('newPassword');
+    const field = this.resetPasswordForm.get('newPassword');
     if (field?.touched && field?.errors) {
       if (field.errors['required']) return 'Ce champ est requis';
       if (field.errors['minlength']) {
@@ -144,7 +134,7 @@ export class SettingsPageComponent {
   }
 
   get confirmPasswordError(): string | null {
-    const field = this.passwordForm.get('confirmPassword');
+    const field = this.resetPasswordForm.get('confirmPassword');
     if (field?.touched && field?.errors) {
       if (field.errors['required']) return 'Ce champ est requis';
       if (field.errors['passwordMismatch']) return 'Les mots de passe ne correspondent pas';
@@ -152,23 +142,13 @@ export class SettingsPageComponent {
     return null;
   }
 
-  get hasCurrentPasswordError(): boolean {
-    const field = this.passwordForm.get('currentPassword');
-    return !!(field?.touched && field?.errors);
-  }
-
   get hasNewPasswordError(): boolean {
-    const field = this.passwordForm.get('newPassword');
+    const field = this.resetPasswordForm.get('newPassword');
     return !!(field?.touched && field?.errors);
   }
 
   get hasConfirmPasswordError(): boolean {
-    const field = this.passwordForm.get('confirmPassword');
+    const field = this.resetPasswordForm.get('confirmPassword');
     return !!(field?.touched && field?.errors);
-  }
-
-  logout(): void {
-    this._userService.logoutUser();
-    this._router.navigate(['/login']);
   }
 }
