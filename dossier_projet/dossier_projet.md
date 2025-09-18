@@ -30,11 +30,55 @@ L’accès à l’application nécessite la création d’un compte et une authe
 
 L’application propose un menu permettant de naviguer facilement entre l’accueil, la liste des quêtes, la carte des hexagones et les paramètres. Un bouton dédié permet de créer rapidement une nouvelle quête. L’interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l’engagement et la productivité de l’utilisateur.
 
-3. **Modélisation des données**
+# 3. Modélisation des données
 
-   - MCD (Modèle Conceptuel de Données)
-   - MLD (Modèle Logique de Données)
-   - Description des entités et relations
+## MCD (Modèle Conceptuel de Données)
+
+```mermaid
+erDiagram
+   USERAPP ||--o{ QUEST : possède
+   QUEST }o--|| HEXASSIGNMENT : "est assignée à"
+
+   USERAPP {
+      Guid Id PK
+      string FirstName
+      string LastName
+      string Email
+      string PasswordHash
+   }
+   QUEST {
+      Guid Id PK
+      string Title
+      string Description
+      int EstimatedTime
+      string Priority
+      bool IsDone
+      bool IsAssigned
+   Guid UserId FK
+   int HexAssignmentId FK
+   }
+   HEXASSIGNMENT {
+      int Id PK
+      int Q
+      int R
+      int S
+      Guid QuestId FK
+      Guid UserId FK
+   }
+```
+
+## MLD (Modèle Logique de Données)
+
+- Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, ...)
+- Table **Quest** (Id PK, Title, Description, EstimatedTime, Priority, IsDone, IsAssigned, UserId FK, HexAssignmentId FK)
+- Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, UserId FK)
+
+## Description des entités et relations
+
+- Un utilisateur peut créer plusieurs quêtes.
+- Une quête appartient à un seul utilisateur.
+- Une quête peut être assignée à un hexagone (HexAssignment) ou non.
+- Un hexagone (HexAssignment) est lié à une seule quête et à un seul utilisateur (pour la personnalisation de la map).
 
 4. **Architecture technique**
 
