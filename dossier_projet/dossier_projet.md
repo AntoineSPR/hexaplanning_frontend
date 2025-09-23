@@ -150,10 +150,41 @@ Cette architecture garantit robustesse, évolutivité et sécurité, tout en per
 
 5. **Qualité logicielle et tests**
 
-- Tests unitaires (frontend et backend)
-- Tests de charge (fixtures avec Bogus)
-- Tests d’intégration
-- Stratégie de validation
+# 5. Qualité logicielle et tests
+
+La qualité logicielle d’HexaPlanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
+
+## 5.1. Tests unitaires (backend)
+
+Les tests unitaires sont réalisés avec xUnit et couvrent les principaux services métiers, notamment le service de gestion des quêtes (`QuestService`). Ces tests vérifient le bon fonctionnement des méthodes de création, lecture, mise à jour et suppression de quêtes, ainsi que la gestion des cas limites (identifiants invalides, absence de données, etc.).
+
+Exemples de méthodes testées :
+
+- Création d’une quête (`CreateQuestAsync`)
+- Récupération d’une quête par ID (`GetQuestByIdAsync`)
+- Mise à jour et suppression de quêtes (`UpdateQuestAsync`, `DeleteQuestAsync`)
+- Récupération des quêtes selon leur statut (en attente, terminées, non assignées)
+
+## 5.2. Tests d’intégration
+
+Des tests d’intégration automatisés valident l’ensemble du pipeline API, de la couche HTTP jusqu’à la base de données PostgreSQL (via Testcontainers). Ils simulent des scénarios réels, comme la récupération de quêtes via des requêtes authentifiées, la gestion des droits d’accès, et la cohérence des données persistées.
+
+Caractéristiques :
+
+- Utilisation de `WebApplicationFactory` pour lancer l’API en environnement de test
+- Base de données PostgreSQL éphémère (Testcontainers)
+- Données de test injectées automatiquement (utilisateur, quêtes)
+- Vérification de la sécurité (JWT requis, accès refusé si non authentifié)
+
+## 5.3. Tests de charge et fixtures
+
+Des fixtures de données sont utilisées pour simuler des volumes importants de quêtes et d’utilisateurs, grâce à la librairie Bogus. Cela permet de valider la tenue en charge de l’API et la stabilité des traitements sur de grands ensembles de données. Les tests ont été réalisés avec 100000 utilisateurs et 1000000 de quêtes pour s'assurer de la robustesse de la base de données.
+
+## 5.4. Stratégie de validation
+
+Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dédiés. Les tests sont exécutés automatiquement lors des pipelines CI/CD (GitHub Actions), garantissant l’absence de régressions avant chaque déploiement. La couverture de code est régulièrement analysée pour cibler les zones à renforcer.
+
+Cette démarche assure un haut niveau de confiance dans la qualité logicielle du backend, tout en facilitant l’évolution continue du projet.
 
 6. **Déploiement et intégration continue**
 
