@@ -345,6 +345,40 @@ Cette approche globale permet de garantir un haut niveau de sécurité pour les 
    - Présentation des choix techniques
    - Avantages et justification
 
+# 8. Technologies utilisées
+
+Le projet HexaPlanning s’appuie sur un ensemble de technologies modernes, choisies pour leur robustesse, leur écosystème et leur adéquation avec les besoins fonctionnels et non fonctionnels du projet.
+
+## 8.1. Frontend
+
+- **Angular 18** : Framework SPA reconnu pour sa structure modulaire, sa maintenabilité et sa communauté active. Il facilite la création d’interfaces dynamiques, responsives et testables.
+- **TypeScript** : Apporte la sécurité de typage et la clarté du code, essentielle pour un projet d’envergure.
+- **Jest & Cypress** : Outils de référence pour les tests unitaires et end-to-end, assurant la fiabilité de l’interface utilisateur.
+
+## 8.2. Backend
+
+- **ASP.NET Core 8** : Framework backend performant, sécurisé et multiplateforme, idéal pour exposer une API REST robuste et scalable.
+- **Entity Framework Core** : ORM facilitant la gestion et la migration de la base de données, tout en assurant la cohérence des modèles.
+- **xUnit** : Framework de tests unitaires moderne et flexible, intégré à l’écosystème .NET.
+
+## 8.3. Base de données
+
+- **PostgreSQL** : SGBD open source reconnu pour sa fiabilité, ses performances et ses capacités avancées (transactions, indexation, JSON, etc.).
+
+## 8.4. Infrastructure et DevOps
+
+- **Docker** : Conteneurisation de chaque composant pour garantir la portabilité, l’isolation et la reproductibilité des environnements.
+- **docker-compose** : Orchestration simplifiée du déploiement multi-conteneurs.
+- **GitHub Actions** : Automatisation des pipelines CI/CD pour des livraisons rapides et sûres.
+- **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy.
+- **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge.
+
+## 8.5. Services externes
+
+- **Brevo (ex-Sendinblue)** : Service d’envoi d’e-mails transactionnels fiable et simple à intégrer.
+
+Ces choix technologiques assurent la robustesse, la sécurité et l’évolutivité de la plateforme, tout en facilitant la maintenance et l’intégration de nouvelles fonctionnalités.
+
 9. **Conclusion et perspectives**
    - Bilan du projet
    - Évolutions possibles
