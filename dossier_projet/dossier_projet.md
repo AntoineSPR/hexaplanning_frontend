@@ -383,4 +383,50 @@ Ces choix technologiques assurent la robustesse, la sécurité et l’évolutivi
    - Bilan du projet
    - Évolutions possibles
 
+# 9. Conclusion et perspectives
+
+## 9.1. Bilan du projet
+
+HexaPlanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
+
+Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L’architecture modulaire et la conteneurisation facilitent la maintenance et l’évolutivité.
+
+## 9.2. Perspectives d’évolution
+
+Les évolutions futures d’HexaPlanning s’articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
+
+- **Sécurité et gestion des comptes**
+
+  - Ajout d’un système de refresh token (stocké localement ou en cookies) pour renforcer la sécurité et la gestion de session.
+  - Envoi d’un email de bienvenue à la création du compte.
+  - Création d’un dashboard administrateur pour gérer les utilisateurs (bannissement, activation de compte, gestion des rôles, etc.).
+
+- **Gestion avancée des quêtes**
+
+  - Mise à jour automatique de la priorité d’une quête selon ses coordonnées sur la carte, et sous-tri par l’axe r (du plus petit au plus grand, y compris valeurs négatives).
+  - Ajout du drag & drop pour réorganiser les quêtes : gestion d’un ordre distinct côté backend selon l’état (en cours, terminée) et la catégorie.
+  - Ajout de propriétés d’ordre spécifiques à chaque état pour l’objet quête.
+  - Mise en avant visuelle des quêtes futures (couleur plus claire/light-theme-color).
+
+- **Interface et expérience utilisateur**
+
+  - Ajout d’un sélecteur de priorité, d’une icône répétable, d’une date de fin et d’une propriété répétable pour chaque quête.
+  - Ajustement de l’affichage si le titre de la quête est trop long.
+  - Ajout d’un slide pour passer d’un onglet à l’autre.
+  - Extension de la map : rendre la carte extensible, zoomable, navigable à la souris ou au doigt, avec adaptation de la taille du texte.
+  - Possibilité de masquer les quêtes tertiaires via un toggle, recentrage automatique sur les quêtes prioritaires.
+  - Création de catégories et tri des quêtes par date, priorité et/ou catégorie.
+  - Optimisation des performances lors du chargement des images d’icônes.
+  - Mise aux normes RGAA des mat-icons du menu.
+  - Saisie manuelle et indépendante des heures et minutes pour les quêtes (sans avoir à taper ":").
+
+- **Fonctionnalités avancées et évolutives**
+  - Gestion de l’ordre des quêtes selon le système de coordonnées cubiques : affichage et priorisation dynamiques dans la liste et sur la carte.
+  - Ajout de flèches pour indiquer le sens de progression d’une quête à l’autre, gestion de la disponibilité des quêtes selon leur accessibilité.
+  - Drag & drop avancé pour déplacer les quêtes et mettre à jour leur rattachement.
+  - Ajout d’une mécanique de « soldat » pour marquer l’accomplissement d’une quête par interaction directe.
+  - Possibilité d’archiver ou de masquer les quêtes accomplies pour alléger l’affichage.
+
+L’architecture actuelle, modulaire et évolutive, permet d’intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
+
 ---
