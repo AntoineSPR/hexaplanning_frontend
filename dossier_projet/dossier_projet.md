@@ -87,12 +87,73 @@ erDiagram
    - Base de données (PostgreSQL)
    - Communication API
 
+# 4. Architecture technique
+
+## 4.1. Vue d’ensemble
+
+L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NET et une base de données PostgreSQL. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
+
+### Schéma global
+
+```mermaid
+flowchart LR
+   A[Frontend Angular] -- HTTP/HTTPS --> B[API .NET]
+   B -- SQL --> C[(PostgreSQL)]
+   B -- SMTP --> D[Brevo : Serveur Mail]
+   B -- JWT --> A
+```
+
+## 4.2. Frontend (Angular)
+
+- **Technologie** : Angular 18
+- **Structure** : Organisation en modules, composants, services et modèles TypeScript.
+- **Responsabilité** : Gestion de l’interface utilisateur, navigation, appels API, gestion du token JWT, affichage dynamique de la carte d’hexagones, gestion des quêtes.
+- **Sécurité** : Intercepteur HTTP pour l’ajout automatique du JWT, guards de navigation pour protéger les routes sensibles.
+- **Tests** : Utilisation de Jest et Cypress pour les tests unitaires et end-to-end.
+
+## 4.3. Backend (.NET)
+
+- **Technologie** : ASP.NET Core 8
+- **Structure** : Architecture en couches (Controllers, Services, Models, DataContext, Utilities).
+- **Responsabilité** : Exposition d’une API RESTful, gestion de l’authentification (JWT), logique métier (création/gestion des quêtes, hexagones, utilisateurs), validation et sécurisation des données. Un service d’envoi d’e-mails est intégré pour la gestion du mot de passe oublié et d’autres notifications : il s’appuie sur la solution Brevo (anciennement Sendinblue), permettant l’envoi fiable et sécurisé de courriels transactionnels depuis l’API .NET.
+- **Sécurité** : Middleware d’authentification JWT, validation des entrées, gestion des droits d’accès, protection contre les attaques courantes.
+- **Tests** : Couverture par des tests unitaires (xUnit) et des tests d’intégration.
+
+## 4.4. Base de données (PostgreSQL)
+
+- **Modélisation** : Respect du MCD/MLD présenté plus haut.
+- **Gestion** : Migrations Entity Framework Core pour la création et l’évolution du schéma.
+- **Sécurité** : Accès restreint via le backend uniquement, aucune exposition directe.
+
+## 4.5. Communication API
+
+- **Format** : JSON via HTTP(S)
+- **Endpoints** : Authentification, gestion des quêtes, gestion des hexagones, gestion des utilisateurs.
+- **Sécurité** : Toutes les routes sensibles sont protégées par JWT, CORS configuré pour limiter les origines autorisées.
+
+## 4.6. Conteneurisation et déploiement
+
+- **Docker** : Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile pour faciliter le déploiement et l’isolation.
+- **Orchestration** : Utilisation de docker-compose pour le développement local et le déploiement sur serveur.
+- **Reverse Proxy** : Nginx Proxy Manager pour la gestion des domaines et des certificats SSL.
+- **CI/CD** : Pipelines GitHub Actions pour l’intégration et le déploiement continus.
+
+## 4.7. Sécurité et bonnes pratiques
+
+- **Authentification JWT** pour toutes les opérations sensibles.
+- **Validation systématique** des données côté backend.
+- **Gestion des erreurs** centralisée.
+- **Logs** pour le suivi et l’audit des actions critiques.
+- **Séparation stricte** des responsabilités entre frontend et backend.
+
+Cette architecture garantit robustesse, évolutivité et sécurité, tout en permettant une expérience utilisateur fluide et moderne.
+
 5. **Qualité logicielle et tests**
 
-   - Tests unitaires (frontend et backend)
-   - Tests de charge (fixtures avec Bogus)
-   - Tests d’intégration (en cours)
-   - Stratégie de validation
+- Tests unitaires (frontend et backend)
+- Tests de charge (fixtures avec Bogus)
+- Tests d’intégration
+- Stratégie de validation
 
 6. **Déploiement et intégration continue**
 
