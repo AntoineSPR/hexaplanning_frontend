@@ -2,55 +2,72 @@
 
 # Table des matières
 
-1. [Introduction](#1-introduction)
-   1. [Présentation du projet](#1-prsentationduprojet)
-   2. [Objectifs et contexte](#2-objectifsetcontexte)
-2. [Fonctionnalités principales](#2-fonctionnalits-principales)
-   1. [Gestion des quêtes (tâches)](#3-gestiondesqutestches)
-   2. [Affichage visuel en hexagones (map)](#4-affichagevisuelenhexagonesmap)
-   3. [Système d’authentification et gestion des utilisateurs](#5-systmedauthentificationetgestiondesutilisateurs)
-   4. [Navigation et ergonomie](#6-navigationetergonomie)
-3. [Modélisation des données](#3-modlisation-des-donnes)
-   1. [MCD (Modèle Conceptuel de Données)](#7-mcdmodleconceptueldedonnes)
-   2. [MLD (Modèle Logique de Données)](#8-mldmodlelogiquededonnes)
-   3. [Description des entités et relations](#9-descriptiondesentitsetrelations)
-4. [Architecture technique](#4-architecture-technique)
-   1. [Vue d’ensemble](#10-41-vue-densemble)
-      - [Schéma global](#101-schma-global)
-   2. [Frontend (Angular)](#11-42-frontend-angular)
-   3. [Backend (.NET)](#12-43-backend-net)
-   4. [Base de données (PostgreSQL)](#13-44-base-de-donnes-postgresql)
-   5. [Communication API](#14-45-communication-api)
-   6. [Conteneurisation et déploiement](#15-46-conteneurisation-et-dploiement)
-   7. [Sécurité et bonnes pratiques](#16-47-scurit-et-bonnes-pratiques)
-5. [Qualité logicielle et tests](#5-qualit-logicielle-et-tests)
-   1. [Tests unitaires (backend)](#17-51-tests-unitaires-backend)
-   2. [Tests d’intégration](#18-52-tests-dintgration)
-   3. [Tests de charge et fixtures](#19-53-tests-de-charge-et-fixtures)
-   4. [Stratégie de validation](#20-54-stratgie-de-validation)
-6. [Déploiement et intégration continue](#6-dploiement-et-intgration-continue)
-   1. [Intégration continue (CI) de l’API](#21-61-intgration-continue-ci-de-lapi)
-   2. [Déploiement continu (CD) du backend](#22-62-dploiement-continu-cd-du-backend)
-   3. [Déploiement continu (CD) du frontend](#23-63-dploiement-continu-cd-du-frontend)
-   4. [Conteneurisation et orchestration](#24-64-conteneurisation-et-orchestration)
-   5. [Hébergement et reverse proxy](#25-65-hbergement-et-reverse-proxy)
-7. [Sécurité](#7-scurit)
-   1. [Authentification et gestion des accès](#26-71-authentification-et-gestion-des-accs)
-   2. [Validation et intégrité des données](#27-72-validation-et-intgrit-des-donnes)
-   3. [Protection contre les attaques](#28-73-protection-contre-les-attaques)
-   4. [Sécurité de la conteneurisation et du déploiement](#29-74-scurit-de-la-conteneurisation-et-du-dploiement)
-   5. [Surveillance et audit](#30-75-surveillance-et-audit)
-8. [Technologies utilisées](#8-technologies-utilises)
-   1. [Frontend](#31-81-frontend)
-   2. [Backend](#32-82-backend)
-   3. [Base de données](#33-83-base-de-donnes)
-   4. [Infrastructure et DevOps](#34-84-infrastructure-et-devops)
-   5. [Services externes](#35-85-services-externes)
-9. [Conclusion et perspectives](#9-conclusion-et-perspectives)
-   1. [Bilan du projet](#36-91-bilan-du-projet)
-   2. [Perspectives d’évolution](#37-92-perspectives-dvolution)
+**I. [Introduction](#i-introduction)**
 
-# Table des matières
+1.  [Présentation du projet](#i-1-présentation-du-projet)
+2.  [Objectifs et contexte](#i-2-objectifs-et-contexte)
+
+**II. [Fonctionnalités principales](#ii-fonctionnalités-principales)**
+
+1.  [Gestion des quêtes (tâches)](#ii-1-gestion-des-quêtes-tâches)
+2.  [Affichage visuel en hexagones (map)](#ii-2-affichage-visuel-en-hexagones-map)
+3.  [Système d’authentification et gestion des utilisateurs](#ii-3-système-d-authentification-et-gestion-des-utilisateurs)
+4.  [Navigation et ergonomie](#ii-4-navigation-et-ergonomie)
+
+**III. [Modélisation des données](#iii-modélisation-des-données)**
+
+1.  [MCD (Modèle Conceptuel de Données)](#iii-1-mcd-modèle-conceptuel-de-données)
+2.  [MLD (Modèle Logique de Données)](#iii-2-mld-modèle-logique-de-données)
+3.  [Description des entités et relations](#iii-3-description-des-entités-et-relations)
+
+**IV. [Architecture technique](#iv-architecture-technique)**
+
+1.  [Vue d’ensemble](#iv-1-vue-d-ensemble)
+    - [Schéma global](#iv-1-1-schéma-global)
+2.  [Frontend (Angular)](#iv-2-frontend-angular)
+3.  [Backend (.NET)](#iv-3-backend-net)
+4.  [Base de données (PostgreSQL)](#iv-4-base-de-données-postgresql)
+5.  [Communication API](#iv-5-communication-api)
+6.  [Conteneurisation et déploiement](#iv-6-conteneurisation-et-déploiement)
+7.  [Sécurité et bonnes pratiques](#iv-7-sécurité-et-bonnes-pratiques)
+
+**V. [Qualité logicielle et tests](#v-qualité-logicielle-et-tests)**
+
+1.  [Tests unitaires (backend)](#v-1-tests-unitaires-backend)
+2.  [Tests d’intégration](#v-2-tests-d-intégration)
+3.  [Tests de charge et fixtures](#v-3-tests-de-charge-et-fixtures)
+4.  [Stratégie de validation](#v-4-stratégie-de-validation)
+
+**VI. [Déploiement et intégration continue](#vi-déploiement-et-intégration-continue)**
+
+1.  [Intégration continue (CI) de l’API](#vi-1-intégration-continue-ci-de-l-api)
+2.  [Déploiement continu (CD) du backend](#vi-2-déploiement-continu-cd-du-backend)
+3.  [Déploiement continu (CD) du frontend](#vi-3-déploiement-continu-cd-du-frontend)
+4.  [Conteneurisation et orchestration](#vi-4-conteneurisation-et-orchestration)
+5.  [Hébergement et reverse proxy](#vi-5-hébergement-et-reverse-proxy)
+
+**VII. [Sécurité](#vii-sécurité)**
+
+1.  [Authentification et gestion des accès](#vii-1-authentification-et-gestion-des-accès)
+2.  [Validation et intégrité des données](#vii-2-validation-et-intégrité-des-données)
+3.  [Protection contre les attaques](#vii-3-protection-contre-les-attaques)
+4.  [Sécurité de la conteneurisation et du déploiement](#vii-4-sécurité-de-la-conteneurisation-et-du-déploiement)
+5.  [Surveillance et audit](#vii-5-surveillance-et-audit)
+
+**VIII. [Technologies utilisées](#viii-technologies-utilisées)**
+
+1.  [Frontend](#viii-1-frontend)
+2.  [Backend](#viii-2-backend)
+3.  [Base de données](#viii-3-base-de-données)
+4.  [Infrastructure et DevOps](#viii-4-infrastructure-et-devops)
+5.  [Services externes](#viii-5-services-externes)
+
+**IX. [Conclusion et perspectives](#ix-conclusion-et-perspectives)**
+
+1.  [Bilan du projet](#ix-1-bilan-du-projet)
+2.  [Perspectives d’évolution](#ix-2-perspectives-d-évolution)
+
+---
 
 ---
 
