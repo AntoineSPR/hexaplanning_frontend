@@ -1,38 +1,90 @@
----
+<!-- vscode-markdown-toc -->
+
 # Table des matières
+
+1. [Introduction](#1-introduction)
+   1. [Présentation du projet](#1-prsentationduprojet)
+   2. [Objectifs et contexte](#2-objectifsetcontexte)
+2. [Fonctionnalités principales](#2-fonctionnalits-principales)
+   1. [Gestion des quêtes (tâches)](#3-gestiondesqutestches)
+   2. [Affichage visuel en hexagones (map)](#4-affichagevisuelenhexagonesmap)
+   3. [Système d’authentification et gestion des utilisateurs](#5-systmedauthentificationetgestiondesutilisateurs)
+   4. [Navigation et ergonomie](#6-navigationetergonomie)
+3. [Modélisation des données](#3-modlisation-des-donnes)
+   1. [MCD (Modèle Conceptuel de Données)](#7-mcdmodleconceptueldedonnes)
+   2. [MLD (Modèle Logique de Données)](#8-mldmodlelogiquededonnes)
+   3. [Description des entités et relations](#9-descriptiondesentitsetrelations)
+4. [Architecture technique](#4-architecture-technique)
+   1. [Vue d’ensemble](#10-41-vue-densemble)
+      - [Schéma global](#101-schma-global)
+   2. [Frontend (Angular)](#11-42-frontend-angular)
+   3. [Backend (.NET)](#12-43-backend-net)
+   4. [Base de données (PostgreSQL)](#13-44-base-de-donnes-postgresql)
+   5. [Communication API](#14-45-communication-api)
+   6. [Conteneurisation et déploiement](#15-46-conteneurisation-et-dploiement)
+   7. [Sécurité et bonnes pratiques](#16-47-scurit-et-bonnes-pratiques)
+5. [Qualité logicielle et tests](#5-qualit-logicielle-et-tests)
+   1. [Tests unitaires (backend)](#17-51-tests-unitaires-backend)
+   2. [Tests d’intégration](#18-52-tests-dintgration)
+   3. [Tests de charge et fixtures](#19-53-tests-de-charge-et-fixtures)
+   4. [Stratégie de validation](#20-54-stratgie-de-validation)
+6. [Déploiement et intégration continue](#6-dploiement-et-intgration-continue)
+   1. [Intégration continue (CI) de l’API](#21-61-intgration-continue-ci-de-lapi)
+   2. [Déploiement continu (CD) du backend](#22-62-dploiement-continu-cd-du-backend)
+   3. [Déploiement continu (CD) du frontend](#23-63-dploiement-continu-cd-du-frontend)
+   4. [Conteneurisation et orchestration](#24-64-conteneurisation-et-orchestration)
+   5. [Hébergement et reverse proxy](#25-65-hbergement-et-reverse-proxy)
+7. [Sécurité](#7-scurit)
+   1. [Authentification et gestion des accès](#26-71-authentification-et-gestion-des-accs)
+   2. [Validation et intégrité des données](#27-72-validation-et-intgrit-des-donnes)
+   3. [Protection contre les attaques](#28-73-protection-contre-les-attaques)
+   4. [Sécurité de la conteneurisation et du déploiement](#29-74-scurit-de-la-conteneurisation-et-du-dploiement)
+   5. [Surveillance et audit](#30-75-surveillance-et-audit)
+8. [Technologies utilisées](#8-technologies-utilises)
+   1. [Frontend](#31-81-frontend)
+   2. [Backend](#32-82-backend)
+   3. [Base de données](#33-83-base-de-donnes)
+   4. [Infrastructure et DevOps](#34-84-infrastructure-et-devops)
+   5. [Services externes](#35-85-services-externes)
+9. [Conclusion et perspectives](#9-conclusion-et-perspectives)
+   1. [Bilan du projet](#36-91-bilan-du-projet)
+   2. [Perspectives d’évolution](#37-92-perspectives-dvolution)
+
+# Table des matières
+
 ---
 
 # 1. Introduction
 
-## Présentation du projet
+## 1. <a name='Prsentationduprojet'></a>Présentation du projet
 
 HexaPlanning est une application web innovante de gestion de tâches, pensée pour transformer la to-do list classique en une expérience visuelle et ludique. Chaque tâche, appelée "quête", peut être placée sur une carte d’hexagones, permettant à l’utilisateur de visualiser ses objectifs comme un parcours à accomplir. Cette approche vise à rendre la planification plus motivante et interactive, en s’inspirant des mécaniques de jeu et de la gamification.
 
-## Objectifs et contexte
+## 2. <a name='Objectifsetcontexte'></a>Objectifs et contexte
 
 Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. HexaPlanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
 
 # 2. Fonctionnalités principales
 
-## Gestion des quêtes (tâches)
+## 3. <a name='Gestiondesqutestches'></a>Gestion des quêtes (tâches)
 
 Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre et une priorité (primaire, secondaire ou tertiaire), ainsi qu’une description et un temps estimé en option. L’utilisateur peut créer, éditer, supprimer ou marquer une quête comme terminée. Les quêtes sont organisées en deux onglets : à faire et terminées, pour un suivi clair de la progression.
 
-## Affichage visuel en hexagones (map)
+## 4. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (map)
 
 L’originalité d’HexaPlanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement la priorité. Les quêtes terminées apparaissent avec un fond plus sombre. L’utilisateur peut assigner ou désassigner une quête à un hexagone d’un simple clic, et visualiser son parcours comme un chemin à accomplir.
 
-## Système d’authentification et gestion des utilisateurs
+## 5. <a name='Systmedauthentificationetgestiondesutilisateurs'></a>Système d’authentification et gestion des utilisateurs
 
 L’accès à l’application nécessite la création d’un compte et une authentification sécurisée. Un système de gestion des mots de passe oubliés est en place, avec envoi d’email pour la réinitialisation. L’utilisateur peut également changer son mot de passe depuis l’interface. La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
 
-## Navigation et ergonomie
+## 6. <a name='Navigationetergonomie'></a>Navigation et ergonomie
 
 L’application propose un menu permettant de naviguer facilement entre l’accueil, la liste des quêtes, la carte des hexagones et les paramètres. Un bouton dédié permet de créer rapidement une nouvelle quête. L’interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l’engagement et la productivité de l’utilisateur.
 
 # 3. Modélisation des données
 
-## MCD (Modèle Conceptuel de Données)
+## 7. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
 
 ```mermaid
 erDiagram
@@ -67,13 +119,13 @@ erDiagram
    }
 ```
 
-## MLD (Modèle Logique de Données)
+## 8. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, ...)
 - Table **Quest** (Id PK, Title, Description, EstimatedTime, Priority, IsDone, IsAssigned, UserId FK, HexAssignmentId FK)
 - Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, UserId FK)
 
-## Description des entités et relations
+## 9. <a name='Descriptiondesentitsetrelations'></a>Description des entités et relations
 
 - Un utilisateur peut créer plusieurs quêtes.
 - Une quête appartient à un seul utilisateur.
@@ -89,11 +141,11 @@ erDiagram
 
 # 4. Architecture technique
 
-## 4.1. Vue d’ensemble
+## 10. <a name='Vuedensemble'></a>4.1. Vue d’ensemble
 
 L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NET et une base de données PostgreSQL. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
 
-### Schéma global
+### 10.1. <a name='Schmaglobal'></a>Schéma global
 
 ```mermaid
 flowchart LR
@@ -103,7 +155,7 @@ flowchart LR
    B -- JWT --> A
 ```
 
-## 4.2. Frontend (Angular)
+## 11. <a name='FrontendAngular'></a>4.2. Frontend (Angular)
 
 - **Technologie** : Angular 18
 - **Structure** : Organisation en modules, composants, services et modèles TypeScript.
@@ -111,7 +163,7 @@ flowchart LR
 - **Sécurité** : Intercepteur HTTP pour l’ajout automatique du JWT, guards de navigation pour protéger les routes sensibles.
 - **Tests** : Utilisation de Jest et Cypress pour les tests unitaires et end-to-end.
 
-## 4.3. Backend (.NET)
+## 12. <a name='Backend.NET'></a>4.3. Backend (.NET)
 
 - **Technologie** : ASP.NET Core 8
 - **Structure** : Architecture en couches (Controllers, Services, Models, DataContext, Utilities).
@@ -119,26 +171,26 @@ flowchart LR
 - **Sécurité** : Middleware d’authentification JWT, validation des entrées, gestion des droits d’accès, protection contre les attaques courantes.
 - **Tests** : Couverture par des tests unitaires (xUnit) et des tests d’intégration.
 
-## 4.4. Base de données (PostgreSQL)
+## 13. <a name='BasededonnesPostgreSQL'></a>4.4. Base de données (PostgreSQL)
 
 - **Modélisation** : Respect du MCD/MLD présenté plus haut.
 - **Gestion** : Migrations Entity Framework Core pour la création et l’évolution du schéma.
 - **Sécurité** : Accès restreint via le backend uniquement, aucune exposition directe.
 
-## 4.5. Communication API
+## 14. <a name='CommunicationAPI'></a>4.5. Communication API
 
 - **Format** : JSON via HTTP(S)
 - **Endpoints** : Authentification, gestion des quêtes, gestion des hexagones, gestion des utilisateurs.
 - **Sécurité** : Toutes les routes sensibles sont protégées par JWT, CORS configuré pour limiter les origines autorisées.
 
-## 4.6. Conteneurisation et déploiement
+## 15. <a name='Conteneurisationetdploiement'></a>4.6. Conteneurisation et déploiement
 
 - **Docker** : Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile pour faciliter le déploiement et l’isolation.
 - **Orchestration** : Utilisation de docker-compose pour le développement local et le déploiement sur serveur.
 - **Reverse Proxy** : Nginx Proxy Manager pour la gestion des domaines et des certificats SSL.
 - **CI/CD** : Pipelines GitHub Actions pour l’intégration et le déploiement continus.
 
-## 4.7. Sécurité et bonnes pratiques
+## 16. <a name='Scuritetbonnespratiques'></a>4.7. Sécurité et bonnes pratiques
 
 - **Authentification JWT** pour toutes les opérations sensibles.
 - **Validation systématique** des données côté backend.
@@ -154,7 +206,7 @@ Cette architecture garantit robustesse, évolutivité et sécurité, tout en per
 
 La qualité logicielle d’HexaPlanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
 
-## 5.1. Tests unitaires (backend)
+## 17. <a name='Testsunitairesbackend'></a>5.1. Tests unitaires (backend)
 
 Les tests unitaires sont réalisés avec xUnit et couvrent les principaux services métiers, notamment le service de gestion des quêtes (`QuestService`). Ces tests vérifient le bon fonctionnement des méthodes de création, lecture, mise à jour et suppression de quêtes, ainsi que la gestion des cas limites (identifiants invalides, absence de données, etc.).
 
@@ -165,7 +217,7 @@ Exemples de méthodes testées :
 - Mise à jour et suppression de quêtes (`UpdateQuestAsync`, `DeleteQuestAsync`)
 - Récupération des quêtes selon leur statut (en attente, terminées, non assignées)
 
-## 5.2. Tests d’intégration
+## 18. <a name='Testsdintgration'></a>5.2. Tests d’intégration
 
 Des tests d’intégration automatisés valident l’ensemble du pipeline API, de la couche HTTP jusqu’à la base de données PostgreSQL (via Testcontainers). Ils simulent des scénarios réels, comme la récupération de quêtes via des requêtes authentifiées, la gestion des droits d’accès, et la cohérence des données persistées.
 
@@ -176,11 +228,11 @@ Caractéristiques :
 - Données de test injectées automatiquement (utilisateur, quêtes)
 - Vérification de la sécurité (JWT requis, accès refusé si non authentifié)
 
-## 5.3. Tests de charge et fixtures
+## 19. <a name='Testsdechargeetfixtures'></a>5.3. Tests de charge et fixtures
 
 Des fixtures de données sont utilisées pour simuler des volumes importants de quêtes et d’utilisateurs, grâce à la librairie Bogus. Cela permet de valider la tenue en charge de l’API et la stabilité des traitements sur de grands ensembles de données. Les tests ont été réalisés avec 100000 utilisateurs et 1000000 de quêtes pour s'assurer de la robustesse de la base de données.
 
-## 5.4. Stratégie de validation
+## 20. <a name='Stratgiedevalidation'></a>5.4. Stratégie de validation
 
 Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dédiés. Les tests sont exécutés automatiquement lors des pipelines CI/CD (GitHub Actions), garantissant l’absence de régressions avant chaque déploiement. La couverture de code est régulièrement analysée pour cibler les zones à renforcer.
 
@@ -197,7 +249,7 @@ Cette démarche assure un haut niveau de confiance dans la qualité logicielle d
 
 L’automatisation du déploiement et de l’intégration continue est assurée par des pipelines GitHub Actions distincts pour le frontend Angular et l’API .NET. Cette organisation garantit des mises en production fiables, rapides et reproductibles.
 
-## 6.1. Intégration continue (CI) de l’API
+## 21. <a name='IntgrationcontinueCIdelAPI'></a>6.1. Intégration continue (CI) de l’API
 
 Un pipeline CI dédié à l’API .NET s’exécute à chaque push sur la branche `main` :
 
@@ -217,7 +269,7 @@ jobs:
       - run: dotnet test --no-build --verbosity detailed  ./TestsIntegration
 ```
 
-## 6.2. Déploiement continu (CD) du backend
+## 22. <a name='DploiementcontinuCDdubackend'></a>6.2. Déploiement continu (CD) du backend
 
 Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne se déclenche que si le pipeline CI de l’API s’est terminé avec succès (`workflow_run`). Il effectue les étapes suivantes :
 
@@ -266,7 +318,7 @@ jobs:
                docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
 ```
 
-## 6.3. Déploiement continu (CD) du frontend
+## 23. <a name='DploiementcontinuCDdufrontend'></a>6.3. Déploiement continu (CD) du frontend
 
 Le frontend Angular bénéficie d’un pipeline CD dédié, déclenché à chaque mise à jour de la branche principale. Ce pipeline prend en charge l’ensemble du cycle de livraison : il construit l’application en mode production, génère une image Docker optimisée, la publie sur Docker Hub, puis orchestre le déploiement sur le serveur distant. L’automatisation garantit que la dernière version du frontend est toujours disponible en production, sans intervention manuelle.
 
@@ -287,11 +339,11 @@ jobs:
                docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
 ```
 
-## 6.4. Conteneurisation et orchestration
+## 24. <a name='Conteneurisationetorchestration'></a>6.4. Conteneurisation et orchestration
 
 Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile. Le déploiement s’effectue via `docker compose`, facilitant la gestion, la montée en charge et la maintenance.
 
-## 6.5. Hébergement et reverse proxy
+## 25. <a name='Hbergementetreverseproxy'></a>6.5. Hébergement et reverse proxy
 
 L’application est hébergée sur un VPS OVH, avec Nginx Proxy Manager pour la gestion des domaines et des certificats SSL. Cette architecture assure la sécurité, la disponibilité et la scalabilité du service.
 
@@ -311,29 +363,29 @@ Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
 La sécurité est un pilier central d’HexaPlanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
-## 7.1. Authentification et gestion des accès
+## 26. <a name='Authentificationetgestiondesaccs'></a>7.1. Authentification et gestion des accès
 
 - **JWT (JSON Web Token)** : Toutes les opérations sensibles nécessitent une authentification par token JWT, généré lors de la connexion et vérifié à chaque requête côté backend.
 - **Guards et Intercepteurs** : Le frontend Angular utilise des guards pour protéger les routes et un intercepteur HTTP pour injecter automatiquement le token dans les requêtes API.
 
-## 7.2. Validation et intégrité des données
+## 27. <a name='Validationetintgritdesdonnes'></a>7.2. Validation et intégrité des données
 
 - **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées.
 - **Gestion des erreurs** : Les erreurs sont centralisées et les messages d’erreur ne révèlent jamais d’informations sensibles.
 
-## 7.3. Protection contre les attaques
+## 28. <a name='Protectioncontrelesattaques'></a>7.3. Protection contre les attaques
 
 - **Force brute** : Limitation du nombre de tentatives de connexion et gestion des comptes bloqués après plusieurs échecs.
 - **CORS** : Configuration stricte des origines autorisées pour l’API.
 - **Sécurité des mots de passe** : Hashage fort (ASP.NET Identity), politique de complexité et gestion sécurisée du reset via email (Brevo).
 
-## 7.4. Sécurité de la conteneurisation et du déploiement
+## 29. <a name='Scuritdelaconteneurisationetdudploiement'></a>7.4. Sécurité de la conteneurisation et du déploiement
 
 - **Isolation** : Chaque composant (frontend, backend, base de données) s’exécute dans un conteneur dédié.
 - **Secrets** : Les secrets (tokens, clés, mots de passe) sont stockés dans les variables d’environnement et jamais dans le code source.
 - **Reverse proxy** : Nginx Proxy Manager gère les certificats SSL et protège l’accès aux services.
 
-## 7.5. Surveillance et audit
+## 30. <a name='Surveillanceetaudit'></a>7.5. Surveillance et audit
 
 - **Logs** : Les actions critiques sont journalisées côté backend pour permettre un audit et une détection rapide d’anomalies.
 - **Mises à jour** : Les dépendances et images Docker sont régulièrement mises à jour pour corriger les vulnérabilités.
@@ -349,23 +401,23 @@ Cette approche globale permet de garantir un haut niveau de sécurité pour les 
 
 Le projet HexaPlanning s’appuie sur un ensemble de technologies modernes, choisies pour leur robustesse, leur écosystème et leur adéquation avec les besoins fonctionnels et non fonctionnels du projet.
 
-## 8.1. Frontend
+## 31. <a name='Frontend'></a>8.1. Frontend
 
 - **Angular 18** : Framework SPA reconnu pour sa structure modulaire, sa maintenabilité et sa communauté active. Il facilite la création d’interfaces dynamiques, responsives et testables.
 - **TypeScript** : Apporte la sécurité de typage et la clarté du code, essentielle pour un projet d’envergure.
 - **Jest & Cypress** : Outils de référence pour les tests unitaires et end-to-end, assurant la fiabilité de l’interface utilisateur.
 
-## 8.2. Backend
+## 32. <a name='Backend'></a>8.2. Backend
 
 - **ASP.NET Core 8** : Framework backend performant, sécurisé et multiplateforme, idéal pour exposer une API REST robuste et scalable.
 - **Entity Framework Core** : ORM facilitant la gestion et la migration de la base de données, tout en assurant la cohérence des modèles.
 - **xUnit** : Framework de tests unitaires moderne et flexible, intégré à l’écosystème .NET.
 
-## 8.3. Base de données
+## 33. <a name='Basededonnes'></a>8.3. Base de données
 
 - **PostgreSQL** : SGBD open source reconnu pour sa fiabilité, ses performances et ses capacités avancées (transactions, indexation, JSON, etc.).
 
-## 8.4. Infrastructure et DevOps
+## 34. <a name='InfrastructureetDevOps'></a>8.4. Infrastructure et DevOps
 
 - **Docker** : Conteneurisation de chaque composant pour garantir la portabilité, l’isolation et la reproductibilité des environnements.
 - **docker-compose** : Orchestration simplifiée du déploiement multi-conteneurs.
@@ -373,7 +425,7 @@ Le projet HexaPlanning s’appuie sur un ensemble de technologies modernes, choi
 - **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy.
 - **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge.
 
-## 8.5. Services externes
+## 35. <a name='Servicesexternes'></a>8.5. Services externes
 
 - **Brevo (ex-Sendinblue)** : Service d’envoi d’e-mails transactionnels fiable et simple à intégrer.
 
@@ -385,13 +437,13 @@ Ces choix technologiques assurent la robustesse, la sécurité et l’évolutivi
 
 # 9. Conclusion et perspectives
 
-## 9.1. Bilan du projet
+## 36. <a name='Bilanduprojet'></a>9.1. Bilan du projet
 
 HexaPlanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L’architecture modulaire et la conteneurisation facilitent la maintenance et l’évolutivité.
 
-## 9.2. Perspectives d’évolution
+## 37. <a name='Perspectivesdvolution'></a>9.2. Perspectives d’évolution
 
 Les évolutions futures d’HexaPlanning s’articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
