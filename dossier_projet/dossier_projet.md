@@ -191,7 +191,113 @@ Cette démarche assure un haut niveau de confiance dans la qualité logicielle d
    - Déploiement continu (CD) avec GitHub Actions
    - Conteneurisation avec Docker
    - Hébergement sur VPS OVH & Nginx Proxy Manager
-   - Intégration continue (CI) en cours
+   - Intégration continue (CI)
+
+# 6. Déploiement et intégration continue
+
+L’automatisation du déploiement et de l’intégration continue est assurée par des pipelines GitHub Actions distincts pour le frontend Angular et l’API .NET. Cette organisation garantit des mises en production fiables, rapides et reproductibles.
+
+## 6.1. Intégration continue (CI) de l’API
+
+Un pipeline CI dédié à l’API .NET s’exécute à chaque push sur la branche `main` :
+
+- **Tests unitaires** : Compilation et exécution des tests unitaires (`dotnet test ./TestsUnitaires`)
+- **Tests d’intégration** : Lancement des tests d’intégration sur une base PostgreSQL éphémère (`dotnet test ./TestsIntegration`)
+- **Vérification de la qualité** : Toute régression ou échec bloque la suite du pipeline
+
+Extrait du workflow :
+
+```yaml
+jobs:
+   test-unitaire:
+      ...
+      - run: dotnet test --no-build --verbosity normal ./TestsUnitaires
+   test-integration:
+      ...
+      - run: dotnet test --no-build --verbosity detailed  ./TestsIntegration
+```
+
+## 6.2. Déploiement continu (CD) du backend
+
+Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne se déclenche que si le pipeline CI de l’API s’est terminé avec succès (`workflow_run`). Il effectue les étapes suivantes :
+
+- **Build Docker** : Construction de l’image Docker de l’API
+- **Push Docker** : Publication de l’image sur Docker Hub
+- **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur backend via `docker compose`
+
+Extrait du workflow :
+
+```yaml
+on:
+   workflow_run:
+      workflows: ["CI pipeline for the API"]
+      types:
+         - completed
+jobs:
+   build-and-deploy:
+      ...
+      - run: docker build -t antoinespr/hexaplanning-api:dev1 .
+      - run: docker push antoinespr/hexaplanning-api:dev1
+      - uses: appleboy/ssh-action@v1.0.0
+         with:
+            script: |
+               docker pull antoinespr/hexaplanning-api:dev1
+               docker compose -f /home/ubuntu/backend/docker-compose.yml up -d --force-recreate
+```
+
+Le frontend Angular dispose d’un pipeline CD qui automatise la construction, la publication et le déploiement sur le serveur de production :
+
+- **Build Docker** : Construction de l’image Docker de l’application Angular
+- **Push Docker** : Publication de l’image sur Docker Hub
+- **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur via `docker compose`
+
+Extrait du workflow :
+
+```yaml
+jobs:
+   deploy:
+      ...
+      - run: docker build --target prod-runtime -t antoinespr/hexaplanning-front:dev1 .
+      - run: docker push antoinespr/hexaplanning-front:dev1
+      - uses: appleboy/ssh-action@v1.0.0
+         with:
+            script: |
+               docker pull antoinespr/hexaplanning-front:dev1
+               docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
+```
+
+## 6.3. Déploiement continu (CD) du frontend
+
+Le frontend Angular bénéficie d’un pipeline CD dédié, déclenché à chaque mise à jour de la branche principale. Ce pipeline prend en charge l’ensemble du cycle de livraison : il construit l’application en mode production, génère une image Docker optimisée, la publie sur Docker Hub, puis orchestre le déploiement sur le serveur distant. L’automatisation garantit que la dernière version du frontend est toujours disponible en production, sans intervention manuelle.
+
+Le pipeline s’appuie sur GitHub Actions et utilise des secrets pour sécuriser l’accès au registre Docker et au serveur. L’étape de déploiement s’effectue via SSH, assurant un redémarrage fluide du conteneur frontend sans interruption de service pour les utilisateurs.
+
+Extrait du workflow :
+
+```yaml
+jobs:
+   deploy:
+      ...
+      - run: docker build --target prod-runtime -t antoinespr/hexaplanning-front:dev1 .
+      - run: docker push antoinespr/hexaplanning-front:dev1
+      - uses: appleboy/ssh-action@v1.0.0
+         with:
+            script: |
+               docker pull antoinespr/hexaplanning-front:dev1
+               docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
+```
+
+## 6.4. Conteneurisation et orchestration
+
+Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile. Le déploiement s’effectue via `docker compose`, facilitant la gestion, la montée en charge et la maintenance.
+
+## 6.5. Hébergement et reverse proxy
+
+L’application est hébergée sur un VPS OVH, avec Nginx Proxy Manager pour la gestion des domaines et des certificats SSL. Cette architecture assure la sécurité, la disponibilité et la scalabilité du service.
+
+Cette chaîne CI/CD garantit des livraisons rapides, sûres et automatisées, tout en limitant les interventions manuelles et les risques d’erreur.
+
+Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
 7. **Sécurité**
 
