@@ -307,6 +307,39 @@ Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
    - Gestion du mot de passe oublié
    - Sécurité liée à la conteneurisation
 
+# 7. Sécurité
+
+La sécurité est un pilier central d’HexaPlanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
+
+## 7.1. Authentification et gestion des accès
+
+- **JWT (JSON Web Token)** : Toutes les opérations sensibles nécessitent une authentification par token JWT, généré lors de la connexion et vérifié à chaque requête côté backend.
+- **Guards et Intercepteurs** : Le frontend Angular utilise des guards pour protéger les routes et un intercepteur HTTP pour injecter automatiquement le token dans les requêtes API.
+
+## 7.2. Validation et intégrité des données
+
+- **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées.
+- **Gestion des erreurs** : Les erreurs sont centralisées et les messages d’erreur ne révèlent jamais d’informations sensibles.
+
+## 7.3. Protection contre les attaques
+
+- **Force brute** : Limitation du nombre de tentatives de connexion et gestion des comptes bloqués après plusieurs échecs.
+- **CORS** : Configuration stricte des origines autorisées pour l’API.
+- **Sécurité des mots de passe** : Hashage fort (ASP.NET Identity), politique de complexité et gestion sécurisée du reset via email (Brevo).
+
+## 7.4. Sécurité de la conteneurisation et du déploiement
+
+- **Isolation** : Chaque composant (frontend, backend, base de données) s’exécute dans un conteneur dédié.
+- **Secrets** : Les secrets (tokens, clés, mots de passe) sont stockés dans les variables d’environnement et jamais dans le code source.
+- **Reverse proxy** : Nginx Proxy Manager gère les certificats SSL et protège l’accès aux services.
+
+## 7.5. Surveillance et audit
+
+- **Logs** : Les actions critiques sont journalisées côté backend pour permettre un audit et une détection rapide d’anomalies.
+- **Mises à jour** : Les dépendances et images Docker sont régulièrement mises à jour pour corriger les vulnérabilités.
+
+Cette approche globale permet de garantir un haut niveau de sécurité pour les utilisateurs et les données de la plateforme.
+
 8. **Technologies utilisées**
 
    - Présentation des choix techniques
