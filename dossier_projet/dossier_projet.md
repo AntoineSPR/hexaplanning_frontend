@@ -75,7 +75,9 @@
 
 ## 1. <a name='Prsentationduprojet'></a>Présentation du projet
 
-HexaPlanning est une application web innovante de gestion de tâches, pensée pour transformer la to-do list classique en une expérience visuelle et ludique. Chaque tâche, appelée "quête", peut être placée sur une carte d’hexagones, permettant à l’utilisateur de visualiser ses objectifs comme un parcours à accomplir. Cette approche vise à rendre la planification plus motivante et interactive, en s’inspirant des mécaniques de jeu et de la gamification.
+HexaPlanning est une application web de gestion de tâches, pensée pour transformer la to-do list classique en une expérience visuelle et ludique. Reprenant la nomenclature des jeux-vidéos, les tâches sont appelées "quêtes". Chacune d'entre elles peut être placée sur une carte d’hexagones, permettant à l’utilisateur de visualiser ses objectifs comme un parcours à accomplir.
+
+Cette approche vise à rendre la planification plus motivante et interactive, en s’inspirant des mécaniques de jeu et de la gamification. L'application a été développée en mobile-first, favorisant une utilisation quotidienne permettant à l'utilisateur d'avoir un aperçu de sa progression et de la mettre à jour régulièrement.
 
 ## 2. <a name='Objectifsetcontexte'></a>Objectifs et contexte
 
@@ -434,34 +436,32 @@ Les évolutions futures d’HexaPlanning s’articulent autour de plusieurs axes
 - **Sécurité et gestion des comptes**
 
   - Ajout d’un système de refresh token (stocké localement ou en cookies) pour renforcer la sécurité et la gestion de session.
-  - Envoi d’un email de bienvenue à la création du compte.
-  - Création d’un dashboard administrateur pour gérer les utilisateurs (bannissement, activation de compte, gestion des rôles, etc.).
+  - Envoi d’un email de bienvenue et de confirmation à la création du compte.
+  - Création d’un dashboard administrateur pour gérer les utilisateurs.
 
-- **Gestion avancée des quêtes**
+- **Liste de quêtes**
 
-  - Mise à jour automatique de la priorité d’une quête selon ses coordonnées sur la carte, et sous-tri par l’axe r (du plus petit au plus grand, y compris valeurs négatives).
-  - Ajout du drag & drop pour réorganiser les quêtes : gestion d’un ordre distinct côté backend selon l’état (en cours, terminée) et la catégorie.
-  - Ajout de propriétés d’ordre spécifiques à chaque état pour l’objet quête.
-  - Mise en avant visuelle des quêtes futures (couleur plus claire/light-theme-color).
+  - Ajout d'options de tri pour l'ordre d'affichage des quêtes : par date de création, par priorité ou personnalisé.
+  - Ajout du drag & drop pour réorganiser les quêtes dans un ordre personnalisé.
+  - Ajout de catégories personnalisables pour faciliter l'organisation.
+  - Ajout d'un sélecteur de priorité directement depuis la liste.
+  - Implémentation du glissement tactile sur mobile pour naviguer d'un menu à l'autre (quêtes à accomplir / quêtes accomplies).
 
-- **Interface et expérience utilisateur**
+- **Détails des quêtes**
 
-  - Ajout d’un sélecteur de priorité, d’une icône répétable, d’une date de fin et d’une propriété répétable pour chaque quête.
-  - Ajustement de l’affichage si le titre de la quête est trop long.
-  - Ajout d’un slide pour passer d’un onglet à l’autre.
-  - Extension de la map : rendre la carte extensible, zoomable, navigable à la souris ou au doigt, avec adaptation de la taille du texte.
-  - Possibilité de masquer les quêtes tertiaires via un toggle, recentrage automatique sur les quêtes prioritaires.
-  - Création de catégories et tri des quêtes par date, priorité et/ou catégorie.
-  - Optimisation des performances lors du chargement des images d’icônes.
-  - Mise aux normes RGAA des mat-icons du menu.
-  - Saisie manuelle et indépendante des heures et minutes pour les quêtes (sans avoir à taper ":").
+  - Ajout d'une option pour rendre les quêtes répétables et permettre de les placer plusieurs fois sur la carte d'hexagones.
+  - Ajout d'options dates pour organiser les quêtes dans le temps (date d'exécution prévue ou deadline).
+    - Regroupement de quêtes en "expédition" avec un objectif final, chaque quête devenant une étape de la progression.
 
-- **Fonctionnalités avancées et évolutives**
-  - Gestion de l’ordre des quêtes selon le système de coordonnées cubiques : affichage et priorisation dynamiques dans la liste et sur la carte.
-  - Ajout de flèches pour indiquer le sens de progression d’une quête à l’autre, gestion de la disponibilité des quêtes selon leur accessibilité.
-  - Drag & drop avancé pour déplacer les quêtes et mettre à jour leur rattachement.
-  - Ajout d’une mécanique de « soldat » pour marquer l’accomplissement d’une quête par interaction directe.
-  - Possibilité d’archiver ou de masquer les quêtes accomplies pour alléger l’affichage.
+- **Carte d'hexagones**
+
+  - Extension de la carte pour ajouter davantage de quêtes, voire extension automatique dès qu'un hexagone proche du bord est rempli.
+  - Multiplication des cartes pour séparer les quêtes par catégorie.
+  - Implémentations d'une navigation plus intuitive avec option de zoom et navigation à la souris ou au doigt.
+  - Ajout de filtres pour masquer les quêtes par état (accomplies / non accomplies) et par priorité, pour permettre à l'utilisateur de se concentrer sur les tâches les plus urgentes sans être distrait par les suivantes, ou simplement de personnaliser son affichage.
+  - Amélioration du système d'assignation des quêtes aux hexagones en permettant de déplacer une quête en drag & drop.
+  - Ajout de flèches pour indiquer le sens de progression d’une quête à l’autre.
+  - Ajout d’une mécanique de personnages se déployant sur la carte comme des soldats conquérant un territoire hexagonal après l'autre, ou d'un personnage seul progressant de façon linéaire jusqu'à un objectif.
 
 L’architecture actuelle, modulaire et évolutive, permet d’intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
 
