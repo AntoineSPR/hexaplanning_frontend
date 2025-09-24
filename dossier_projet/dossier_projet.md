@@ -174,6 +174,8 @@ erDiagram
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
+//TODO : Ajouter Mail ?
+
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, ...)
 - Table **Quest** (Id PK, Title, Description, EstimatedTime, Priority, IsDone, IsAssigned, UserId FK, HexAssignmentId FK)
 - Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, UserId FK)
@@ -219,7 +221,7 @@ erDiagram
 
 ## 1. <a name='Vuedensemble'></a> Vue d’ensemble
 
-L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NET et une base de données PostgreSQL. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
+L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NET et une base de données PostgreSQL. Elle fait également appel à Brevo pour permettre l'envoi de mails. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
 
 ### <a name='Schmaglobal'></a>Schéma global
 
@@ -515,7 +517,7 @@ Les évolutions futures d’HexaPlanning s’articulent autour de plusieurs axes
 
   - Ajout d'une option pour rendre les quêtes répétables et permettre de les placer plusieurs fois sur la carte d'hexagones.
   - Ajout d'options dates pour organiser les quêtes dans le temps (date d'exécution prévue ou deadline).
-    - Regroupement de quêtes en "expédition" avec un objectif final, chaque quête devenant une étape de la progression.
+  - Regroupement de quêtes en "expédition" avec un objectif final, chaque quête devenant une étape de la progression.
 
 - **Carte d'hexagones**
 
