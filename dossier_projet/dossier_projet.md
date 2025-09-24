@@ -174,7 +174,7 @@ erDiagram
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
-//TODO : Ajouter Mail ?
+//TODO : Ajouter Mail avec templates et status d'envoi (succès/échec)
 
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, ...)
 - Table **Quest** (Id PK, Title, Description, EstimatedTime, Priority, IsDone, IsAssigned, UserId FK, HexAssignmentId FK)
@@ -528,6 +528,17 @@ Les évolutions futures d’HexaPlanning s’articulent autour de plusieurs axes
   - Amélioration du système d'assignation des quêtes aux hexagones en permettant de déplacer une quête en drag & drop.
   - Ajout de flèches pour indiquer le sens de progression d’une quête à l’autre.
   - Ajout d’une mécanique de personnages se déployant sur la carte comme des soldats conquérant un territoire hexagonal après l'autre, ou d'un personnage seul progressant de façon linéaire jusqu'à un objectif.
+
+- **Personnalisation**
+
+  - Ajout d'un avatar pour l'utilisateur.
+  - Personnalisation des couleurs (thème de l'application, texte des priorités dans les détails de quêtes, liseré des priorités dans la carte d'hexagones).
+  - Personnalisation des unités déployables sur la carte (une fois faite l'implémentation d'un ou plusieurs personnages évoluant sur la carte).
+
+- **Déploiement futur**
+  - Création d'une application mobile en utilisant Ionic, et déploiement sur les stores Android et iOS.
+  - Système de notifications.
+  - Persistance des données utilisateurs en les stockant sur l'AsyncStorage de l'appareil afin d'éviter d'avoir à se reconnecter à chaque ouverture de l'app.
 
 L’architecture actuelle, modulaire et évolutive, permet d’intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
 
