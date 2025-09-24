@@ -10,7 +10,7 @@
 **II. [Fonctionnalités principales](#ii-fonctionnalités-principales)**
 
 1.  [Gestion des quêtes (tâches)](#ii-1-gestion-des-quêtes-tâches)
-2.  [Affichage visuel en hexagones (map)](#ii-2-affichage-visuel-en-hexagones-map)
+2.  [Affichage visuel en hexagones (carte)](#ii-2-affichage-visuel-en-hexagones-map)
 3.  [Système d’authentification et gestion des utilisateurs](#ii-3-système-d-authentification-et-gestion-des-utilisateurs)
 4.  [Navigation et ergonomie](#ii-4-navigation-et-ergonomie)
 
@@ -87,23 +87,57 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 ## 1. <a name='Gestiondesqutestches'></a>Gestion des quêtes (tâches)
 
-Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre et une priorité (primaire, secondaire ou tertiaire), ainsi qu’une description et un temps estimé en option. L’utilisateur peut créer, éditer, supprimer ou marquer une quête comme terminée. Les quêtes sont organisées en deux onglets : à faire et terminées, pour un suivi clair de la progression.
+Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre et une priorité (primaire, secondaire ou tertiaire, avec code couleur associé), ainsi qu’une description et un temps estimé en option. L’utilisateur peut créer, éditer, supprimer ou marquer une quête comme terminée.
 
-## 2. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (map)
+// TODO : Insérer screenshot détail de quête
 
-L’originalité d’HexaPlanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement la priorité. Les quêtes terminées apparaissent avec un fond plus sombre. L’utilisateur peut assigner ou désassigner une quête à un hexagone d’un simple clic, et visualiser son parcours comme un chemin à accomplir.
+Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets.
+
+// TODO : Insérer screenshot liste de quêtes
+
+Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée.
+
+## 2. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (carte)
+
+L’originalité d’HexaPlanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement sa priorité. Les quêtes terminées apparaissent quant à elle avec un fond plus sombre.
+
+// TODO : Insérer screenshot map
+
+L’utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone vide, faisant apparaître une modale contenant la liste de toutes les quêtes non accomplies, et en sélectionnant la quête de son choix. Il pourra ensuite la désassigner d’un simple clic sur l'icône de croix au-dessus du titre de la quête. Ainsi, il pourra visualiser son parcours comme un chemin à accomplir.
+
+// TODO : Insérer screenshot modale d'assignation
+
+Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un élément pour afficher les détails de la quête assignée à cet hexagone, et éventuellement modifier ou supprimer la quête, ou la passer d'un état à l'autre (accomplie ou non accomplie).
 
 ## 3. <a name='Systmedauthentificationetgestiondesutilisateurs'></a>Système d’authentification et gestion des utilisateurs
 
-L’accès à l’application nécessite la création d’un compte et une authentification sécurisée. Un système de gestion des mots de passe oubliés est en place, avec envoi d’email pour la réinitialisation. L’utilisateur peut également changer son mot de passe depuis l’interface. La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
+L’accès à l’application nécessite la création d’un compte et une authentification sécurisée.
+
+// TODO : Insérer screenshots écran register + login
+
+Un système de gestion des mots de passe oubliés est en place, avec envoi d’email pour la réinitialisation.
+
+// TODO : Insérer screenshots modale mdp oublié + écran reset
+
+L’utilisateur peut également changer son mot de passe depuis l’interface, en accédant au menu des paramètres, et il peut bien entendu se déconnecter depuis ce même menu.
+
+// TODO : Insérer screenshots menu paramètres + edit pwd
+
+La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
 
 ## 4. <a name='Navigationetergonomie'></a>Navigation et ergonomie
 
-L’application propose un menu permettant de naviguer facilement entre l’accueil, la liste des quêtes, la carte des hexagones et les paramètres. Un bouton dédié permet de créer rapidement une nouvelle quête. L’interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l’engagement et la productivité de l’utilisateur.
+L’application propose un menu apparaissant en permanence en bas de page, et permettant de naviguer entre l’accueil, les listes de quêtes, la carte des hexagones et les paramètres. Un bouton dédié au centre du menu permet de créer rapidement une nouvelle quête, qui viendra s'insérer dans la liste qui lui correspond, et sera accessible dans la modale d'assignation à un hexagone.
+
+// TODO : Insérer screenshots menu x4
+
+L’interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l’engagement et la productivité de l’utilisateur.
 
 # III. Modélisation des données
 
 ## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
+
+// TODO : Insérer screenshot diagram.io en modifiant sur Paint pour ajouter 1:n etc. à chaque liaison
 
 ```mermaid
 erDiagram
@@ -147,9 +181,39 @@ erDiagram
 ## 3. <a name='Descriptiondesentitsetrelations'></a>Description des entités et relations
 
 - Un utilisateur peut créer plusieurs quêtes.
+  Il possède :
+
+  - Un nom et un prénom.
+  - Une adresse e-mail.
+  - Un mot de passe (hashé dans la base de données).
+  - Une liste de quêtes.
+  - Un token d'authentification lié à la session.
+
 - Une quête appartient à un seul utilisateur.
+  Elle possède :
+
+  - Un titre (limité à 100 caractères).
+  - Une priorité choisie dans un enum composé de 3 options (par défaut TERTIARY).
+  - Optionnellement, une description.
+  - Optionnellement, un temps estimé.
+  - Un UserId pour la rattacher à son utilisateur.
+  - Optionnellement, un HexAssignment pour l'assigner à un hexagone.
+  - Un booléen isDone pour déterminer son état.
+  - Un booléen isAssigned pour déterminer son assignation éventuelle et pouvoir l'afficher dans la liste des quêtes assignables, ou non.
+
 - Une quête peut être assignée à un hexagone (HexAssignment) ou non.
-- Un hexagone (HexAssignment) est lié à une seule quête et à un seul utilisateur (pour la personnalisation de la map).
+
+- Un hexagone (HexAssignment) est lié à une seule quête et à un seul utilisateur (pour la personnalisation de la map). Il possède :
+
+  - Un jeu de coordonnées q, r, s qui lui est unique.
+  - Une quêtes assignée éventuellement.
+  - Un utilisateur auquel il appartient.
+
+- Un mail est indépendant et permet d'envoyer un lien de réinitialisation de mot de passe, et plus tard un message de bienvenue et un lien d'activation de compte, ou tout autre communication nécessaire au bon fonctionnement de l'application. Il possède :
+  - Un sujet.
+  - Un corps de message.
+  - Un destinataire.
+  - Un expéditeur.
 
 # IV. Architecture technique
 
