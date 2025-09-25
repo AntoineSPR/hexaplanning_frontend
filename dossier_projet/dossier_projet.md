@@ -137,40 +137,9 @@ L’interface est pensée pour être intuitive, responsive et agréable à utili
 
 ## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
 
-// TODO : Insérer screenshot diagram.io en modifiant sur Paint pour ajouter 1:n etc. à chaque liaison
+// TODO : Ajouter 1:n etc. à chaque liaison
 
-```mermaid
-erDiagram
-   USERAPP ||--o{ QUEST : possède
-   QUEST }o--|| HEXASSIGNMENT : "est assignée à"
-
-   USERAPP {
-      Guid Id PK
-      string FirstName
-      string LastName
-      string Email
-      string PasswordHash
-   }
-   QUEST {
-      Guid Id PK
-      string Title
-      string Description
-      int EstimatedTime
-      string Priority
-      bool IsDone
-      bool IsAssigned
-   Guid UserId FK
-   int HexAssignmentId FK
-   }
-   HEXASSIGNMENT {
-      int Id PK
-      int Q
-      int R
-      int S
-      Guid QuestId FK
-      Guid UserId FK
-   }
-```
+<img src="images/mcd.png" />
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
@@ -225,7 +194,7 @@ L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NE
 
 ### <a name='Schmaglobal'></a>Schéma global
 
-<img src="schemaglobal.png" />
+<img src="images/schemaglobal.png" />
 
 ## 2. <a name='FrontendAngular'></a> Frontend (Angular)
 

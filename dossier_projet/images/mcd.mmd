@@ -1,0 +1,30 @@
+erDiagram
+   USERAPP ||--o{ QUEST : possède
+   QUEST }o--|| HEXASSIGNMENT : "est assignée à"
+
+   USERAPP {
+      Guid Id PK
+      string FirstName
+      string LastName
+      string Email
+      string PasswordHash
+   }
+   QUEST {
+      Guid Id PK
+      string Title
+      string Description
+      int EstimatedTime
+      string Priority
+      bool IsDone
+      bool IsAssigned
+   Guid UserId FK
+   int HexAssignmentId FK
+   }
+   HEXASSIGNMENT {
+      int Id PK
+      int Q
+      int R
+      int S
+      Guid QuestId FK
+      Guid UserId FK
+   }
