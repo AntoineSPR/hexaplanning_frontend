@@ -225,13 +225,7 @@ L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NE
 
 ### <a name='Schmaglobal'></a>Schéma global
 
-```mermaid
-flowchart LR
-   A[Frontend Angular] -- HTTP/HTTPS --> B[API .NET]
-   B -- SQL --> C[(PostgreSQL)]
-   B -- SMTP --> D[Brevo : Serveur Mail]
-   B -- JWT --> A
-```
+<img src="schemaglobal.png" />
 
 ## 2. <a name='FrontendAngular'></a> Frontend (Angular)
 
