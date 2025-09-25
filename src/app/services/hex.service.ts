@@ -4,11 +4,23 @@ import { catchError, Observable, of, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment.development';
 import { HexAssignment } from '../models/hexAssignment.model';
 
+/**
+ * Service de gestion des hexagones et de leurs affectations.
+ */
 @Injectable({ providedIn: 'root' })
 export class HexService {
   private readonly _http = inject(HttpClient);
   private readonly _apiUrl = `${environment.apiUrl}/hexAssignment`;
 
+  /**
+   * Récupère toutes les affectations d'hexagones.
+   * @returns Observable<HexAssignment[]> Liste de toutes les affectations d'hexagones.
+   * @description Récupère toutes les affectations d'hexagones depuis l'API.
+   * @example
+   * this.hexService.getAllAssignments().subscribe(assignments => {
+   *   console.log(assignments);
+   * });
+   */
   getAllAssignments(): Observable<HexAssignment[]> {
     return this._http.get<HexAssignment[]>(this._apiUrl);
   }

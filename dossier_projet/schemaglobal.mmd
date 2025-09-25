@@ -1,0 +1,5 @@
+flowchart LR
+   A[Frontend Angular] -- HTTP/HTTPS --> B[API .NET]
+   B -- SQL --> C[(PostgreSQL)]
+   B -- SMTP --> D[Brevo : Serveur Mail]
+   B -- JWT --> A
