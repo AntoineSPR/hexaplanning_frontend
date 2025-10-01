@@ -39,7 +39,7 @@ export class UserService {
   }
 
   forgotPassword(forgotPasswordData: ForgotPasswordDTO): Observable<any> {
-    return this._http.post(`${this._apiUrl}/forgot-password`, forgotPasswordData);
+    return this._http.post(`${this._apiUrl}/forgot-password/${forgotPasswordData.email}`, {});
   }
 
   resetPassword(resetPasswordData: ResetPasswordDTO): Observable<any> {
