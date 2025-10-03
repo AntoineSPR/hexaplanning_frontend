@@ -36,6 +36,27 @@
     <label for="toggleStatus" style="font-style: italic">{{ quest.isDone ? 'Terminé' : 'À terminer' }} </label>
   </div>
 
+  <!-- STATUT -->
+  <div class="flex flex-column align-content-center mt-2">
+    <div>
+      <label for="status" class="visually-hidden">Statut</label>
+      <p-select
+        id="status"
+        formControlName="status"
+        [options]="statusOptions"
+        [readonly]="!isEdit"
+        [ngClass]="selectClasses"
+        optionLabel="label"
+        optionValue="value">
+        <ng-template let-option pTemplate="item">
+          <span>
+            {{ option.label }}
+          </span>
+        </ng-template></p-select
+      >
+    </div>
+  </div>
+
   <div class="flex flex-column align-content-center">
     <!-- PRIORITE -->
     <div>

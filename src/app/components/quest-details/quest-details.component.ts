@@ -6,7 +6,7 @@ import { Textarea, TextareaModule } from 'primeng/textarea';
 import { CalendarModule } from 'primeng/calendar';
 import { SliderModule } from 'primeng/slider';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DEFAULT_ESTIMATED_TIME, DEFAULT_PRIORITY, Quest, QuestBase, QuestPriority } from '../../models/quest.model';
+import { DEFAULT_ESTIMATED_TIME, DEFAULT_PRIORITY, Quest, QuestBase, QuestPriority, QuestStatus } from '../../models/quest.model';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
@@ -41,6 +41,10 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   questForm!: FormGroup;
   priorityOptions = Object.entries(QuestPriority).map(([key, value]) => ({
+    label: value,
+    value: key,
+  }));
+  statusOptions = Object.entries(QuestStatus).map(([key, value]) => ({
     label: value,
     value: key,
   }));

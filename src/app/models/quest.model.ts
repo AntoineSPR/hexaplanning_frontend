@@ -4,11 +4,18 @@ export enum QuestPriority {
   TERTIARY = 'Quête tertiaire',
 }
 
+export enum QuestStatus {
+  NOT_STARTED = 'Non commencée',
+  IN_PROGRESS = 'En cours',
+  COMPLETED = 'Terminée',
+}
+
 export type QuestBase = {
   title: string;
   description?: string;
   estimatedTime: number;
   priority: QuestPriority;
+  status: QuestStatus;
   isDone: boolean;
   isAssigned: boolean;
 };

@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Quest, QuestBase, QuestPriority } from '../models/quest.model';
+import { Quest, QuestBase, QuestPriority, QuestStatus } from '../models/quest.model';
 
 type QuestModalData = {
   quest: Quest | QuestBase;
@@ -15,6 +15,7 @@ export class QuestModalService {
     estimatedTime: 0,
     description: '',
     priority: QuestPriority.TERTIARY,
+    status: QuestStatus.NOT_STARTED,
     isDone: false,
     isAssigned: false,
   };
