@@ -65,7 +65,7 @@ export class QuestService {
     return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/unassigned_pending`).pipe(tap(quests => this._unassignedPendingQuests.set(quests)));
   }
 
-  getQuestById(id: number): Observable<QuestUpdateDTO> {
+  getQuestById(id: string): Observable<QuestUpdateDTO> {
     return this._http.get<QuestUpdateDTO>(`${this._apiUrl}/${id}`);
   }
 

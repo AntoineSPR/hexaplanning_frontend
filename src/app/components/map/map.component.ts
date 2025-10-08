@@ -130,11 +130,11 @@ export class MapComponent implements OnInit {
     this._hexService.getAllAssignments().subscribe(assignments => {
       for (const a of assignments) {
         const hex = this.hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
-        // if (hex) {
-        //   this._questService.getQuestById(a.questId).subscribe(quest => {
-        //     hex.quest = quest;
-        //   });
-        // }
+        if (hex) {
+          this._questService.getQuestById(a.questId).subscribe(quest => {
+            hex.quest = quest;
+          });
+        }
       }
     });
   }
@@ -142,11 +142,11 @@ export class MapComponent implements OnInit {
   handleHexClick(hex: Hex): void {
     this._hexService.getAssignmentByCoordinates(hex.q, hex.r, hex.s).subscribe({
       next: assignment => {
-        // if (assignment) {
-        //   this.openQuestDetails(assignment.questId);
-        // } else {
-        //   this.openQuestToHexModal(hex);
-        // }
+        if (assignment) {
+          this.openQuestDetails(assignment.questId);
+        } else {
+          this.openQuestToHexModal(hex);
+        }
       },
       error: err => {
         console.error('Error fetching assignment:', err);
@@ -154,7 +154,7 @@ export class MapComponent implements OnInit {
     });
   }
 
-  openQuestDetails(questId: number): void {
+  openQuestDetails(questId: string): void {
     this._questService.getQuestById(questId).subscribe(quest => {
       this._questModalService.openQuestDetails(quest);
     });
@@ -247,14 +247,15 @@ export class MapComponent implements OnInit {
   }
 
   getPriorityImagePath(quest: QuestUpdateDTO): string {
-    return '';
-    // const priorityKey = this.getPriorityKey(quest.priority);
-    // return `/icons/${priorityKey}.png`;
+    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
+    const priorityKey = this.getPriorityKey(priority?.icon ?? 'primary');
+    return `/icons/${priorityKey}.png`;
   }
 
   getPriorityAltText(quest: QuestUpdateDTO): string {
-    return '';
-    // return quest.priority || 'Icône de priorité';
+    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
+    const priorityKey = this.getPriorityKey(priority?.name ?? 'quete principale');
+    return priorityKey;
   }
 
   selectQuest(quest: QuestUpdateDTO): void {
