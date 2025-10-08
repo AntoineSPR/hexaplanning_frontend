@@ -23,31 +23,20 @@
     </div>
   </div>
 
-  <!-- CHECKBOX -->
-  <div class="done_checkbox">
-    <input
-      id="toggleStatus"
-      type="checkbox"
-      class="quest-checkbox"
-      [checked]="quest.isDone"
-      (change)="toggleStatus()"
-      (click)="$event.stopPropagation()"
-      aria-label="Marquer cette tâche comme terminée" />
-    <label for="toggleStatus" style="font-style: italic">{{ quest.isDone ? 'Terminé' : 'À terminer' }} </label>
-  </div>
-
   <!-- STATUT -->
   <div class="flex flex-column align-content-center mt-2">
     <div>
       <label for="status" class="visually-hidden">Statut</label>
-      <p-select id="status" formControlName="statusId" [options]="statusOptions ?? []" [readonly]="!isEdit" optionLabel="name" optionValue="id">
+      @if (isEdit) {
+      <p-select id="status" formControlName="statusId" [options]="statusOptions ?? []" [disabled]="!isEdit" optionLabel="name" optionValue="id">
         <ng-template let-option pTemplate="item">
           <span>
             {{ option.name }}
             <!-- [ngClass]="selectClasses" -->
           </span>
         </ng-template></p-select
-      >
+      >} @else { <span class="font-bold" [style.color]="statusColor">{{ getStatusName(quest.statusId) }}</span>
+      }
     </div>
   </div>
 
@@ -55,6 +44,7 @@
     <!-- PRIORITE -->
     <div>
       <label for="priority" class="visually-hidden">Priorité</label>
+      @if (isEdit) {
       <p-select id="priority" formControlName="priorityId" [options]="priorityOptions ?? []" [readonly]="!isEdit" optionLabel="name" optionValue="id">
         <ng-template let-option pTemplate="item">
           <span [class]="'priority-'">
@@ -63,6 +53,8 @@
           </span>
         </ng-template></p-select
       >
+      } @else { <span class="font-bold" [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
+      }
     </div>
   </div>
 

@@ -17,7 +17,7 @@ export class QuestCardComponent implements OnInit {
   @Input() quest!: QuestUpdateDTO;
 
   private readonly _questModalService = inject(QuestModalService);
-  private readonly _questService = inject(QuestService);
+  protected readonly _questService = inject(QuestService);
   private readonly _messageService = inject(MessageService);
 
   priorityOptions: string[] = [];
@@ -30,8 +30,8 @@ export class QuestCardComponent implements OnInit {
 
   toggleStatus(): void {
     if (this.quest) {
-      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe(result => {
-        if (result.isDone) {
+      this._questService.updateQuest({ ...this.quest }).subscribe(result => {
+        if (result.statusId === this._questService.statusDoneId) {
           this._messageService.add({
             severity: 'success',
             summary: 'Quête terminée !',
@@ -58,8 +58,8 @@ export class QuestCardComponent implements OnInit {
   }
 
   get priorityKey(): string {
-    return '';
-    // return this.getPriorityKey(this.quest?.priority);
+    const priority = this._questService.priorities()?.find(p => p.id === this.quest.priorityId);
+    return priority?.icon ?? 'Inconnu';
   }
 
   get priorityImagePath(): string {

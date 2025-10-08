@@ -30,6 +30,7 @@ export class QuestService {
   //status
   statuses = signal<Status[] | null>(null);
   priorities = signal<Priority[] | null>(null);
+  statusDoneId = '6662dfc1-9c40-4d78-806f-34cd22e07023';
 
   loadQuests(): void {
     this.getAllQuests().subscribe();
@@ -83,7 +84,7 @@ export class QuestService {
         // Update main quests list
         this._quests.update(quests => quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)));
 
-        if (updatedQuest.isDone) {
+        if (updatedQuest.statusId === this.statusDoneId) {
           // Remove from pending if completed
           this._pendingQuests.update(quests => quests.filter(q => q.id !== updatedQuest.id));
           // Add to completed if not already there
@@ -100,7 +101,7 @@ export class QuestService {
             return exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
           });
 
-          if (!updatedQuest.isAssigned) {
+          if (!updatedQuest.hexAssignmentId) {
             // Add to unassigned if not already there
             this._unassignedPendingQuests.update(quests => {
               const exists = quests.some(q => q.id === updatedQuest.id);

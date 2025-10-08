@@ -14,8 +14,8 @@ export class QuestModalService {
     title: '',
     estimatedTime: 0,
     description: '',
-    isDone: false,
-    isAssigned: false,
+    statusId: '17c07323-d5b4-4568-b773-de3487ff30b1',
+    priorityId: '17c07323-d5b4-4568-b773-de3487ff30b1',
   };
 
   private _questModalVisible = signal<boolean>(false);

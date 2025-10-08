@@ -3,7 +3,7 @@
   <input
     type="checkbox"
     class="quest-checkbox"
-    [checked]="quest.isDone"
+    [checked]="quest.statusId === _questService.statusDoneId"
     (change)="toggleStatus()"
     (click)="$event.stopPropagation()"
     aria-label="Marquer cette tâche comme terminée" />

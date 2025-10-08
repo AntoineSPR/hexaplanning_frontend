@@ -179,7 +179,7 @@ export class MapComponent implements OnInit {
 
       this._hexService
         .saveAssignment(hexAssignment)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToAssign, isAssigned: true })))
+        .pipe(switchMap(() => this._questService.updateQuest({ ...questToAssign })))
         .subscribe({
           next: () => {
             hexToUpdate.quest = questToAssign;
@@ -202,7 +202,7 @@ export class MapComponent implements OnInit {
 
       this._hexService
         .deleteAssignment(hex.q, hex.r, hex.s)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate, isAssigned: false })))
+        .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
         .subscribe({
           next: () => {
             hex.quest = undefined;
@@ -217,7 +217,7 @@ export class MapComponent implements OnInit {
   getHexColor(hex: Hex): string {
     let color = '#eee';
     if (!hex.quest) return color;
-    if (hex.quest.isDone) {
+    if (hex.quest.statusId === this._questService.statusDoneId) {
       color = 'var(--dark-theme-color)';
     } else {
       color = 'var(--theme-color)';
@@ -227,7 +227,7 @@ export class MapComponent implements OnInit {
 
   getHexBorderColor(hex: Hex): string {
     if (!hex.quest) return '';
-    if (hex.quest.isDone) return '';
+    if (hex.quest.statusId === this._questService.statusDoneId) return '';
 
     // switch (hex.quest.priority as string) {
     //   case 'PRIMARY':

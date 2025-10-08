@@ -171,23 +171,6 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this.isEdit = true;
   }
 
-  toggleStatus(): void {
-    if (this.quest) {
-      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe(result => {
-        if (result.isDone) {
-          this._messageService.add({
-            severity: 'success',
-            summary: 'Quête terminée !',
-            detail: this.quest.title,
-            life: 1500,
-          });
-        }
-      });
-    }
-    this.closeDialog.emit();
-  }
-  //#endregion
-
   //#region Date & Time
   /** Conversion des minutes en objet Date */
   minutesToDate(minutes: number): Date {
@@ -229,8 +212,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       title: this.quest?.title ?? '',
       description: this.quest?.description ?? '',
       estimatedTime: this.minutesToDate(this.quest?.estimatedTime ?? DEFAULT_ESTIMATED_TIME),
-      priorityId: this.defaultPriority,
-      statusId: this.defaultStatus,
+      priorityId: this.quest?.priorityId ?? this.defaultPriority,
+      statusId: this.quest?.statusId ?? this.defaultStatus,
     });
   }
 
@@ -252,5 +235,23 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   get defaultPriority() {
     return '17c07323-d5b4-4568-b773-de3487ff30b1';
+  }
+
+  get statusColor() {
+    return this.statusOptions?.find(s => s.id === this.quest.statusId)?.color ?? '#f7f6f6ff';
+  }
+
+  get priorityColor() {
+    return this.priorityOptions?.find(p => p.id === this.quest.priorityId)?.color ?? '#f7f6f6ff';
+  }
+
+  getStatusName(statusId: string): string {
+    const status = this.statusOptions?.find(s => s.id === statusId);
+    return status ? status.name : 'Inconnu';
+  }
+
+  getPriorityName(priorityId: string): string {
+    const priority = this.priorityOptions?.find(p => p.id === priorityId);
+    return priority ? priority.name : 'Inconnu';
   }
 }
