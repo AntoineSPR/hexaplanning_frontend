@@ -40,11 +40,7 @@
       <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
         <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
         <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
-        <img
-          class="priority-icon"
-          [src]="getPriorityImagePath(quest)"
-          [alt]="getPriorityAltText(quest)"
-          [class]="'priority-' + getPriorityKey(quest.priority).toLowerCase()" />
+        <img class="priority-icon" [src]="getPriorityImagePath(quest)" [alt]="getPriorityAltText(quest)" [class]="'priority-'" />
       </div>
       } }
     </div>

@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { Quest, QuestBase, QuestPriority, QuestStatus } from '../models/quest.model';
+import { Quest, QuestCreateDTO } from '../models/quest.model';
 
 type QuestModalData = {
-  quest: Quest | QuestBase;
+  quest: Quest | QuestCreateDTO;
   isNew: boolean;
 };
 
@@ -10,12 +10,10 @@ type QuestModalData = {
   providedIn: 'root',
 })
 export class QuestModalService {
-  private readonly _DEFAULT_QUEST: QuestBase = {
+  private readonly _DEFAULT_QUEST: QuestCreateDTO = {
     title: '',
     estimatedTime: 0,
     description: '',
-    priority: QuestPriority.TERTIARY,
-    status: QuestStatus.NOT_STARTED,
     isDone: false,
     isAssigned: false,
   };

@@ -4,6 +4,7 @@ import { QuestContainerComponent } from './components/quest-container/quest-cont
 import { UserService } from './services/user.service';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { QuestService } from './services/quest.service';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ import { MessageService } from 'primeng/api';
 })
 export class AppComponent implements OnInit {
   private readonly _userService = inject(UserService);
+  private readonly _questService = inject(QuestService);
 
   ngOnInit() {
     localStorage.getItem('user');
@@ -26,5 +28,9 @@ export class AppComponent implements OnInit {
 
     this._userService.user.set(JSON.parse(localStorage.getItem('user') || 'null'));
     this._userService.token.set(localStorage.getItem('token'));
+
+    // load statuses and priorities
+    this._questService.loadStatuses().subscribe();
+    this._questService.loadPriorities().subscribe();
   }
 }

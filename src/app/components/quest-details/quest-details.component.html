@@ -40,17 +40,11 @@
   <div class="flex flex-column align-content-center mt-2">
     <div>
       <label for="status" class="visually-hidden">Statut</label>
-      <p-select
-        id="status"
-        formControlName="status"
-        [options]="statusOptions"
-        [readonly]="!isEdit"
-        [ngClass]="selectClasses"
-        optionLabel="label"
-        optionValue="value">
+      <p-select id="status" formControlName="statusId" [options]="statusOptions ?? []" [readonly]="!isEdit" optionLabel="name" optionValue="id">
         <ng-template let-option pTemplate="item">
           <span>
-            {{ option.label }}
+            {{ option.name }}
+            <!-- [ngClass]="selectClasses" -->
           </span>
         </ng-template></p-select
       >
@@ -61,17 +55,11 @@
     <!-- PRIORITE -->
     <div>
       <label for="priority" class="visually-hidden">Priorité</label>
-      <p-select
-        id="priority"
-        formControlName="priority"
-        [options]="priorityOptions"
-        [readonly]="!isEdit"
-        [ngClass]="selectClasses"
-        optionLabel="label"
-        optionValue="value">
+      <p-select id="priority" formControlName="priorityId" [options]="priorityOptions ?? []" [readonly]="!isEdit" optionLabel="name" optionValue="id">
         <ng-template let-option pTemplate="item">
-          <span [class]="'priority-' + getPriorityKey(option.value)">
-            {{ option.label }}
+          <span [class]="'priority-'">
+            <!-- [ngClass]="selectClasses" -->
+            {{ option.name }}
           </span>
         </ng-template></p-select
       >

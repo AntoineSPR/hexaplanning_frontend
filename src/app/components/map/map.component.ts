@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
-import { Quest, QuestPriority } from 'src/app/models/quest.model';
+import { Quest } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
@@ -229,14 +229,14 @@ export class MapComponent implements OnInit {
     if (!hex.quest) return '';
     if (hex.quest.isDone) return '';
 
-    switch (hex.quest.priority as string) {
-      case 'PRIMARY':
-        return 'var(--primary-priority-color)';
-      case 'SECONDARY':
-        return 'var(--secondary-priority-color)';
-      default:
-        return '';
-    }
+    // switch (hex.quest.priority as string) {
+    //   case 'PRIMARY':
+    //     return 'var(--primary-priority-color)';
+    //   case 'SECONDARY':
+    //     return 'var(--secondary-priority-color)';
+    //   default:
+    // }
+    return '';
   }
 
   getPriorityKey(priorityValue: string): string {
@@ -247,12 +247,14 @@ export class MapComponent implements OnInit {
   }
 
   getPriorityImagePath(quest: Quest): string {
-    const priorityKey = this.getPriorityKey(quest.priority);
-    return `/icons/${priorityKey}.png`;
+    return '';
+    // const priorityKey = this.getPriorityKey(quest.priority);
+    // return `/icons/${priorityKey}.png`;
   }
 
   getPriorityAltText(quest: Quest): string {
-    return quest.priority || 'Icône de priorité';
+    return '';
+    // return quest.priority || 'Icône de priorité';
   }
 
   selectQuest(quest: Quest): void {

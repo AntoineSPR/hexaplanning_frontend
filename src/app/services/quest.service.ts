@@ -1,14 +1,17 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { Quest, QuestBase } from '../models/quest.model';
+import { Quest, QuestCreateDTO } from '../models/quest.model';
 import { environment } from '../../environments/environment.development';
 import { HexService } from './hex.service';
+import { Status } from '../models/status';
+import { Priority } from '../models/priority';
 
 @Injectable({ providedIn: 'root' })
 export class QuestService {
   private readonly _http = inject(HttpClient);
   private readonly _apiUrl = `${environment.apiUrl}/quest`;
+  private readonly _apiUrlBase = environment.apiUrl;
 
   private readonly _hexService = inject(HexService);
 
@@ -23,6 +26,10 @@ export class QuestService {
 
   public _deletedQuestId = signal<number | null>(null);
   public deletedQuestId = this._deletedQuestId.asReadonly();
+
+  //status
+  statuses = signal<Status[] | null>(null);
+  priorities = signal<Priority[] | null>(null);
 
   loadQuests(): void {
     this.getAllQuests().subscribe();
@@ -60,7 +67,7 @@ export class QuestService {
     return this._http.get<Quest>(`${this._apiUrl}/${id}`);
   }
 
-  createQuest(quest: QuestBase): Observable<Quest> {
+  createQuest(quest: QuestCreateDTO): Observable<Quest> {
     return this._http.post<Quest>(this._apiUrl, quest).pipe(
       tap(newQuest => {
         this._quests.update(quests => [...quests, newQuest]);
@@ -123,5 +130,14 @@ export class QuestService {
         this._deletedQuestId.set(id);
       })
     );
+  }
+
+  // load statuses and priorities
+  public loadStatuses() {
+    return this._http.get<Status[]>(`${this._apiUrlBase}/status`).pipe(tap(statuses => this.statuses.set(statuses)));
+  }
+
+  public loadPriorities() {
+    return this._http.get<Priority[]>(`${this._apiUrlBase}/priority`).pipe(tap(priorities => this.priorities.set(priorities)));
   }
 }

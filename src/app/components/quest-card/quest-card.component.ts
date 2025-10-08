@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { QuestPriority, Quest } from '../../models/quest.model';
+import { Quest } from '../../models/quest.model';
 import { CommonModule } from '@angular/common';
 import { QuestModalService } from '../../services/quest-modal.service';
 import { QuestService } from '../../services/quest.service';
@@ -24,8 +24,8 @@ export class QuestCardComponent implements OnInit {
   priorityControl: FormControl = new FormControl();
 
   ngOnInit(): void {
-    this.priorityOptions = Object.values(QuestPriority);
-    this.priorityControl.setValue(this.quest?.priority ?? QuestPriority.TERTIARY);
+    // this.priorityOptions = Object.values(QuestPriority);
+    // this.priorityControl.setValue(this.quest?.priority ?? QuestPriority.TERTIARY);
   }
 
   toggleStatus(): void {
@@ -58,7 +58,8 @@ export class QuestCardComponent implements OnInit {
   }
 
   get priorityKey(): string {
-    return this.getPriorityKey(this.quest?.priority);
+    return '';
+    // return this.getPriorityKey(this.quest?.priority);
   }
 
   get priorityImagePath(): string {
@@ -66,6 +67,7 @@ export class QuestCardComponent implements OnInit {
   }
 
   get priorityAltText(): string {
-    return this.quest?.priority || 'Icône de priorité';
+    return '';
+    // return this.quest?.priority || 'Icône de priorité';
   }
 }
