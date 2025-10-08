@@ -31,6 +31,7 @@ export class QuestService {
   statuses = signal<Status[] | null>(null);
   priorities = signal<Priority[] | null>(null);
   statusDoneId = '6662dfc1-9c40-4d78-806f-34cd22e07023';
+  statusPendingId = '17c07323-d5b4-4568-b773-de3487ff30b1';
 
   loadQuests(): void {
     this.getAllQuests().subscribe();

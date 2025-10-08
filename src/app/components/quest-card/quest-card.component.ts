@@ -29,16 +29,23 @@ export class QuestCardComponent implements OnInit {
   }
 
   toggleStatus(): void {
-    if (this.quest) {
-      this._questService.updateQuest({ ...this.quest }).subscribe(result => {
-        if (result.statusId === this._questService.statusDoneId) {
-          this._messageService.add({
-            severity: 'success',
-            summary: 'Quête terminée !',
-            detail: this.quest.title,
-            life: 1500,
-          });
-        }
+    if (this.quest && this.quest.statusId !== this._questService.statusDoneId) {
+      this._questService.updateQuest({ ...this.quest, statusId: this._questService.statusDoneId }).subscribe(result => {
+        this._messageService.add({
+          severity: 'success',
+          summary: 'Quête terminée !',
+          detail: this.quest.title,
+          life: 1500,
+        });
+      });
+    } else {
+      this._questService.updateQuest({ ...this.quest, statusId: this._questService.statusPendingId }).subscribe(result => {
+        this._messageService.add({
+          severity: 'success',
+          summary: 'Quête réouverte',
+          detail: this.quest.title,
+          life: 1500,
+        });
       });
     }
   }
