@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { Quest, QuestCreateDTO } from '../models/quest.model';
+import { QuestUpdateDTO, QuestCreateDTO } from '../models/quest.model';
 import { environment } from '../../environments/environment.development';
 import { HexService } from './hex.service';
 import { Status } from '../models/status';
@@ -15,16 +15,16 @@ export class QuestService {
 
   private readonly _hexService = inject(HexService);
 
-  private _quests = signal<Quest[]>([]);
+  private _quests = signal<QuestUpdateDTO[]>([]);
   public quests = this._quests.asReadonly();
-  private _pendingQuests = signal<Quest[]>([]);
+  private _pendingQuests = signal<QuestUpdateDTO[]>([]);
   public pendingQuests = this._pendingQuests.asReadonly();
-  private _completedQuests = signal<Quest[]>([]);
+  private _completedQuests = signal<QuestUpdateDTO[]>([]);
   public completedQuests = this._completedQuests.asReadonly();
-  private _unassignedPendingQuests = signal<Quest[]>([]);
+  private _unassignedPendingQuests = signal<QuestUpdateDTO[]>([]);
   public unassignedPendingQuests = this._unassignedPendingQuests.asReadonly();
 
-  public _deletedQuestId = signal<number | null>(null);
+  public _deletedQuestId = signal<string | null>(null);
   public deletedQuestId = this._deletedQuestId.asReadonly();
 
   //status
@@ -47,28 +47,28 @@ export class QuestService {
     this.getAllUnassignedPendingQuests().subscribe();
   }
 
-  getAllQuests(): Observable<Quest[]> {
-    return this._http.get<Quest[]>(this._apiUrl).pipe(tap(quests => this._quests.set(quests)));
+  getAllQuests(): Observable<QuestUpdateDTO[]> {
+    return this._http.get<QuestUpdateDTO[]>(this._apiUrl).pipe(tap(quests => this._quests.set(quests)));
   }
 
-  getAllPendingQuests(): Observable<Quest[]> {
-    return this._http.get<Quest[]>(`${this._apiUrl}/pending`).pipe(tap(quests => this._pendingQuests.set(quests)));
+  getAllPendingQuests(): Observable<QuestUpdateDTO[]> {
+    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/pending`).pipe(tap(quests => this._pendingQuests.set(quests)));
   }
 
-  getAllCompletedQuests(): Observable<Quest[]> {
-    return this._http.get<Quest[]>(`${this._apiUrl}/completed`).pipe(tap(quests => this._completedQuests.set(quests)));
+  getAllCompletedQuests(): Observable<QuestUpdateDTO[]> {
+    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/completed`).pipe(tap(quests => this._completedQuests.set(quests)));
   }
 
-  getAllUnassignedPendingQuests(): Observable<Quest[]> {
-    return this._http.get<Quest[]>(`${this._apiUrl}/unassigned_pending`).pipe(tap(quests => this._unassignedPendingQuests.set(quests)));
+  getAllUnassignedPendingQuests(): Observable<QuestUpdateDTO[]> {
+    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/unassigned_pending`).pipe(tap(quests => this._unassignedPendingQuests.set(quests)));
   }
 
-  getQuestById(id: number): Observable<Quest> {
-    return this._http.get<Quest>(`${this._apiUrl}/${id}`);
+  getQuestById(id: number): Observable<QuestUpdateDTO> {
+    return this._http.get<QuestUpdateDTO>(`${this._apiUrl}/${id}`);
   }
 
-  createQuest(quest: QuestCreateDTO): Observable<Quest> {
-    return this._http.post<Quest>(this._apiUrl, quest).pipe(
+  createQuest(quest: QuestCreateDTO): Observable<QuestUpdateDTO> {
+    return this._http.post<QuestUpdateDTO>(this._apiUrl, quest).pipe(
       tap(newQuest => {
         this._quests.update(quests => [...quests, newQuest]);
         this._pendingQuests.update(quests => [...quests, newQuest]);
@@ -77,8 +77,8 @@ export class QuestService {
     );
   }
 
-  updateQuest(quest: Quest): Observable<Quest> {
-    return this._http.put<Quest>(`${this._apiUrl}/${quest.id}`, quest).pipe(
+  updateQuest(quest: QuestUpdateDTO): Observable<QuestUpdateDTO> {
+    return this._http.put<QuestUpdateDTO>(`${this._apiUrl}/${quest.id}`, quest).pipe(
       tap(updatedQuest => {
         // Update main quests list
         this._quests.update(quests => quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)));
@@ -115,18 +115,16 @@ export class QuestService {
     );
   }
 
-  deleteQuest(id: number): Observable<void> {
+  deleteQuest(id: string): Observable<void> {
     return this._http.delete<void>(`${this._apiUrl}/${id}`).pipe(
       tap(() => {
         this._quests.update(quests => quests.filter(q => q.id !== id));
         this._completedQuests.update(quests => quests.filter(q => q.id !== id));
         this._pendingQuests.update(quests => quests.filter(q => q.id !== id));
         this._unassignedPendingQuests.update(quests => quests.filter(q => q.id !== id));
-
-        this._hexService.getAssignmentByQuestId(id).subscribe(assignment => {
-          this._hexService.deleteAssignment(assignment.q, assignment.r, assignment.s).subscribe();
-        });
-
+        // this._hexService.getAssignmentByQuestId(id).subscribe(assignment => {
+        //   this._hexService.deleteAssignment(assignment.q, assignment.r, assignment.s).subscribe();
+        // });
         this._deletedQuestId.set(id);
       })
     );

@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { Quest, QuestCreateDTO } from '../models/quest.model';
+import { QuestUpdateDTO, QuestCreateDTO } from '../models/quest.model';
 
 type QuestModalData = {
-  quest: Quest | QuestCreateDTO;
+  quest: QuestUpdateDTO | QuestCreateDTO;
   isNew: boolean;
 };
 
@@ -27,13 +27,13 @@ export class QuestModalService {
   public questModalVisible = this._questModalVisible.asReadonly();
   public questModalData = this._questModalData.asReadonly();
 
-  openQuestDetails(quest: Quest, isNew = false): void {
+  openQuestDetails(quest: QuestUpdateDTO, isNew = false): void {
     this._questModalData.set({ quest, isNew });
     this._questModalVisible.set(true);
   }
 
   openNewQuest(): void {
-    this.openQuestDetails(this._DEFAULT_QUEST as Quest, true);
+    this.openQuestDetails(this._DEFAULT_QUEST as QuestUpdateDTO, true);
   }
 
   closeQuestModal(): void {

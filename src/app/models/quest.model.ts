@@ -6,8 +6,13 @@ export type QuestCreateDTO = {
   isAssigned: boolean;
 };
 
-export type Quest = QuestCreateDTO & {
-  id: number;
+export type QuestUpdateDTO = {
+  id: string;
+  title: string;
+  description?: string;
+  estimatedTime: number;
+  isDone: boolean;
+  isAssigned: boolean;
 };
 
 export const DEFAULT_ESTIMATED_TIME = 0;

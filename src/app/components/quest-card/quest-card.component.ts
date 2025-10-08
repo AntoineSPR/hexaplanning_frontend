@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Quest } from '../../models/quest.model';
+import { QuestUpdateDTO } from '../../models/quest.model';
 import { CommonModule } from '@angular/common';
 import { QuestModalService } from '../../services/quest-modal.service';
 import { QuestService } from '../../services/quest.service';
@@ -14,7 +14,7 @@ import { MessageService } from 'primeng/api';
   styleUrls: ['./quest-card.component.scss'],
 })
 export class QuestCardComponent implements OnInit {
-  @Input() quest!: Quest;
+  @Input() quest!: QuestUpdateDTO;
 
   private readonly _questModalService = inject(QuestModalService);
   private readonly _questService = inject(QuestService);

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
-import { Quest } from 'src/app/models/quest.model';
+import { QuestUpdateDTO } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
@@ -17,7 +17,7 @@ type Hex = {
   cx: number;
   cy: number;
   priority: number;
-  quest?: Quest;
+  quest?: QuestUpdateDTO;
 };
 
 const MAP_WIDTH = 290;
@@ -43,11 +43,11 @@ export class MapComponent implements OnInit {
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
 
-  get unassignedPendingQuests(): Quest[] {
+  get unassignedPendingQuests(): QuestUpdateDTO[] {
     return this._questService.unassignedPendingQuests();
   }
 
-  selectedQuest: Quest | null = null;
+  selectedQuest: QuestUpdateDTO | null = null;
   dialogVisible = false;
   selectedHex: Hex | null = null;
 
@@ -68,11 +68,11 @@ export class MapComponent implements OnInit {
 
     effect(() => {
       const deletedQuestId = this._questService.deletedQuestId();
-      this.hexes.forEach(hex => {
-        if (hex.quest?.id === deletedQuestId) {
-          hex.quest = undefined;
-        }
-      });
+      // this.hexes.forEach(hex => {
+      //   if (hex.quest?.id === deletedQuestId) {
+      //     hex.quest = undefined;
+      //   }
+      // });
     });
   }
 
@@ -130,11 +130,11 @@ export class MapComponent implements OnInit {
     this._hexService.getAllAssignments().subscribe(assignments => {
       for (const a of assignments) {
         const hex = this.hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
-        if (hex) {
-          this._questService.getQuestById(a.questId).subscribe(quest => {
-            hex.quest = quest;
-          });
-        }
+        // if (hex) {
+        //   this._questService.getQuestById(a.questId).subscribe(quest => {
+        //     hex.quest = quest;
+        //   });
+        // }
       }
     });
   }
@@ -142,11 +142,11 @@ export class MapComponent implements OnInit {
   handleHexClick(hex: Hex): void {
     this._hexService.getAssignmentByCoordinates(hex.q, hex.r, hex.s).subscribe({
       next: assignment => {
-        if (assignment) {
-          this.openQuestDetails(assignment.questId);
-        } else {
-          this.openQuestToHexModal(hex);
-        }
+        // if (assignment) {
+        //   this.openQuestDetails(assignment.questId);
+        // } else {
+        //   this.openQuestToHexModal(hex);
+        // }
       },
       error: err => {
         console.error('Error fetching assignment:', err);
@@ -246,18 +246,18 @@ export class MapComponent implements OnInit {
     return 'primary';
   }
 
-  getPriorityImagePath(quest: Quest): string {
+  getPriorityImagePath(quest: QuestUpdateDTO): string {
     return '';
     // const priorityKey = this.getPriorityKey(quest.priority);
     // return `/icons/${priorityKey}.png`;
   }
 
-  getPriorityAltText(quest: Quest): string {
+  getPriorityAltText(quest: QuestUpdateDTO): string {
     return '';
     // return quest.priority || 'Icône de priorité';
   }
 
-  selectQuest(quest: Quest): void {
+  selectQuest(quest: QuestUpdateDTO): void {
     this.selectedQuest = quest;
   }
 }

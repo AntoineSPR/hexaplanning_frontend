@@ -6,7 +6,7 @@ import { Textarea, TextareaModule } from 'primeng/textarea';
 import { CalendarModule } from 'primeng/calendar';
 import { SliderModule } from 'primeng/slider';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DEFAULT_ESTIMATED_TIME, Quest, QuestCreateDTO } from '../../models/quest.model';
+import { DEFAULT_ESTIMATED_TIME, QuestUpdateDTO, QuestCreateDTO } from '../../models/quest.model';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
@@ -35,7 +35,7 @@ import { catchError, of } from 'rxjs';
   styleUrl: './quest-details.component.scss',
 })
 export class QuestDetailsComponent implements OnInit, AfterViewInit {
-  @Input({ required: true }) quest!: Quest;
+  @Input({ required: true }) quest!: QuestUpdateDTO;
   @Input() isNew: boolean = false;
   @Output() closeDialog = new EventEmitter<void>();
   @ViewChildren(Textarea) textareas!: QueryList<Textarea>;
@@ -97,17 +97,24 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         },
       });
     } else {
-      const updatedQuest: Quest = {
+      const updatedQuest: QuestUpdateDTO = {
         ...this.quest,
         ...formValues,
       };
 
       this._questService.updateQuest(updatedQuest).subscribe({
         next: () => {
-          console.log('Quest updated successfully');
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Quête mise à jour !',
+          });
         },
         error: error => {
-          console.error('Error updating quest:', error);
+          this._messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Erreur lors de la mise à jour de la quête',
+          });
         },
       });
     }
@@ -142,9 +149,18 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
             this.isEdit = false;
             this.isNew = false;
             this.closeDialog.emit();
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Quête supprimée !',
+            });
           },
           error: error => {
             console.error('Error deleting quest:', error);
+            this._messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Erreur lors de la suppression de la quête',
+            });
           },
         });
       },
