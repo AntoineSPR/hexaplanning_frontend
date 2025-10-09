@@ -229,14 +229,9 @@ export class MapComponent implements OnInit {
     if (!hex.quest) return '';
     if (hex.quest.statusId === this._questService.statusDoneId) return '';
 
-    // switch (hex.quest.priority as string) {
-    //   case 'PRIMARY':
-    //     return 'var(--primary-priority-color)';
-    //   case 'SECONDARY':
-    //     return 'var(--secondary-priority-color)';
-    //   default:
-    // }
-    return '';
+    const priorityQuest = this._questService?.priorities()?.find(x => x.id == hex?.quest?.priorityId);
+
+    return priorityQuest?.borderColor ?? '';
   }
 
   getPriorityKey(priorityValue: string): string {
