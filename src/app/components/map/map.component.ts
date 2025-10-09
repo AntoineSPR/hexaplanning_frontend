@@ -123,6 +123,35 @@ export class MapComponent implements OnInit {
     }
     return points.join(' ');
   }
+
+  getProgressPath(cx: number, cy: number, advancement: number): string {
+    if (advancement <= 0) return '';
+    if (advancement >= 100) return this.getHexPoints(cx, cy);
+
+    const size = this.size;
+    const percentage = Math.min(advancement, 100) / 100;
+
+    // Create a circular arc that fills the hexagon radially
+    const startAngle = -Math.PI / 2; // Start from top
+    const endAngle = startAngle + 2 * Math.PI * percentage;
+
+    // Calculate the arc points
+    const startX = cx + size * Math.cos(startAngle);
+    const startY = cy + size * Math.sin(startAngle);
+    const endX = cx + size * Math.cos(endAngle);
+    const endY = cy + size * Math.sin(endAngle);
+
+    // Create an SVG path for the arc
+    const largeArcFlag = percentage > 0.5 ? 1 : 0;
+
+    if (percentage === 1) {
+      // Full circle
+      return `M ${cx},${cy} m -${size},0 a ${size},${size} 0 1,1 ${size * 2},0 a ${size},${size} 0 1,1 -${size * 2},0`;
+    } else {
+      // Partial arc
+      return `M ${cx} ${cy} L ${startX} ${startY} A ${size} ${size} 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
+    }
+  }
   // #endregion
 
   //#region Quests
@@ -255,5 +284,30 @@ export class MapComponent implements OnInit {
 
   selectQuest(quest: QuestUpdateDTO): void {
     this.selectedQuest = quest;
+  }
+
+  getQuestAdvancement(hex: Hex): number {
+    if (!hex.quest) return 0;
+    // Cast to QuestOutputDTO to access advancement property
+    const questOutput = hex.quest as any;
+    return questOutput.advancement || 0;
+  }
+
+  getProgressColor(advancement: number): string {
+    // Green gradient based on progress
+    const opacity = 0.6;
+    if (advancement < 25) {
+      return `rgba(255, 193, 7, ${opacity})`; // Yellow for low progress
+    } else if (advancement < 50) {
+      return `rgba(255, 152, 0, ${opacity})`; // Orange for medium-low progress
+    } else if (advancement < 75) {
+      return `rgba(76, 175, 80, ${opacity})`; // Green for medium-high progress
+    } else {
+      return `rgba(46, 125, 50, ${opacity})`; // Dark green for high progress
+    }
+  }
+
+  getHexClipId(hex: Hex): string {
+    return `hex-clip-${hex.q}-${hex.r}-${hex.s}`;
   }
 }
