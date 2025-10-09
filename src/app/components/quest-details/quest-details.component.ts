@@ -1,4 +1,16 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  OnInit,
+  Output,
+  QueryList,
+  signal,
+  ViewChildren,
+} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
@@ -29,6 +41,8 @@ import { catchError, of } from 'rxjs';
     CalendarModule,
     TimePipe,
     ConfirmDialogModule,
+    InputNumberModule,
+    SliderModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
@@ -128,6 +142,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     if (this.isNew) {
       this.onReturn();
     } else if (this.isEdit) {
+      this._setFormValues();
       this.isEdit = false;
     }
   }
@@ -204,6 +219,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       estimatedTime: new FormControl(''),
       priorityId: new FormControl('', Validators.required),
       statusId: new FormControl('', Validators.required),
+      advancement: new FormControl(0),
     });
   }
 
@@ -214,7 +230,12 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       estimatedTime: this.minutesToDate(this.quest?.estimatedTime ?? DEFAULT_ESTIMATED_TIME),
       priorityId: this.quest?.priorityId ?? this.defaultPriority,
       statusId: this.quest?.statusId ?? this.defaultStatus,
+      advancement: this.quest?.advancement ?? 0,
     });
+  }
+
+  onApprehensionChange(event: any) {
+    this.questForm.patchValue({ advancement: event.value }); // this.advancement = event.value;
   }
 
   //#endregion
