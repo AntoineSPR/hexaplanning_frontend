@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
@@ -30,6 +30,7 @@ export class ResetPasswordComponent implements OnInit {
   resetPasswordForm: FormGroup;
   isLoading = false;
   token: string | null = null;
+  email: string | null = null;
 
   constructor() {
     this.resetPasswordForm = this._formBuilder.group(
@@ -37,13 +38,15 @@ export class ResetPasswordComponent implements OnInit {
         newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
         confirmPassword: ['', [Validators.required]],
       },
-      { validators: this.passwordMatchValidator }
+      { 
+        validators: this.passwordMatchValidator
+      }
     );
   }
 
   ngOnInit(): void {
-    // Get token from query parameters
     this.token = this._route.snapshot.queryParamMap.get('token');
+    this.email = this._route.snapshot.queryParamMap.get('email');
 
     if (!this.token) {
       this._messageService.add({
@@ -55,9 +58,9 @@ export class ResetPasswordComponent implements OnInit {
     }
   }
 
-  passwordMatchValidator(form: FormGroup): any {
-    const newPassword = form.get('newPassword');
-    const confirmPassword = form.get('confirmPassword');
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const newPassword = control.get('newPassword');
+    const confirmPassword = control.get('confirmPassword');
 
     if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
       confirmPassword.setErrors({ passwordMismatch: true });
@@ -76,11 +79,12 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.resetPasswordForm.valid && this.token) {
+    if (this.resetPasswordForm.valid && this.token && this.email) {
       this.isLoading = true;
 
       const resetPasswordData: ResetPasswordDTO = {
         token: this.token,
+        email: this.email,
         newPassword: this.resetPasswordForm.value.newPassword,
         confirmPassword: this.resetPasswordForm.value.confirmPassword,
       };

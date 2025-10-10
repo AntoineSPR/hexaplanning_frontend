@@ -1,6 +1,6 @@
 <div class="dashboard">
-  <h2>Bienvenue {{ user()?.firstName }} {{ user()?.lastName }} !</h2>
+  <h2>Bienvenue {{ user()?.firstName | titlecase }} {{ user()?.lastName | titlecase }} !</h2>
   <br />
-  <p>Vous avez {{ pending_quests_number }} quêtes en cours.</p>
+  <p>Vous avez {{ pending_quests_number() }} quêtes en cours.</p>
 </div>
 <app-menu></app-menu>
