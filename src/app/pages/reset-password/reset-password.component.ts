@@ -30,6 +30,7 @@ export class ResetPasswordComponent implements OnInit {
   resetPasswordForm: FormGroup;
   isLoading = false;
   token: string | null = null;
+  email: string | null = null;
 
   constructor() {
     this.resetPasswordForm = this._formBuilder.group(
@@ -42,8 +43,8 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Get token from query parameters
     this.token = this._route.snapshot.queryParamMap.get('token');
+    this.email = this._route.snapshot.queryParamMap.get('email');
 
     if (!this.token) {
       this._messageService.add({
@@ -76,11 +77,12 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.resetPasswordForm.valid && this.token) {
+    if (this.resetPasswordForm.valid && this.token && this.email) {
       this.isLoading = true;
 
       const resetPasswordData: ResetPasswordDTO = {
         token: this.token,
+        email: this.email,
         newPassword: this.resetPasswordForm.value.newPassword,
         confirmPassword: this.resetPasswordForm.value.confirmPassword,
       };
