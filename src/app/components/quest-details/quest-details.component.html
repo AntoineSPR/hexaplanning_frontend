@@ -28,11 +28,17 @@
     <div>
       <label for="status" class="visually-hidden">Statut</label>
       @if (isEdit) {
-      <p-select id="status" formControlName="statusId" [options]="statusOptions ?? []" [disabled]="!isEdit" optionLabel="name" optionValue="id">
+      <p-select
+        id="status"
+        formControlName="statusId"
+        [options]="statusOptions ?? []"
+        [disabled]="!isEdit"
+        optionLabel="name"
+        optionValue="id"
+        [styleClass]="'custom-select'">
         <ng-template let-option pTemplate="item">
           <span>
             {{ option.name }}
-            <!-- [ngClass]="selectClasses" -->
           </span>
         </ng-template></p-select
       >} @else { <span class="font-bold" [style.color]="statusColor">{{ getStatusName(quest.statusId) }}</span>
@@ -54,10 +60,16 @@
     <div>
       <label for="priority" class="visually-hidden">Priorité</label>
       @if (isEdit) {
-      <p-select id="priority" formControlName="priorityId" [options]="priorityOptions ?? []" [readonly]="!isEdit" optionLabel="name" optionValue="id">
+      <p-select
+        id="priority"
+        formControlName="priorityId"
+        [options]="priorityOptions ?? []"
+        [readonly]="!isEdit"
+        optionLabel="name"
+        optionValue="id"
+        [styleClass]="'custom-select'">
         <ng-template let-option pTemplate="item">
           <span [class]="'priority-'">
-            <!-- [ngClass]="selectClasses" -->
             {{ option.name }}
           </span>
         </ng-template></p-select
