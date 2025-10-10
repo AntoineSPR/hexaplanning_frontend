@@ -68,11 +68,11 @@ export class MapComponent implements OnInit {
 
     effect(() => {
       const deletedQuestId = this._questService.deletedQuestId();
-      // this.hexes.forEach(hex => {
-      //   if (hex.quest?.id === deletedQuestId) {
-      //     hex.quest = undefined;
-      //   }
-      // });
+      this.hexes.forEach(hex => {
+        if (hex.quest?.id === deletedQuestId) {
+          hex.quest = undefined;
+        }
+      });
     });
   }
 
