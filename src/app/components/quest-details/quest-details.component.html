@@ -23,37 +23,47 @@
     </div>
   </div>
 
-  <!-- CHECKBOX -->
-  <div class="done_checkbox">
-    <input
-      id="toggleStatus"
-      type="checkbox"
-      class="quest-checkbox"
-      [checked]="quest.isDone"
-      (change)="toggleStatus()"
-      (click)="$event.stopPropagation()"
-      aria-label="Marquer cette tâche comme terminée" />
-    <label for="toggleStatus" style="font-style: italic">{{ quest.isDone ? 'Terminé' : 'À terminer' }} </label>
+  <!-- STATUT -->
+  <div class="flex flex-column align-content-center mt-2">
+    <div>
+      <label for="status" class="visually-hidden">Statut</label>
+      @if (isEdit) {
+      <p-select id="status" formControlName="statusId" [options]="statusOptions ?? []" [disabled]="!isEdit" optionLabel="name" optionValue="id">
+        <ng-template let-option pTemplate="item">
+          <span>
+            {{ option.name }}
+            <!-- [ngClass]="selectClasses" -->
+          </span>
+        </ng-template></p-select
+      >} @else { <span class="font-bold" [style.color]="statusColor">{{ getStatusName(quest.statusId) }}</span>
+      }
+    </div>
   </div>
+  <div class="quest-field">
+    <label for="apprehension" class="font-bold">Jauge d'appréhension : </label>
+    <p>{{ questForm.get('advancement')?.value }}%</p>
+  </div>
+  @if (isEdit) {
+  <div class="w-full">
+    <p-slider formControlName="advancement" (onChange)="onApprehensionChange($event)" [min]="0" [max]="100" [step]="5" />
+  </div>
+  }
 
   <div class="flex flex-column align-content-center">
     <!-- PRIORITE -->
     <div>
       <label for="priority" class="visually-hidden">Priorité</label>
-      <p-select
-        id="priority"
-        formControlName="priority"
-        [options]="priorityOptions"
-        [readonly]="!isEdit"
-        [ngClass]="selectClasses"
-        optionLabel="label"
-        optionValue="value">
+      @if (isEdit) {
+      <p-select id="priority" formControlName="priorityId" [options]="priorityOptions ?? []" [readonly]="!isEdit" optionLabel="name" optionValue="id">
         <ng-template let-option pTemplate="item">
-          <span [class]="'priority-' + getPriorityKey(option.value)">
-            {{ option.label }}
+          <span [class]="'priority-'">
+            <!-- [ngClass]="selectClasses" -->
+            {{ option.name }}
           </span>
         </ng-template></p-select
       >
+      } @else { <span class="font-bold" [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
+      }
     </div>
   </div>
 

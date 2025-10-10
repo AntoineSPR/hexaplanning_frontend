@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
-import { Quest, QuestPriority } from 'src/app/models/quest.model';
+import { QuestUpdateDTO } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
@@ -17,7 +17,7 @@ type Hex = {
   cx: number;
   cy: number;
   priority: number;
-  quest?: Quest;
+  quest?: QuestUpdateDTO;
 };
 
 const MAP_WIDTH = 290;
@@ -43,11 +43,11 @@ export class MapComponent implements OnInit {
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
 
-  get unassignedPendingQuests(): Quest[] {
+  get unassignedPendingQuests(): QuestUpdateDTO[] {
     return this._questService.unassignedPendingQuests();
   }
 
-  selectedQuest: Quest | null = null;
+  selectedQuest: QuestUpdateDTO | null = null;
   dialogVisible = false;
   selectedHex: Hex | null = null;
 
@@ -68,11 +68,11 @@ export class MapComponent implements OnInit {
 
     effect(() => {
       const deletedQuestId = this._questService.deletedQuestId();
-      this.hexes.forEach(hex => {
-        if (hex.quest?.id === deletedQuestId) {
-          hex.quest = undefined;
-        }
-      });
+      // this.hexes.forEach(hex => {
+      //   if (hex.quest?.id === deletedQuestId) {
+      //     hex.quest = undefined;
+      //   }
+      // });
     });
   }
 
@@ -123,6 +123,35 @@ export class MapComponent implements OnInit {
     }
     return points.join(' ');
   }
+
+  getProgressPath(cx: number, cy: number, advancement: number): string {
+    if (advancement <= 0) return '';
+    if (advancement >= 100) return this.getHexPoints(cx, cy);
+
+    const size = this.size;
+    const percentage = Math.min(advancement, 100) / 100;
+
+    // Create a circular arc that fills the hexagon radially
+    const startAngle = -Math.PI / 2; // Start from top
+    const endAngle = startAngle + 2 * Math.PI * percentage;
+
+    // Calculate the arc points
+    const startX = cx + size * Math.cos(startAngle);
+    const startY = cy + size * Math.sin(startAngle);
+    const endX = cx + size * Math.cos(endAngle);
+    const endY = cy + size * Math.sin(endAngle);
+
+    // Create an SVG path for the arc
+    const largeArcFlag = percentage > 0.5 ? 1 : 0;
+
+    if (percentage === 1) {
+      // Full circle
+      return `M ${cx},${cy} m -${size},0 a ${size},${size} 0 1,1 ${size * 2},0 a ${size},${size} 0 1,1 -${size * 2},0`;
+    } else {
+      // Partial arc
+      return `M ${cx} ${cy} L ${startX} ${startY} A ${size} ${size} 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
+    }
+  }
   // #endregion
 
   //#region Quests
@@ -154,7 +183,7 @@ export class MapComponent implements OnInit {
     });
   }
 
-  openQuestDetails(questId: number): void {
+  openQuestDetails(questId: string): void {
     this._questService.getQuestById(questId).subscribe(quest => {
       this._questModalService.openQuestDetails(quest);
     });
@@ -179,7 +208,7 @@ export class MapComponent implements OnInit {
 
       this._hexService
         .saveAssignment(hexAssignment)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToAssign, isAssigned: true })))
+        .pipe(switchMap(() => this._questService.updateQuest({ ...questToAssign })))
         .subscribe({
           next: () => {
             hexToUpdate.quest = questToAssign;
@@ -202,7 +231,7 @@ export class MapComponent implements OnInit {
 
       this._hexService
         .deleteAssignment(hex.q, hex.r, hex.s)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate, isAssigned: false })))
+        .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
         .subscribe({
           next: () => {
             hex.quest = undefined;
@@ -217,7 +246,7 @@ export class MapComponent implements OnInit {
   getHexColor(hex: Hex): string {
     let color = '#eee';
     if (!hex.quest) return color;
-    if (hex.quest.isDone) {
+    if (hex.quest.statusId === this._questService.statusDoneId) {
       color = 'var(--dark-theme-color)';
     } else {
       color = 'var(--theme-color)';
@@ -227,16 +256,11 @@ export class MapComponent implements OnInit {
 
   getHexBorderColor(hex: Hex): string {
     if (!hex.quest) return '';
-    if (hex.quest.isDone) return '';
+    if (hex.quest.statusId === this._questService.statusDoneId) return '';
 
-    switch (hex.quest.priority as string) {
-      case 'PRIMARY':
-        return 'var(--primary-priority-color)';
-      case 'SECONDARY':
-        return 'var(--secondary-priority-color)';
-      default:
-        return '';
-    }
+    const priorityQuest = this._questService?.priorities()?.find(x => x.id == hex?.quest?.priorityId);
+
+    return priorityQuest?.borderColor ?? '';
   }
 
   getPriorityKey(priorityValue: string): string {
@@ -246,16 +270,44 @@ export class MapComponent implements OnInit {
     return 'primary';
   }
 
-  getPriorityImagePath(quest: Quest): string {
-    const priorityKey = this.getPriorityKey(quest.priority);
+  getPriorityImagePath(quest: QuestUpdateDTO): string {
+    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
+    const priorityKey = this.getPriorityKey(priority?.icon ?? 'primary');
     return `/icons/${priorityKey}.png`;
   }
 
-  getPriorityAltText(quest: Quest): string {
-    return quest.priority || 'Icône de priorité';
+  getPriorityAltText(quest: QuestUpdateDTO): string {
+    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
+    const priorityKey = this.getPriorityKey(priority?.name ?? 'quete principale');
+    return priorityKey;
   }
 
-  selectQuest(quest: Quest): void {
+  selectQuest(quest: QuestUpdateDTO): void {
     this.selectedQuest = quest;
+  }
+
+  getQuestAdvancement(hex: Hex): number {
+    if (!hex.quest) return 0;
+    // Cast to QuestOutputDTO to access advancement property
+    const questOutput = hex.quest as any;
+    return questOutput.advancement || 0;
+  }
+
+  getProgressColor(advancement: number): string {
+    // Green gradient based on progress
+    const opacity = 0.6;
+    if (advancement < 25) {
+      return `rgba(255, 193, 7, ${opacity})`; // Yellow for low progress
+    } else if (advancement < 50) {
+      return `rgba(255, 152, 0, ${opacity})`; // Orange for medium-low progress
+    } else if (advancement < 75) {
+      return `rgba(76, 175, 80, ${opacity})`; // Green for medium-high progress
+    } else {
+      return `rgba(46, 125, 50, ${opacity})`; // Dark green for high progress
+    }
+  }
+
+  getHexClipId(hex: Hex): string {
+    return `hex-clip-${hex.q}-${hex.r}-${hex.s}`;
   }
 }

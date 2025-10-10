@@ -1,6 +1,28 @@
 <svg id="hexmap" [attr.width]="mapWidth" [attr.height]="mapHeight">
+  <!-- Define clipping paths for each hexagon -->
+  <defs>
+    @for (h of hexes; track $index) {
+    <clipPath [attr.id]="getHexClipId(h)">
+      <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
+    </clipPath>
+    }
+  </defs>
+
   @for (h of hexes; track $index) {
+  <!-- Base hexagon -->
   <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
+
+  <!-- Progress overlay (if quest has advancement) -->
+  @if (h.quest && getQuestAdvancement(h) > 0) {
+  <path
+    [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
+    [attr.fill]="getProgressColor(getQuestAdvancement(h))"
+    [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
+    stroke="none"
+    (click)="handleHexClick(h)" />
+  }
+
+  <!-- Border -->
   <polygon
     [attr.points]="getHexPoints(h.cx, h.cy, -2)"
     [attr.stroke]="getHexBorderColor(h)"
@@ -40,11 +62,7 @@
       <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
         <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
         <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
-        <img
-          class="priority-icon"
-          [src]="getPriorityImagePath(quest)"
-          [alt]="getPriorityAltText(quest)"
-          [class]="'priority-' + getPriorityKey(quest.priority).toLowerCase()" />
+        <img class="priority-icon" [src]="getPriorityImagePath(quest)" [alt]="getPriorityAltText(quest)" [class]="'priority-'" />
       </div>
       } }
     </div>

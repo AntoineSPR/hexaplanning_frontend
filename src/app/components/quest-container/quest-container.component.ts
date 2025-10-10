@@ -3,7 +3,7 @@ import { Component, inject } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { QuestDetailsComponent } from '../quest-details/quest-details.component';
 import { QuestModalService } from '../../services/quest-modal.service'; // Adjust the path as needed
-import { Quest } from '../../models/quest.model'; // Adjust the path as needed
+import { QuestUpdateDTO } from '../../models/quest.model'; // Adjust the path as needed
 
 @Component({
   selector: 'app-quest-container',
@@ -19,9 +19,9 @@ export class QuestContainerComponent {
     return this._questModalService.questModalVisible();
   }
 
-  get quest(): Quest {
+  get quest(): QuestUpdateDTO {
     const quest = this._questModalService.questModalData().quest;
-    return quest as Quest;
+    return quest as QuestUpdateDTO;
   }
 
   get isNew(): boolean {

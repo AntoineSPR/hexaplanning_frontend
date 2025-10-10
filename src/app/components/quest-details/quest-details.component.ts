@@ -1,4 +1,16 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  OnInit,
+  Output,
+  QueryList,
+  signal,
+  ViewChildren,
+} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
@@ -6,12 +18,13 @@ import { Textarea, TextareaModule } from 'primeng/textarea';
 import { CalendarModule } from 'primeng/calendar';
 import { SliderModule } from 'primeng/slider';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DEFAULT_ESTIMATED_TIME, DEFAULT_PRIORITY, Quest, QuestBase, QuestPriority } from '../../models/quest.model';
+import { DEFAULT_ESTIMATED_TIME, QuestUpdateDTO, QuestCreateDTO } from '../../models/quest.model';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-quest-details',
@@ -28,29 +41,29 @@ import { ConfirmationService, MessageService } from 'primeng/api';
     CalendarModule,
     TimePipe,
     ConfirmDialogModule,
+    InputNumberModule,
+    SliderModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
   styleUrl: './quest-details.component.scss',
 })
 export class QuestDetailsComponent implements OnInit, AfterViewInit {
-  @Input({ required: true }) quest!: Quest;
+  @Input({ required: true }) quest!: QuestUpdateDTO;
   @Input() isNew: boolean = false;
   @Output() closeDialog = new EventEmitter<void>();
   @ViewChildren(Textarea) textareas!: QueryList<Textarea>;
-
-  questForm!: FormGroup;
-  priorityOptions = Object.entries(QuestPriority).map(([key, value]) => ({
-    label: value,
-    value: key,
-  }));
-  isEdit: boolean = false;
 
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
+
+  questForm!: FormGroup;
+  priorityOptions = this._questService.priorities();
+  statusOptions = this._questService.statuses();
+  isEdit: boolean = false;
 
   ngOnInit(): void {
     this._createFormGroup();
@@ -79,28 +92,43 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     };
 
     if (this.isNew) {
-      const newQuest: QuestBase = formValues;
+      const newQuest: QuestCreateDTO = formValues;
 
       this._questService.createQuest(newQuest).subscribe({
         next: () => {
           console.log('Quest created successfully');
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Quête créée !',
+          });
         },
         error: error => {
-          console.error('Error creating quest:', error);
+          this._messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Erreur lors de la création de la quête',
+          });
         },
       });
     } else {
-      const updatedQuest: Quest = {
+      const updatedQuest: QuestUpdateDTO = {
         ...this.quest,
         ...formValues,
       };
 
       this._questService.updateQuest(updatedQuest).subscribe({
         next: () => {
-          console.log('Quest updated successfully');
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Quête mise à jour !',
+          });
         },
         error: error => {
-          console.error('Error updating quest:', error);
+          this._messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Erreur lors de la mise à jour de la quête',
+          });
         },
       });
     }
@@ -114,6 +142,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     if (this.isNew) {
       this.onReturn();
     } else if (this.isEdit) {
+      this._setFormValues();
       this.isEdit = false;
     }
   }
@@ -135,9 +164,18 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
             this.isEdit = false;
             this.isNew = false;
             this.closeDialog.emit();
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Quête supprimée !',
+            });
           },
           error: error => {
             console.error('Error deleting quest:', error);
+            this._messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Erreur lors de la suppression de la quête',
+            });
           },
         });
       },
@@ -147,23 +185,6 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   onEdit(): void {
     this.isEdit = true;
   }
-
-  toggleStatus(): void {
-    if (this.quest) {
-      this._questService.updateQuest({ ...this.quest, isDone: !this.quest.isDone }).subscribe(result => {
-        if (result.isDone) {
-          this._messageService.add({
-            severity: 'success',
-            summary: 'Quête terminée !',
-            detail: this.quest.title,
-            life: 1500,
-          });
-        }
-      });
-    }
-    this.closeDialog.emit();
-  }
-  //#endregion
 
   //#region Date & Time
   /** Conversion des minutes en objet Date */
@@ -196,8 +217,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       title: new FormControl('', [Validators.required, Validators.maxLength(100)]),
       description: new FormControl(''),
       estimatedTime: new FormControl(''),
-      priority: new FormControl('', Validators.required),
-      isDone: new FormControl(false),
+      priorityId: new FormControl('', Validators.required),
+      statusId: new FormControl('', Validators.required),
+      advancement: new FormControl(0),
     });
   }
 
@@ -206,56 +228,17 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       title: this.quest?.title ?? '',
       description: this.quest?.description ?? '',
       estimatedTime: this.minutesToDate(this.quest?.estimatedTime ?? DEFAULT_ESTIMATED_TIME),
-      priority: this.quest?.priority ? this._getPriorityKey(this.quest.priority) : DEFAULT_PRIORITY,
-      isDone: this.quest?.isDone ?? false,
+      priorityId: this.quest?.priorityId ?? this.defaultPriority,
+      statusId: this.quest?.statusId ?? this.defaultStatus,
+      advancement: this.quest?.advancement ?? 0,
     });
   }
 
-  private _getPriorityKey(value: string): keyof typeof QuestPriority | null {
-    const entryByValue = Object.entries(QuestPriority).find(([, val]) => val === value);
-    if (entryByValue) {
-      return entryByValue[0] as keyof typeof QuestPriority;
-    }
-
-    if (Object.keys(QuestPriority).includes(value)) {
-      return value as keyof typeof QuestPriority;
-    }
-
-    return DEFAULT_PRIORITY;
+  onApprehensionChange(event: any) {
+    this.questForm.patchValue({ advancement: event.value }); // this.advancement = event.value;
   }
 
   //#endregion
-
-  getPriorityKey(priority: QuestPriority | string): string {
-    const priorityString = typeof priority === 'string' ? priority : priority;
-
-    switch (priorityString) {
-      case QuestPriority.PRIMARY:
-      case 'PRIMARY':
-        return 'primary';
-      case QuestPriority.SECONDARY:
-      case 'SECONDARY':
-        return 'secondary';
-      case QuestPriority.TERTIARY:
-      case 'TERTIARY':
-        return 'tertiary';
-      default:
-        return 'tertiary';
-    }
-  }
-
-  get currentPriorityClass(): string {
-    const currentPriority = this.questForm?.get('priority')?.value || this.quest?.priority;
-    if (!currentPriority) return 'priority-tertiary';
-    return `priority-${this.getPriorityKey(currentPriority)}`;
-  }
-
-  get selectClasses() {
-    return {
-      'quest-readonly': !this.isEdit,
-      [this.currentPriorityClass]: true,
-    };
-  }
 
   get hasEstimatedTime(): boolean {
     const estimatedTime = this.quest?.estimatedTime ?? 0;
@@ -265,5 +248,31 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   get hasDescription(): boolean {
     const description = this.quest?.description ?? '';
     return description.trim().length > 0;
+  }
+
+  get defaultStatus() {
+    return '17c07323-d5b4-4568-b773-de3487ff30b1';
+  }
+
+  get defaultPriority() {
+    return '17c07323-d5b4-4568-b773-de3487ff30b1';
+  }
+
+  get statusColor() {
+    return this.statusOptions?.find(s => s.id === this.quest.statusId)?.color ?? '#f7f6f6ff';
+  }
+
+  get priorityColor() {
+    return this.priorityOptions?.find(p => p.id === this.quest.priorityId)?.color ?? '#f7f6f6ff';
+  }
+
+  getStatusName(statusId: string): string {
+    const status = this.statusOptions?.find(s => s.id === statusId);
+    return status ? status.name : 'Inconnu';
+  }
+
+  getPriorityName(priorityId: string): string {
+    const priority = this.priorityOptions?.find(p => p.id === priorityId);
+    return priority ? priority.name : 'Inconnu';
   }
 }
