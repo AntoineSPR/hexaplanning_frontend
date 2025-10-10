@@ -215,6 +215,7 @@ export class MapComponent implements OnInit {
             this.dialogVisible = false;
             this.selectedHex = null;
             this.selectedQuest = null;
+            this._questService.loadUnassignedPendingQuests();
           },
           error: err => {
             console.error('Failed to assign quest:', err);
@@ -235,6 +236,7 @@ export class MapComponent implements OnInit {
         .subscribe({
           next: () => {
             hex.quest = undefined;
+            this._questService.loadUnassignedPendingQuests();
           },
           error: err => {
             console.error('Failed to delete quest from hex:', err);
