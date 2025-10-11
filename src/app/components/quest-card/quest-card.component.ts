@@ -77,4 +77,16 @@ export class QuestCardComponent implements OnInit {
     return '';
     // return this.quest?.priority || 'Icône de priorité';
   }
+
+  get isInProgress(): boolean {
+    return this.quest?.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3';
+  }
+
+  get advancement(): number {
+    return this.quest?.advancement ?? 0;
+  }
+
+  get isCompleted(): boolean {
+    return this.quest?.statusId === '6662dfc1-9c40-4d78-806f-34cd22e07023';
+  }
 }

@@ -1,4 +1,8 @@
 .quest-card {
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease;
+
   &.done {
     opacity: 0.6;
     text-decoration: line-through;
@@ -10,9 +14,18 @@
     font-weight: bold;
     cursor: pointer;
     font-size: small;
+    position: relative;
+    z-index: 1;
   }
 
   select {
     margin-left: 10px;
+  }
+
+  // Ensure text and elements are readable over the progress background
+  .quest-checkbox,
+  .priority-icon {
+    position: relative;
+    z-index: 1;
   }
 }
