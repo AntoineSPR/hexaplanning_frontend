@@ -35,14 +35,16 @@
   word-break: break-word;
   line-height: 1.2;
   padding-top: 18px;
+  color: var(--text-color);
+  font-weight: bold;
 }
 
 .quest-delete {
   position: absolute;
   top: 0px;
   right: 35%;
-  background-color: white;
-  color: black;
+  background-color: black;
+  color: #b2abf2;
   border: none;
   border-radius: 50%;
   width: 18px;

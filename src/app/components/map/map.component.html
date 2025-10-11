@@ -36,8 +36,10 @@
     [attr.width]="size * 1.5"
     [attr.height]="size * 1.2">
     @if (h.quest) {
+    <!-- Unassign button -->
     <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)">X</button>
     }
+    <!-- Quest title -->
     <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
       <div class="hex_quest_title">
         {{ h.quest?.title || '' }}
