@@ -66,7 +66,6 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   priorityOptions = this._questService.priorities();
   statusOptions = this._questService.statuses();
   isEdit: boolean = false;
-  hasProgression = signal(false);
 
   ngOnInit(): void {
     this._createFormGroup();
@@ -251,6 +250,11 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   get hasDescription(): boolean {
     const description = this.quest?.description ?? '';
     return description.trim().length > 0;
+  }
+
+  get isInProgress(): boolean {
+    const statusId = this.questForm.get('statusId')?.value ?? this.quest?.statusId;
+    return statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3';
   }
 
   get defaultStatus() {
