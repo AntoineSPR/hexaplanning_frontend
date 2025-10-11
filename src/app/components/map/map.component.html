@@ -74,4 +74,18 @@
     <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
   </ng-template>
 </p-dialog>
+
+<!-- Confirmation dialog for quest unassignment -->
+<p-confirmdialog #cd>
+  <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
+    <div class="confirmation-dialog">
+      <p>{{ message.message }}</p>
+      <div class="flex items-center gap-2 justify-content-end">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Retirer</button>
+      </div>
+    </div>
+  </ng-template>
+</p-confirmdialog>
+
 <app-menu></app-menu>

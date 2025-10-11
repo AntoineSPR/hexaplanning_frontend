@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { QuestUpdateDTO } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
@@ -28,7 +30,8 @@ const MAX_PRIORITY_LEVEL = 3;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent],
+  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
+  providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
@@ -36,6 +39,7 @@ export class MapComponent implements OnInit {
   _questService = inject(QuestService);
   _hexService = inject(HexService);
   _questModalService = inject(QuestModalService);
+  private readonly _confirmationService = inject(ConfirmationService);
 
   hexes: Hex[] = [];
   size = HEX_SIZE;
@@ -230,18 +234,25 @@ export class MapComponent implements OnInit {
     if (hex.quest) {
       const questToUpdate = hex.quest;
 
-      this._hexService
-        .deleteAssignment(hex.q, hex.r, hex.s)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
-        .subscribe({
-          next: () => {
-            hex.quest = undefined;
-            this._questService.loadUnassignedPendingQuests();
-          },
-          error: err => {
-            console.error('Failed to delete quest from hex:', err);
-          },
-        });
+      this._confirmationService.confirm({
+        message: `Retirer la quête de la carte ?`,
+        closable: true,
+        closeOnEscape: true,
+        accept: () => {
+          this._hexService
+            .deleteAssignment(hex.q, hex.r, hex.s)
+            .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
+            .subscribe({
+              next: () => {
+                hex.quest = undefined;
+                this._questService.loadUnassignedPendingQuests();
+              },
+              error: err => {
+                console.error('Failed to delete quest from hex:', err);
+              },
+            });
+        },
+      });
     }
   }
 
