@@ -157,8 +157,8 @@ export class LoginComponent {
         next: () => {
           this._messageService.add({
             severity: 'success',
-            summary: 'Email envoyé',
-            detail: 'Un email de réinitialisation a été envoyé à votre adresse email.',
+            summary: 'Lien de réinitialisation de mot de passe',
+            detail: "Un email a été envoyé à l'adresse indiquée, si elle existe",
           });
           this.closeForgotPasswordModal();
         },

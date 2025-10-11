@@ -99,8 +99,8 @@ export class SettingsPageComponent {
         error: (error: any) => {
           this._messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: 'Erreur lors de la modification du mot de passe. Vérifiez votre mot de passe actuel.',
+            summary: 'Erreur lors de la modification du mot de passe.',
+            detail: 'Vérifiez votre mot de passe actuel.',
           });
           this.isLoading = false;
           console.error('Password change error:', error);

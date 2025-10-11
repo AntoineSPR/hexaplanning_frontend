@@ -38,8 +38,8 @@ export class ResetPasswordComponent implements OnInit {
         newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
         confirmPassword: ['', [Validators.required]],
       },
-      { 
-        validators: this.passwordMatchValidator
+      {
+        validators: this.passwordMatchValidator,
       }
     );
   }
@@ -93,8 +93,8 @@ export class ResetPasswordComponent implements OnInit {
         next: () => {
           this._messageService.add({
             severity: 'success',
-            summary: 'Succès',
-            detail: 'Mot de passe réinitialisé avec succès! Vous pouvez maintenant vous connecter.',
+            summary: 'Mot de passe réinitialisé avec succès!',
+            detail: 'Vous allez être redirigé.e vers la page de connexion',
           });
           this.isLoading = false;
           // Redirect to login after a delay
@@ -106,7 +106,7 @@ export class ResetPasswordComponent implements OnInit {
           this._messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Erreur lors de la réinitialisation. Le token pourrait être expiré.',
+            detail: 'Le token pourrait être expiré.',
           });
           this.isLoading = false;
           console.error('Reset password error:', error);
