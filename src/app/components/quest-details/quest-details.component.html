@@ -41,7 +41,7 @@
             {{ option.name }}
           </span>
         </ng-template></p-select
-      >} @else { <span class="font-bold" [style.color]="statusColor">{{ getStatusName(quest.statusId) }}</span>
+      >} @else { <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
       }
     </div>
   </div>
@@ -80,7 +80,7 @@
           </span>
         </ng-template></p-select
       >
-      } @else { <span class="font-bold" [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
+      } @else { <span [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
       }
     </div>
   </div>
