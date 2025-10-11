@@ -35,16 +35,16 @@ export class QuestCardComponent implements OnInit {
           severity: 'success',
           summary: 'Quête terminée !',
           detail: this.quest.title,
-          life: 1500,
+          life: 2000,
         });
       });
     } else {
       this._questService.updateQuest({ ...this.quest, statusId: this._questService.statusPendingId }).subscribe(result => {
         this._messageService.add({
           severity: 'success',
-          summary: 'Quête réouverte',
+          summary: 'Quête réactivée',
           detail: this.quest.title,
-          life: 1500,
+          life: 2000,
         });
       });
     }

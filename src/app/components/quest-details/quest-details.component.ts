@@ -24,7 +24,6 @@ import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { catchError, of } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
@@ -101,7 +100,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
           console.log('Quest created successfully');
           this._messageService.add({
             severity: 'success',
-            summary: 'Quête créée !',
+            summary: 'Quête créée',
+            detail: newQuest.title,
+            life: 2000,
           });
         },
         error: error => {
@@ -109,6 +110,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
             severity: 'error',
             summary: 'Erreur',
             detail: 'Erreur lors de la création de la quête',
+            life: 2000,
           });
         },
       });
@@ -118,18 +120,34 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         ...formValues,
       };
 
+      const wasCompleted = this.quest.statusId === this._questService.statusDoneId;
+      const isNowCompleted = updatedQuest.statusId === this._questService.statusDoneId;
+      const justCompleted = !wasCompleted && isNowCompleted;
+
       this._questService.updateQuest(updatedQuest).subscribe({
         next: () => {
-          this._messageService.add({
-            severity: 'success',
-            summary: 'Quête mise à jour !',
-          });
+          if (justCompleted) {
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Quête terminée !',
+              detail: this.quest.title,
+              life: 2000,
+            });
+          } else {
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Quête mise à jour',
+              detail: this.quest.title,
+              life: 2000,
+            });
+          }
         },
         error: error => {
           this._messageService.add({
             severity: 'error',
             summary: 'Erreur',
             detail: 'Erreur lors de la mise à jour de la quête',
+            life: 2000,
           });
         },
       });
@@ -169,6 +187,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
             this._messageService.add({
               severity: 'success',
               summary: 'Quête supprimée !',
+              detail: this.quest.title,
+              life: 2000,
             });
           },
           error: error => {
@@ -177,6 +197,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
               severity: 'error',
               summary: 'Erreur',
               detail: 'Erreur lors de la suppression de la quête',
+              life: 2000,
             });
           },
         });
