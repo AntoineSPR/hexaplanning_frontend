@@ -79,6 +79,30 @@ input {
     width: 200px !important;
   }
 
+  // PrimeNG Progress Bar styling
+  p-progressbar {
+    width: 100%;
+
+    .p-progressbar {
+      height: 20px !important;
+      background-color: var(--dark-theme-color) !important;
+      border-radius: 4px !important;
+      overflow: hidden !important;
+    }
+
+    .p-progressbar-value {
+      background-color: var(--theme-color) !important;
+      height: 100% !important;
+      transition: width 0.3s ease !important;
+    }
+
+    .p-progressbar-label {
+      color: white !important;
+      font-weight: bold !important;
+      font-size: 12px !important;
+    }
+  }
+
   textarea {
     min-height: 3.2rem;
     width: 100%;

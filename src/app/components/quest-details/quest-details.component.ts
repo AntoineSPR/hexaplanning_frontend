@@ -25,6 +25,7 @@ import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { catchError, of } from 'rxjs';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
   selector: 'app-quest-details',
@@ -43,6 +44,7 @@ import { catchError, of } from 'rxjs';
     ConfirmDialogModule,
     InputNumberModule,
     SliderModule,
+    ProgressBarModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
@@ -64,6 +66,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   priorityOptions = this._questService.priorities();
   statusOptions = this._questService.statuses();
   isEdit: boolean = false;
+  hasProgression = signal(false);
 
   ngOnInit(): void {
     this._createFormGroup();
@@ -234,8 +237,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     });
   }
 
-  onApprehensionChange(event: any) {
-    this.questForm.patchValue({ advancement: event.value }); // this.advancement = event.value;
+  onAdvancementChange(event: any) {
+    this.questForm.patchValue({ advancement: event.value });
   }
 
   //#endregion

@@ -46,12 +46,16 @@
     </div>
   </div>
   <div class="quest-field">
-    <label for="apprehension" class="font-bold">Jauge d'appréhension : </label>
+    <label for="advancement" class="font-bold">Progression : </label>
     <p>{{ questForm.get('advancement')?.value }}%</p>
   </div>
   @if (isEdit) {
   <div class="w-full">
-    <p-slider formControlName="advancement" (onChange)="onApprehensionChange($event)" [min]="0" [max]="100" [step]="5" />
+    <p-slider id="advancement" formControlName="advancement" (onChange)="onAdvancementChange($event)" [min]="0" [max]="100" [step]="5" />
+  </div>
+  } @else {
+  <div class="w-full">
+    <p-progressBar [value]="questForm.get('advancement')?.value" />
   </div>
   }
 
