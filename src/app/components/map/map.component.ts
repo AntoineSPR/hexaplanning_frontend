@@ -295,20 +295,6 @@ export class MapComponent implements OnInit {
     return questOutput.advancement || 0;
   }
 
-  getProgressColor(advancement: number): string {
-    // Green gradient based on progress
-    const opacity = 0.6;
-    if (advancement < 25) {
-      return `rgba(255, 193, 7, ${opacity})`; // Yellow for low progress
-    } else if (advancement < 50) {
-      return `rgba(255, 152, 0, ${opacity})`; // Orange for medium-low progress
-    } else if (advancement < 75) {
-      return `rgba(76, 175, 80, ${opacity})`; // Green for medium-high progress
-    } else {
-      return `rgba(46, 125, 50, ${opacity})`; // Dark green for high progress
-    }
-  }
-
   getHexClipId(hex: Hex): string {
     return `hex-clip-${hex.q}-${hex.r}-${hex.s}`;
   }

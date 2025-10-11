@@ -16,7 +16,7 @@
   @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
   <path
     [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
-    [attr.fill]="getProgressColor(getQuestAdvancement(h))"
+    [attr.fill]="'var(--dark-theme-color)'"
     [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
     stroke="none"
     (click)="handleHexClick(h)" />
