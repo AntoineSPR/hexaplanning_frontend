@@ -74,8 +74,8 @@ export class QuestCardComponent implements OnInit {
   }
 
   get priorityAltText(): string {
-    return '';
-    // return this.quest?.priority || 'Icône de priorité';
+    const priority = this._questService.priorities()?.find(p => p.id === this.quest.priorityId);
+    return priority?.name ?? 'Icône de priorité';
   }
 
   get isInProgress(): boolean {
