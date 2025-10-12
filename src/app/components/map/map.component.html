@@ -12,11 +12,11 @@
   <!-- Base hexagon -->
   <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
 
-  <!-- Progress overlay (if quest has advancement) -->
-  @if (h.quest && getQuestAdvancement(h) > 0) {
+  <!-- Progress overlay (if quest has advancement and is in progress) -->
+  @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
   <path
     [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
-    [attr.fill]="getProgressColor(getQuestAdvancement(h))"
+    [attr.fill]="'var(--dark-theme-color)'"
     [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
     stroke="none"
     (click)="handleHexClick(h)" />
@@ -36,8 +36,10 @@
     [attr.width]="size * 1.5"
     [attr.height]="size * 1.2">
     @if (h.quest) {
+    <!-- Unassign button -->
     <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)">X</button>
     }
+    <!-- Quest title -->
     <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
       <div class="hex_quest_title">
         {{ h.quest?.title || '' }}
@@ -50,7 +52,7 @@
 <p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
   <ng-template #header>
     @if (selectedHex) {
-    <h3>Assigner une quête en cours</h3>
+    <h3>Assigner une quête à accomplir</h3>
     }
   </ng-template>
 
@@ -62,7 +64,11 @@
       <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
         <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
         <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
-        <img class="priority-icon" [src]="getPriorityImagePath(quest)" [alt]="getPriorityAltText(quest)" [class]="'priority-'" />
+        <img
+          class="priority-icon"
+          [src]="getPriorityImagePath(quest)"
+          [alt]="getPriorityAltText(quest)"
+          [class]="'priority-' + getPriorityIcon(quest)" />
       </div>
       } }
     </div>
@@ -72,4 +78,18 @@
     <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
   </ng-template>
 </p-dialog>
+
+<!-- Confirmation dialog for quest unassignment -->
+<p-confirmdialog #cd>
+  <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
+    <div class="confirmation-dialog">
+      <p>{{ message.message }}</p>
+      <div class="flex items-center gap-2 justify-content-end">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Retirer</button>
+      </div>
+    </div>
+  </ng-template>
+</p-confirmdialog>
+
 <app-menu></app-menu>

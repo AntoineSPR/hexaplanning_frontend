@@ -24,7 +24,7 @@ import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { catchError, of } from 'rxjs';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
   selector: 'app-quest-details',
@@ -43,6 +43,7 @@ import { catchError, of } from 'rxjs';
     ConfirmDialogModule,
     InputNumberModule,
     SliderModule,
+    ProgressBarModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
@@ -99,7 +100,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
           console.log('Quest created successfully');
           this._messageService.add({
             severity: 'success',
-            summary: 'Quête créée !',
+            summary: 'Quête créée',
+            detail: newQuest.title,
+            life: 2000,
           });
         },
         error: error => {
@@ -107,6 +110,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
             severity: 'error',
             summary: 'Erreur',
             detail: 'Erreur lors de la création de la quête',
+            life: 2000,
           });
         },
       });
@@ -116,18 +120,34 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         ...formValues,
       };
 
+      const wasCompleted = this.quest.statusId === this._questService.statusDoneId;
+      const isNowCompleted = updatedQuest.statusId === this._questService.statusDoneId;
+      const justCompleted = !wasCompleted && isNowCompleted;
+
       this._questService.updateQuest(updatedQuest).subscribe({
         next: () => {
-          this._messageService.add({
-            severity: 'success',
-            summary: 'Quête mise à jour !',
-          });
+          if (justCompleted) {
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Quête terminée !',
+              detail: this.quest.title,
+              life: 2000,
+            });
+          } else {
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Quête mise à jour',
+              detail: this.quest.title,
+              life: 2000,
+            });
+          }
         },
         error: error => {
           this._messageService.add({
             severity: 'error',
             summary: 'Erreur',
             detail: 'Erreur lors de la mise à jour de la quête',
+            life: 2000,
           });
         },
       });
@@ -167,6 +187,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
             this._messageService.add({
               severity: 'success',
               summary: 'Quête supprimée !',
+              detail: this.quest.title,
+              life: 2000,
             });
           },
           error: error => {
@@ -175,6 +197,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
               severity: 'error',
               summary: 'Erreur',
               detail: 'Erreur lors de la suppression de la quête',
+              life: 2000,
             });
           },
         });
@@ -234,8 +257,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     });
   }
 
-  onApprehensionChange(event: any) {
-    this.questForm.patchValue({ advancement: event.value }); // this.advancement = event.value;
+  onAdvancementChange(event: any) {
+    this.questForm.patchValue({ advancement: event.value });
   }
 
   //#endregion
@@ -248,6 +271,11 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   get hasDescription(): boolean {
     const description = this.quest?.description ?? '';
     return description.trim().length > 0;
+  }
+
+  get isInProgress(): boolean {
+    const statusId = this.questForm.get('statusId')?.value ?? this.quest?.statusId;
+    return statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3';
   }
 
   get defaultStatus() {
@@ -274,5 +302,10 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   getPriorityName(priorityId: string): string {
     const priority = this.priorityOptions?.find(p => p.id === priorityId);
     return priority ? priority.name : 'Inconnu';
+  }
+
+  getPriorityIcon(priorityId: string): string {
+    const priority = this.priorityOptions?.find(p => p.id === priorityId);
+    return priority ? priority.icon || 'primary' : 'primary';
   }
 }

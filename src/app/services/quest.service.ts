@@ -54,7 +54,12 @@ export class QuestService {
   }
 
   getAllPendingQuests(): Observable<QuestUpdateDTO[]> {
-    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/pending`).pipe(tap(quests => this._pendingQuests.set(quests)));
+    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/pending`).pipe(
+      tap(quests => {
+        const sortedQuests = this.sortQuestsByPriority(quests);
+        this._pendingQuests.set(sortedQuests);
+      })
+    );
   }
 
   getAllCompletedQuests(): Observable<QuestUpdateDTO[]> {
@@ -62,7 +67,12 @@ export class QuestService {
   }
 
   getAllUnassignedPendingQuests(): Observable<QuestUpdateDTO[]> {
-    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/unassigned_pending`).pipe(tap(quests => this._unassignedPendingQuests.set(quests)));
+    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/unassigned_pending`).pipe(
+      tap(quests => {
+        const sortedQuests = this.sortQuestsByPriority(quests);
+        this._unassignedPendingQuests.set(sortedQuests);
+      })
+    );
   }
 
   getQuestById(id: string): Observable<QuestUpdateDTO> {
@@ -73,8 +83,8 @@ export class QuestService {
     return this._http.post<QuestUpdateDTO>(this._apiUrl, quest).pipe(
       tap(newQuest => {
         this._quests.update(quests => [...quests, newQuest]);
-        this._pendingQuests.update(quests => [...quests, newQuest]);
-        this._unassignedPendingQuests.update(quests => [...quests, newQuest]);
+        this._pendingQuests.update(quests => this.sortQuestsByPriority([...quests, newQuest]));
+        this._unassignedPendingQuests.update(quests => this.sortQuestsByPriority([...quests, newQuest]));
       })
     );
   }
@@ -96,17 +106,19 @@ export class QuestService {
         } else {
           // Remove from completed if pending
           this._completedQuests.update(quests => quests.filter(q => q.id !== updatedQuest.id));
-          // Add to pending if not already there
+          // Add to pending if not already there and maintain sorting
           this._pendingQuests.update(quests => {
             const exists = quests.some(q => q.id === updatedQuest.id);
-            return exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
+            const updatedQuests = exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
+            return this.sortQuestsByPriority(updatedQuests);
           });
 
           if (!updatedQuest.hexAssignmentId) {
-            // Add to unassigned if not already there
+            // Add to unassigned if not already there and maintain sorting
             this._unassignedPendingQuests.update(quests => {
               const exists = quests.some(q => q.id === updatedQuest.id);
-              return exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
+              const updatedQuests = exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
+              return this.sortQuestsByPriority(updatedQuests);
             });
           } else {
             // Remove from unassigned if now assigned
@@ -139,5 +151,37 @@ export class QuestService {
 
   public loadPriorities() {
     return this._http.get<Priority[]>(`${this._apiUrlBase}/priority`).pipe(tap(priorities => this.priorities.set(priorities)));
+  }
+
+  private sortQuestsByPriority(quests: QuestUpdateDTO[]): QuestUpdateDTO[] {
+    return quests.sort((a, b) => {
+      // Get priority information
+      const priorityA = this.priorities()?.find(p => p.id === a.priorityId);
+      const priorityB = this.priorities()?.find(p => p.id === b.priorityId);
+
+      // Define priority order (primary = 1, secondary = 2, tertiary = 3)
+      const getPriorityOrder = (priority: Priority | undefined): number => {
+        if (!priority || !priority.icon) return 999;
+        switch (priority.icon.toLowerCase()) {
+          case 'primary':
+            return 1;
+          case 'secondary':
+            return 2;
+          case 'tertiary':
+            return 3;
+          default:
+            return 999;
+        }
+      };
+
+      const orderA = getPriorityOrder(priorityA);
+      const orderB = getPriorityOrder(priorityB);
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      return 0;
+    });
   }
 }

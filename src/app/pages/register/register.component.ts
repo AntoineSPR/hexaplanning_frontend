@@ -89,8 +89,8 @@ export class RegisterComponent {
         error: error => {
           this._messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue lors de la création du compte. Veuillez réessayer.',
+            summary: 'Erreur lors de la création du compte',
+            detail: 'Veuillez réessayer.',
           });
           this.isLoading = false;
           console.error('Registration error:', error);

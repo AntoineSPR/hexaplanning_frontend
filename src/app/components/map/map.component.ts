@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { QuestUpdateDTO } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
@@ -16,19 +18,20 @@ type Hex = {
   s: number;
   cx: number;
   cy: number;
-  priority: number;
+  level: number;
   quest?: QuestUpdateDTO;
 };
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
-const MAX_PRIORITY_LEVEL = 3;
+const MAX_EXPANSION = 3;
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent],
+  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
+  providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
@@ -36,10 +39,11 @@ export class MapComponent implements OnInit {
   _questService = inject(QuestService);
   _hexService = inject(HexService);
   _questModalService = inject(QuestModalService);
+  private readonly _confirmationService = inject(ConfirmationService);
 
   hexes: Hex[] = [];
   size = HEX_SIZE;
-  maxPriorityLevel = MAX_PRIORITY_LEVEL;
+  maxExpansion = MAX_EXPANSION;
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
 
@@ -68,11 +72,11 @@ export class MapComponent implements OnInit {
 
     effect(() => {
       const deletedQuestId = this._questService.deletedQuestId();
-      // this.hexes.forEach(hex => {
-      //   if (hex.quest?.id === deletedQuestId) {
-      //     hex.quest = undefined;
-      //   }
-      // });
+      this.hexes.forEach(hex => {
+        if (hex.quest?.id === deletedQuestId) {
+          hex.quest = undefined;
+        }
+      });
     });
   }
 
@@ -86,14 +90,14 @@ export class MapComponent implements OnInit {
   generateHexes(): void {
     const hexes: Hex[] = [];
 
-    for (let priority = 0; priority <= this.maxPriorityLevel; priority++) {
-      for (let q = 0; q <= priority; q++) {
-        for (let r = Math.max(-priority, -q); r <= Math.min(priority, priority - q); r++) {
+    for (let level = 0; level <= this.maxExpansion; level++) {
+      for (let q = 0; q <= level; q++) {
+        for (let r = Math.max(-level, -q); r <= Math.min(level, level - q); r++) {
           const s = -q - r;
           const maxAbs = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-          if (maxAbs === priority) {
+          if (maxAbs === level) {
             const { cx, cy } = this.hexToPixel(q, r);
-            hexes.push({ q, r, s, cx, cy, priority });
+            hexes.push({ q, r, s, cx, cy, level });
           }
         }
       }
@@ -230,18 +234,25 @@ export class MapComponent implements OnInit {
     if (hex.quest) {
       const questToUpdate = hex.quest;
 
-      this._hexService
-        .deleteAssignment(hex.q, hex.r, hex.s)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
-        .subscribe({
-          next: () => {
-            hex.quest = undefined;
-            this._questService.loadUnassignedPendingQuests();
-          },
-          error: err => {
-            console.error('Failed to delete quest from hex:', err);
-          },
-        });
+      this._confirmationService.confirm({
+        message: `Retirer la quête de la carte ?`,
+        closable: true,
+        closeOnEscape: true,
+        accept: () => {
+          this._hexService
+            .deleteAssignment(hex.q, hex.r, hex.s)
+            .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
+            .subscribe({
+              next: () => {
+                hex.quest = undefined;
+                this._questService.loadUnassignedPendingQuests();
+              },
+              error: err => {
+                console.error('Failed to delete quest from hex:', err);
+              },
+            });
+        },
+      });
     }
   }
 
@@ -272,6 +283,11 @@ export class MapComponent implements OnInit {
     return 'primary';
   }
 
+  getPriorityIcon(quest: QuestUpdateDTO): string {
+    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
+    return priority?.icon ?? 'primary';
+  }
+
   getPriorityImagePath(quest: QuestUpdateDTO): string {
     const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
     const priorityKey = this.getPriorityKey(priority?.icon ?? 'primary');
@@ -293,20 +309,6 @@ export class MapComponent implements OnInit {
     // Cast to QuestOutputDTO to access advancement property
     const questOutput = hex.quest as any;
     return questOutput.advancement || 0;
-  }
-
-  getProgressColor(advancement: number): string {
-    // Green gradient based on progress
-    const opacity = 0.6;
-    if (advancement < 25) {
-      return `rgba(255, 193, 7, ${opacity})`; // Yellow for low progress
-    } else if (advancement < 50) {
-      return `rgba(255, 152, 0, ${opacity})`; // Orange for medium-low progress
-    } else if (advancement < 75) {
-      return `rgba(76, 175, 80, ${opacity})`; // Green for medium-high progress
-    } else {
-      return `rgba(46, 125, 50, ${opacity})`; // Dark green for high progress
-    }
   }
 
   getHexClipId(hex: Hex): string {

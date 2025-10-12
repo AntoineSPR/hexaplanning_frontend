@@ -1,6 +1,8 @@
 <h1>Paramètres</h1>
-<p-button label="Modifier le mot de passe" (click)="openPasswordModal()" styleClass="p-button-text" />
-<p-button label="Se déconnecter" (click)="logout()" styleClass="p-button-text" />
+<div class="settings-buttons">
+  <p-button label="Modifier le mot de passe" (click)="openPasswordModal()" variant="outlined" />
+  <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" />
+</div>
 
 <!-- Password Change Modal -->
 <p-dialog
@@ -79,3 +81,15 @@
 </p-dialog>
 
 <app-menu></app-menu>
+
+<p-confirmdialog #cd>
+  <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
+    <div class="confirmation-dialog">
+      <p>{{ message.message }}</p>
+      <div class="flex items-center gap-2">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Déconnexion</button>
+      </div>
+    </div>
+  </ng-template>
+</p-confirmdialog>

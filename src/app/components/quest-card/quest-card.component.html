@@ -1,4 +1,15 @@
-<button type="button" class="quest-card" (click)="openDetails()" (keydown.enter)="openDetails()">
+<button
+  type="button"
+  class="quest-card"
+  (click)="openDetails()"
+  (keydown.enter)="openDetails()"
+  [style.background]="
+    isInProgress
+      ? 'linear-gradient(to right, var(--progress-bar-color) ' + advancement + '%, transparent ' + advancement + '%)'
+      : isCompleted
+      ? 'var(--progress-bar-color)'
+      : null
+  ">
   <!-- Case à cocher -->
   <input
     type="checkbox"
@@ -20,5 +31,5 @@
     tabindex="0"
     (click)="$event.stopPropagation()"
     (keydown.enter)="$event.stopPropagation()"
-    [class]="'priority-'" />
+    [class]="'priority-' + priorityKey" />
 </button>

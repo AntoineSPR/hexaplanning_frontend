@@ -35,16 +35,16 @@ export class QuestCardComponent implements OnInit {
           severity: 'success',
           summary: 'Quête terminée !',
           detail: this.quest.title,
-          life: 1500,
+          life: 2000,
         });
       });
     } else {
       this._questService.updateQuest({ ...this.quest, statusId: this._questService.statusPendingId }).subscribe(result => {
         this._messageService.add({
           severity: 'success',
-          summary: 'Quête réouverte',
+          summary: 'Quête réactivée',
           detail: this.quest.title,
-          life: 1500,
+          life: 2000,
         });
       });
     }
@@ -74,7 +74,19 @@ export class QuestCardComponent implements OnInit {
   }
 
   get priorityAltText(): string {
-    return '';
-    // return this.quest?.priority || 'Icône de priorité';
+    const priority = this._questService.priorities()?.find(p => p.id === this.quest.priorityId);
+    return priority?.name ?? 'Icône de priorité';
+  }
+
+  get isInProgress(): boolean {
+    return this.quest?.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3';
+  }
+
+  get advancement(): number {
+    return this.quest?.advancement ?? 0;
+  }
+
+  get isCompleted(): boolean {
+    return this.quest?.statusId === '6662dfc1-9c40-4d78-806f-34cd22e07023';
   }
 }

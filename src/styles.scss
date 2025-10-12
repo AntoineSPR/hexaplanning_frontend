@@ -3,14 +3,16 @@
 :root {
   --background-color: #151515;
   --text-color: #ffffff;
-  --theme-color: blueviolet;
+  --theme-color: #8a2be2;
   --light-theme-color: #b87fed;
   --dark-theme-color: #521987;
   --primary-priority-color: #ffb300;
   --secondary-priority-color: #e1bee7;
   --primary-priority-bg-color: #e28a2b;
-  --secondary-priority-bg-color: lightgrey;
+  --secondary-priority-bg-color: #d3d3d3;
   --tertiary-priority-bg-color: #5e5b5b;
+  --progress-bar-color: #5e309674;
+  // --progress-bar-color: #b2abf2;
   font-family: 'Inter', sans-serif;
 }
 
@@ -151,7 +153,7 @@ h1 {
   max-width: 300px;
   margin: auto;
   font-weight: bold;
-  background-color: var(--theme-color);
+  background-color: var(--progress-bar-color);
   color: white;
   border-radius: 8px;
   animation: pop-in 300ms ease-out;
