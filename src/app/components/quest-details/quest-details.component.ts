@@ -303,4 +303,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     const priority = this.priorityOptions?.find(p => p.id === priorityId);
     return priority ? priority.name : 'Inconnu';
   }
+
+  getPriorityIcon(priorityId: string): string {
+    const priority = this.priorityOptions?.find(p => p.id === priorityId);
+    return priority ? priority.icon || 'primary' : 'primary';
+  }
 }

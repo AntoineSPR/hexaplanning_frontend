@@ -93,7 +93,28 @@ input {
   }
 
   .custom-select {
-    width: 200px !important;
+    width: 220px !important;
+  }
+
+  // Priority icon styling in selected item
+  .priority-icon {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    box-shadow: inset 0 0 3px black;
+    border-radius: 2px;
+
+    &.priority-primary {
+      background-color: var(--primary-priority-bg-color);
+    }
+
+    &.priority-secondary {
+      background-color: var(--secondary-priority-bg-color);
+    }
+
+    &.priority-tertiary {
+      background-color: var(--tertiary-priority-bg-color);
+    }
   }
 
   // PrimeNG Progress Bar styling

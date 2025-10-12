@@ -72,13 +72,29 @@
       optionLabel="name"
       optionValue="id"
       [styleClass]="'custom-select'">
+      <ng-template let-option pTemplate="selectedItem">
+        <div class="flex align-items-center gap-2">
+          <img class="priority-icon" [src]="'/icons/' + option.icon + '.png'" [alt]="option.name" [class]="'priority-' + option.icon" />
+          <span [class]="'priority-' + option.icon">
+            {{ option.name }}
+          </span>
+        </div>
+      </ng-template>
       <ng-template let-option pTemplate="item">
-        <span [class]="'priority-'">
+        <span [class]="'priority-' + option.icon">
           {{ option.name }}
         </span>
       </ng-template></p-select
     >
-    } @else { <span [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
+    } @else {
+    <div class="flex align-items-center gap-2">
+      <img
+        class="priority-icon"
+        [src]="'/icons/' + getPriorityIcon(quest.priorityId) + '.png'"
+        [alt]="getPriorityName(quest.priorityId)"
+        [class]="'priority-' + getPriorityIcon(quest.priorityId)" />
+      <span class="italic">{{ getPriorityName(quest.priorityId) }}</span>
+    </div>
     }
   </div>
 
