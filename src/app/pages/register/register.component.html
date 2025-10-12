@@ -92,6 +92,35 @@
         }
       </div>
 
+      <div class="form-field">
+        <div class="checkbox-container">
+          <p-checkbox formControlName="acceptCgu" [binary]="true" inputId="acceptCgu" [class.p-invalid]="hasAcceptCguError"> </p-checkbox>
+          <label for="acceptCgu" class="checkbox-label">
+            J'accepte les <a routerLink="/cgu" target="_blank" class="terms-link">Conditions Générales d'Utilisation</a>.
+          </label>
+        </div>
+        @if (hasAcceptCguError) {
+        <small class="p-error">
+          {{ acceptCguError }}
+        </small>
+        }
+      </div>
+
+      <div class="form-field">
+        <div class="checkbox-container">
+          <p-checkbox formControlName="acceptRgpd" [binary]="true" inputId="acceptRgpd" [class.p-invalid]="hasAcceptRgpdError"> </p-checkbox>
+          <label for="acceptRgpd" class="checkbox-label">
+            J'accepte le traitement de mes données personnelles conformément à la
+            <a routerLink="/rgpd" target="_blank" class="terms-link">Politique de Confidentialité</a>.
+          </label>
+        </div>
+        @if (hasAcceptRgpdError) {
+        <small class="p-error">
+          {{ acceptRgpdError }}
+        </small>
+        }
+      </div>
+
       <div class="form-actions">
         <p-button
           type="submit"

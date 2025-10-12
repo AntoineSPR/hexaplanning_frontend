@@ -8,6 +8,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
+import { CheckboxModule } from 'primeng/checkbox';
 import { UserService } from '../../services/user.service';
 import { UserCreateDTO } from '../../models/userCreateDTO.model';
 import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from '../../validators/password.validators';
@@ -18,7 +19,7 @@ const NO_ERRORS = 0;
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, InputTextModule, PasswordModule, ToastModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, InputTextModule, PasswordModule, ToastModule, CheckboxModule],
   providers: [MessageService],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
@@ -40,6 +41,8 @@ export class RegisterComponent {
         email: ['', [Validators.required, Validators.email]],
         password: ['', [Validators.required, apiPasswordValidator()]],
         confirmPassword: ['', [Validators.required]],
+        acceptCgu: [false, [Validators.requiredTrue]],
+        acceptRgpd: [false, [Validators.requiredTrue]],
       },
       { validators: passwordMatchValidator('password', 'confirmPassword') }
     );
@@ -180,6 +183,32 @@ export class RegisterComponent {
 
   get hasConfirmPasswordError(): boolean {
     const field = this.registerForm.get('confirmPassword');
+    return !!(field?.touched && field?.errors);
+  }
+
+  get acceptCguError(): string | null {
+    const field = this.registerForm.get('acceptCgu');
+    if (field?.touched && field?.errors) {
+      if (field.errors['required']) return "Vous devez accepter les Conditions Générales d'Utilisation";
+    }
+    return null;
+  }
+
+  get acceptRgpdError(): string | null {
+    const field = this.registerForm.get('acceptRgpd');
+    if (field?.touched && field?.errors) {
+      if (field.errors['required']) return 'Vous devez accepter la Politique de Confidentialité';
+    }
+    return null;
+  }
+
+  get hasAcceptCguError(): boolean {
+    const field = this.registerForm.get('acceptCgu');
+    return !!(field?.touched && field?.errors);
+  }
+
+  get hasAcceptRgpdError(): boolean {
+    const field = this.registerForm.get('acceptRgpd');
     return !!(field?.touched && field?.errors);
   }
 
