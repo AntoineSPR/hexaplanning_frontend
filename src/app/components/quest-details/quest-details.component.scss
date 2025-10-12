@@ -25,6 +25,22 @@
   align-items: center;
 }
 
+label {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.25rem;
+  color: var(--theme-color);
+}
+
+.invisible {
+  display: none;
+}
+
+.italic {
+  font-style: italic;
+  font-weight: normal;
+}
+
 input {
   font-family: inherit;
 }

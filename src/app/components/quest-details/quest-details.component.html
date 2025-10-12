@@ -4,7 +4,7 @@
     <button type="button" class="pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
     <!-- TITRE -->
     <div class="title">
-      <label for="title" class="visually-hidden">Titre</label>
+      <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
       <textarea
         id="title"
         formControlName="title"
@@ -15,9 +15,10 @@
           'quest-readonly': !isEdit,
           'p-invalid': questForm.get('title')?.invalid && questForm.get('title')?.touched
         }"
-        maxlength="100"
-        placeholder="Titre de la quête"></textarea>
-      @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
+        maxlength="100"></textarea>
+      @if (isEdit || isNew) {
+      <small>{{ questForm.get('title')?.value?.length || 0 }}/100</small>
+      } @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
       <small class="p-error block mt-1"> Le titre est obligatoire </small>
       }
     </div>
@@ -25,25 +26,23 @@
 
   <!-- STATUT -->
   <div class="flex flex-column align-content-center mt-2">
-    <div>
-      <label for="status" class="visually-hidden">Statut</label>
-      @if (isEdit) {
-      <p-select
-        id="status"
-        formControlName="statusId"
-        [options]="statusOptions ?? []"
-        [disabled]="!isEdit"
-        optionLabel="name"
-        optionValue="id"
-        [styleClass]="'custom-select'">
-        <ng-template let-option pTemplate="item">
-          <span>
-            {{ option.name }}
-          </span>
-        </ng-template></p-select
-      >} @else { <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
-      }
-    </div>
+    <label for="status" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Statut :</label>
+    @if (isEdit) {
+    <p-select
+      id="status"
+      formControlName="statusId"
+      [options]="statusOptions ?? []"
+      [disabled]="!isEdit"
+      optionLabel="name"
+      optionValue="id"
+      [styleClass]="'custom-select'">
+      <ng-template let-option pTemplate="item">
+        <span>
+          {{ option.name }}
+        </span>
+      </ng-template></p-select
+    >} @else { <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
+    }
   </div>
 
   @if (isInProgress) {
@@ -63,32 +62,30 @@
 
   <div class="flex flex-column align-content-center">
     <!-- PRIORITE -->
-    <div>
-      <label for="priority" class="visually-hidden">Priorité</label>
-      @if (isEdit) {
-      <p-select
-        id="priority"
-        formControlName="priorityId"
-        [options]="priorityOptions ?? []"
-        [readonly]="!isEdit"
-        optionLabel="name"
-        optionValue="id"
-        [styleClass]="'custom-select'">
-        <ng-template let-option pTemplate="item">
-          <span [class]="'priority-'">
-            {{ option.name }}
-          </span>
-        </ng-template></p-select
-      >
-      } @else { <span [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
-      }
-    </div>
+    <label for="priority" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Priorité :</label>
+    @if (isEdit) {
+    <p-select
+      id="priority"
+      formControlName="priorityId"
+      [options]="priorityOptions ?? []"
+      [readonly]="!isEdit"
+      optionLabel="name"
+      optionValue="id"
+      [styleClass]="'custom-select'">
+      <ng-template let-option pTemplate="item">
+        <span [class]="'priority-'">
+          {{ option.name }}
+        </span>
+      </ng-template></p-select
+    >
+    } @else { <span [style.color]="priorityColor">{{ getPriorityName(quest.priorityId) }}</span>
+    }
   </div>
 
   <!-- TEMPS ESTIME -->
   @if (isEdit || hasEstimatedTime) {
   <div class="quest-field py-2">
-    <label for="estimatedTime" class="font-bold">Temps estimé : </label>
+    <label for="estimatedTime">Temps estimé <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
     @if (isEdit) {
     <p-calendar
       id="estimatedTime"
@@ -113,7 +110,7 @@
   <!-- DETAILS -->
   @if (isEdit || hasDescription) {
   <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
-    <label for="description" class="text-center font-bold">Details :</label>
+    <label for="description">Détails <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
     <textarea
       id="description"
       formControlName="description"
