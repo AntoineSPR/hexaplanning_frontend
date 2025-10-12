@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { MenuComponent } from 'src/app/components/menu/menu.component';
 import { UserService } from 'src/app/services/user.service';
 import { ButtonModule } from 'primeng/button';
@@ -12,14 +12,26 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { ChangePasswordDTO } from 'src/app/models/changePasswordDTO.model';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 const MIN_PASSWORD_LENGTH = 6;
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MenuComponent, ButtonModule, DialogModule, CardModule, InputTextModule, PasswordModule, ToastModule],
-  providers: [MessageService],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MenuComponent,
+    ButtonModule,
+    DialogModule,
+    CardModule,
+    InputTextModule,
+    PasswordModule,
+    ToastModule,
+    ConfirmDialogModule,
+  ],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './settings-page.component.html',
   styleUrls: ['./settings-page.component.scss'],
 })
@@ -28,6 +40,7 @@ export class SettingsPageComponent {
   private readonly _router = inject(Router);
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _messageService = inject(MessageService);
+  private readonly _confirmationService = inject(ConfirmationService);
 
   user = this._userService.user;
 
@@ -168,7 +181,14 @@ export class SettingsPageComponent {
   }
 
   logout(): void {
-    this._userService.logoutUser();
-    this._router.navigate(['/login']);
+    this._confirmationService.confirm({
+      message: 'Êtes-vous sûr.e de vouloir vous déconnecter ?',
+      closable: true,
+      closeOnEscape: true,
+      accept: () => {
+        this._userService.logoutUser();
+        this._router.navigate(['/login']);
+      },
+    });
   }
 }
