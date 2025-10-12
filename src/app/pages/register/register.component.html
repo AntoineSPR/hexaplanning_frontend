@@ -56,6 +56,7 @@
 
       <div class="form-field">
         <label for="password" class="form-label">Mot de passe *</label>
+        <div class="form-label requirements-list">(Minimum : 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial)</div>
         <p-password
           formControlName="password"
           [toggleMask]="true"
@@ -66,7 +67,8 @@
           promptLabel="Entrez un mot de passe"
           weakLabel="Faible"
           mediumLabel="Moyen"
-          strongLabel="Fort"></p-password>
+          strongLabel="Fort">
+        </p-password>
         @if (hasPasswordError) {
         <small class="p-error">
           {{ passwordError }}

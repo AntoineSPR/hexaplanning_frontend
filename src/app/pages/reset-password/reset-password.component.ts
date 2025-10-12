@@ -9,8 +9,7 @@ import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { UserService } from '../../services/user.service';
 import { ResetPasswordDTO } from '../../models/resetPasswordDTO.model';
-
-const MIN_PASSWORD_LENGTH = 6;
+import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from '../../validators/password.validators';
 
 @Component({
   selector: 'app-reset-password',
@@ -35,11 +34,11 @@ export class ResetPasswordComponent implements OnInit {
   constructor() {
     this.resetPasswordForm = this._formBuilder.group(
       {
-        newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
+        newPassword: ['', [Validators.required, apiPasswordValidator()]],
         confirmPassword: ['', [Validators.required]],
       },
       {
-        validators: this.passwordMatchValidator,
+        validators: passwordMatchValidator('newPassword', 'confirmPassword'),
       }
     );
   }
@@ -56,26 +55,6 @@ export class ResetPasswordComponent implements OnInit {
       });
       this._router.navigate(['/login']);
     }
-  }
-
-  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const newPassword = control.get('newPassword');
-    const confirmPassword = control.get('confirmPassword');
-
-    if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-
-    if (confirmPassword?.hasError('passwordMismatch')) {
-      delete confirmPassword.errors?.['passwordMismatch'];
-      const errorsCount = Object.keys(confirmPassword.errors || {}).length;
-      if (errorsCount === 0) {
-        confirmPassword.setErrors(null);
-      }
-    }
-
-    return null;
   }
 
   onSubmit(): void {
@@ -128,11 +107,7 @@ export class ResetPasswordComponent implements OnInit {
   get newPasswordError(): string | null {
     const field = this.resetPasswordForm.get('newPassword');
     if (field?.touched && field?.errors) {
-      if (field.errors['required']) return 'Ce champ est requis';
-      if (field.errors['minlength']) {
-        const requiredLength = field.errors['minlength'].requiredLength;
-        return `Ce champ doit contenir au moins ${requiredLength} caractères`;
-      }
+      return getPasswordErrorMessage(field.errors);
     }
     return null;
   }
