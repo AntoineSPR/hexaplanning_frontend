@@ -4,6 +4,14 @@ h1 {
   color: var(--text-color);
 }
 
+.settings-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
 // Password Modal Styling
 ::ng-deep .p-dialog {
   width: 90vw;

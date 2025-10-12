@@ -1,6 +1,8 @@
 <h1>Paramètres</h1>
-<p-button label="Modifier le mot de passe" (click)="openPasswordModal()" styleClass="p-button-text" />
-<p-button label="Se déconnecter" (click)="logout()" styleClass="p-button-text" />
+<div class="settings-buttons">
+  <p-button label="Modifier le mot de passe" (click)="openPasswordModal()" variant="outlined" />
+  <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" />
+</div>
 
 <!-- Password Change Modal -->
 <p-dialog
