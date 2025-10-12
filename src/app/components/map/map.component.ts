@@ -18,14 +18,14 @@ type Hex = {
   s: number;
   cx: number;
   cy: number;
-  priority: number;
+  level: number;
   quest?: QuestUpdateDTO;
 };
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
-const MAX_PRIORITY_LEVEL = 3;
+const MAX_EXPANSION = 3;
 
 @Component({
   selector: 'app-map',
@@ -43,7 +43,7 @@ export class MapComponent implements OnInit {
 
   hexes: Hex[] = [];
   size = HEX_SIZE;
-  maxPriorityLevel = MAX_PRIORITY_LEVEL;
+  maxExpansion = MAX_EXPANSION;
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
 
@@ -90,14 +90,14 @@ export class MapComponent implements OnInit {
   generateHexes(): void {
     const hexes: Hex[] = [];
 
-    for (let priority = 0; priority <= this.maxPriorityLevel; priority++) {
-      for (let q = 0; q <= priority; q++) {
-        for (let r = Math.max(-priority, -q); r <= Math.min(priority, priority - q); r++) {
+    for (let level = 0; level <= this.maxExpansion; level++) {
+      for (let q = 0; q <= level; q++) {
+        for (let r = Math.max(-level, -q); r <= Math.min(level, level - q); r++) {
           const s = -q - r;
           const maxAbs = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-          if (maxAbs === priority) {
+          if (maxAbs === level) {
             const { cx, cy } = this.hexToPixel(q, r);
-            hexes.push({ q, r, s, cx, cy, priority });
+            hexes.push({ q, r, s, cx, cy, level });
           }
         }
       }
@@ -281,6 +281,11 @@ export class MapComponent implements OnInit {
       return priorityValue.toLowerCase();
     }
     return 'primary';
+  }
+
+  getPriorityIcon(quest: QuestUpdateDTO): string {
+    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
+    return priority?.icon ?? 'primary';
   }
 
   getPriorityImagePath(quest: QuestUpdateDTO): string {
