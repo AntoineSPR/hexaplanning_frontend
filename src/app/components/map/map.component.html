@@ -10,7 +10,17 @@
 
   @for (h of hexes; track $index) {
   <!-- Base hexagon -->
-  <polygon [attr.points]="getHexPoints(h.cx, h.cy)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(h)" (click)="handleHexClick(h)" />
+  <polygon
+    [attr.points]="getHexPoints(h.cx, h.cy)"
+    stroke="black"
+    stroke-width="1"
+    [attr.fill]="getHexColor(h)"
+    (click)="handleHexClick(h)"
+    (keydown)="handleHexKeydown($event, h)"
+    tabindex="0"
+    role="button"
+    [attr.aria-label]="getHexAriaLabel(h)"
+    class="hex-polygon" />
 
   <!-- Progress overlay (if quest has advancement and is in progress) -->
   @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
@@ -19,7 +29,9 @@
     [attr.fill]="'var(--dark-theme-color)'"
     [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
     stroke="none"
-    (click)="handleHexClick(h)" />
+    (click)="handleHexClick(h)"
+    tabindex="-1"
+    role="presentation" />
   }
 
   <!-- Border -->
@@ -28,7 +40,9 @@
     [attr.stroke]="getHexBorderColor(h)"
     [attr.stroke-width]="2"
     fill="none"
-    (click)="handleHexClick(h)" />
+    (click)="handleHexClick(h)"
+    tabindex="-1"
+    role="presentation" />
   <foreignObject
     class="hex_text_wrapper"
     [attr.x]="h.cx - size * 0.75"

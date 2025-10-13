@@ -1,6 +1,7 @@
-<div class="dashboard">
-  <h2>Bienvenue {{ user()?.firstName | titlecase }} {{ user()?.lastName | titlecase }} !</h2>
-  <br />
-  <p>Vous avez {{ pending_quests_number() }} quêtes à accomplir.</p>
-</div>
+<main class="dashboard">
+  <h1>Bienvenue {{ user()?.firstName | titlecase }} {{ user()?.lastName | titlecase }} !</h1>
+  <p>
+    Vous avez <span class="quest-count">{{ pending_quests_number() }}</span> quête{{ pending_quests_number() > 1 ? 's' : '' }} à accomplir.
+  </p>
+</main>
 <app-menu></app-menu>
