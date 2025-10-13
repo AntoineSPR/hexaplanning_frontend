@@ -75,61 +75,69 @@
 
 ## 1. <a name='Prsentationduprojet'></a>Présentation du projet
 
-HexaPlanning est une application web de gestion de tâches, pensée pour transformer la to-do list classique en une expérience visuelle et ludique. Reprenant la nomenclature des jeux-vidéos, les tâches sont appelées "quêtes". Chacune d'entre elles peut être placée sur une carte d’hexagones, permettant à l’utilisateur de visualiser ses objectifs comme un parcours à accomplir.
+Hexaplanning est une application web de gestion de tâches, pensée pour transformer la to-do list classique en une expérience visuelle et ludique. Reprenant la nomenclature des jeux-vidéos, les tâches sont appelées "quêtes". Chacune d'entre elles peut être placée sur une carte d’hexagones, permettant à l’utilisateur de visualiser ses objectifs comme un parcours à accomplir.
 
-Cette approche vise à rendre la planification plus motivante et interactive, en s’inspirant des mécaniques de jeu et de la gamification. L'application a été développée en mobile-first, favorisant une utilisation quotidienne permettant à l'utilisateur d'avoir un aperçu de sa progression et de la mettre à jour régulièrement.
+Cette approche vise à rendre la planification plus motivante et interactive, en s’inspirant des mécaniques de jeu et de la gamification. Hexaplanning est destinée tout particulièrement aux personnes sujètes à un trouble de l'attention et ayant de la difficulté à se concentrer sur une tâche à la fois.
+
+L'application a été développée en mobile-first, favorisant une utilisation quotidienne permettant à l'utilisateur d'avoir un aperçu de sa progression et de la mettre à jour régulièrement. Elle est bien entendu accessible également sur ordinateur, et l'utilisateur pourra se créer un compte pour accéder à sa progression depuis n'importe quel appareil.
 
 ## 2. <a name='Objectifsetcontexte'></a>Objectifs et contexte
 
-Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. HexaPlanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
+Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. Hexaplanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
 
 # II. Fonctionnalités principales
 
 ## 1. <a name='Gestiondesqutestches'></a>Gestion des quêtes (tâches)
 
-Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre et une priorité (primaire, secondaire ou tertiaire, avec code couleur associé), ainsi qu’une description et un temps estimé en option. L’utilisateur peut créer, éditer, supprimer ou marquer une quête comme terminée.
+Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre, un statut (en attente, en cours et terminée) et une priorité (primaire, secondaire ou tertiaire, avec une icône et un code couleur associés), ainsi qu’une description et un temps estimé en option, ainsi qu'un pourcentage de progression (associé à une barre de progression) dans le cas des quêtes en cours. L’utilisateur peut créer, éditer ou supprimer une quête, la marquer rapidement comme terminée ou la remettre en attente, et l'associer à un hexagone sur la carte prévue à cet effet.
 
-// TODO : Insérer screenshot détail de quête
+<!-- // TODO : Insérer screenshot détail de quête -->
 
-Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets.
+Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets. Les quêtes à accomplir sont triées par ordre de priorité.
 
-// TODO : Insérer screenshot liste de quêtes
+<!-- // TODO : Insérer screenshot liste de quêtes -->
 
-Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée.
+Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée. Si la quête est indiquée comme "en cours", la barre de progression s'affiche directement sur l'aperçu de la quête, la remplissant progressivement d'une couleur plus sombre. Les quêtes terminées sont entièrement remplies.
 
 ## 2. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (carte)
 
-L’originalité d’HexaPlanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement sa priorité. Les quêtes terminées apparaissent quant à elle avec un fond plus sombre.
+L’originalité d’Hexaplanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement sa priorité (orangé pour les principales, argenté pour les secondaires, et aucun liseré pour les tertiaires). Les quêtes terminées apparaissent avec un fond plus sombre, et les quêtes en cours disposent d'une barre de progression radiale qui remplit progressivement l'hexagone avec cette couleur, à la manière d'une horloge.
 
-// TODO : Insérer screenshot map
+<!-- // TODO : Insérer screenshot map -->
 
-L’utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone vide, faisant apparaître une modale contenant la liste de toutes les quêtes non accomplies, et en sélectionnant la quête de son choix. Il pourra ensuite la désassigner d’un simple clic sur l'icône de croix au-dessus du titre de la quête. Ainsi, il pourra visualiser son parcours comme un chemin à accomplir.
+L’utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone vide, faisant apparaître une modale contenant la liste de toutes les quêtes non accomplies, et en sélectionnant la quête de son choix. Il pourra ensuite la désassigner d’un simple clic sur l'icône de croix au-dessus du titre de la quête, ce qui déclenchera une modale de confirmation.
 
-// TODO : Insérer screenshot modale d'assignation
+<!-- // TODO : Insérer screenshot modale d'assignation -->
 
-Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un élément pour afficher les détails de la quête assignée à cet hexagone, et éventuellement modifier ou supprimer la quête, ou la passer d'un état à l'autre (accomplie ou non accomplie).
+Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un hexagone associé à une quête pour afficher les détails de la quête en question, et éventuellement modifier ou supprimer la quête (ce qui la fera disparaître de la carte et des listes).
 
 ## 3. <a name='Systmedauthentificationetgestiondesutilisateurs'></a>Système d’authentification et gestion des utilisateurs
 
-L’accès à l’application nécessite la création d’un compte et une authentification sécurisée.
+L’accès à l’application nécessite la création d’un compte et une authentification sécurisée. L'utilisateur devra accepter les CGU et la politique de confidentialité, accessibles via des liens sur le formulaire de création de compte. Le mot de passe choisi devra respecter les normes standard : au minimum 8 caractères dont 1 lettre majuscule, 1 lettre minuscule, 1 chiffre et 1 caractère spécial. Après son enregistrement, l'utilisateur sera redirigé vers la page de connexion, et il peut aisément naviguer entre la connexion et la création de compte via un lien en bas de page.
 
-// TODO : Insérer screenshots écran register + login
+<!-- // TODO : Insérer screenshots écran register + login -->
 
-Un système de gestion des mots de passe oubliés est en place, avec envoi d’email pour la réinitialisation.
+Un système de gestion des mots de passe oubliés est en place, avec envoi d’email pour la réinitialisation. Lorsque l'utilisateur clique sur "mot de passe oublié", une modale s'ouvre. Si l'utilisateur avait déjà rentré son adresse e-mail dans le champ de connexion, il sera automatiquement reporté dans le champ de la modale. Au clic sur le bouton d'envoi, un toast informe l'utilisateur qu'un mail a été délivré à l'adresse indiquée, si elle existe. En effet, il s'agit de ne pas confirmer ou infirmer la présence de cette adresse e-mail dans la base de données. De plus, il ne peut y avoir qu'une seule requête vers la même adresse toutes les 5 minutes, afin d'éviter le spam d'une adresse e-mail et la saturation du service de mail.
 
-// TODO : Insérer screenshots modale mdp oublié + écran reset
+<!-- // TODO : Insérer screenshot modale mdp oublié -->
 
-L’utilisateur peut également changer son mot de passe depuis l’interface, en accédant au menu des paramètres, et il peut bien entendu se déconnecter depuis ce même menu.
+Le destinataire recevera un mail contenant un lien de réinitialisation de mot de passe. Ce lien le redirigera vers la page prévue à cet effet, avec dans l'url un token valable une heure, et l'adresse e-mail du compte à modifier. Sans ces deux éléments valides, la requête ne pourra être acceptée. L'utilisateur n'a plus qu'à rentrer son nouveau mot de passe et à le confirmer, avant d'être redirigé vers la page de connexion.
 
-// TODO : Insérer screenshots menu paramètres + edit pwd
+<!-- // TODO : Insérer screenshots mail + écran reset -->
+
+L’utilisateur peut également changer son mot de passe depuis l’interface : en accédant au menu des paramètres, il aura la possibilité d'ouvrir une modale lui demandant son mot de passe actuel ainsi que le nouveau. Depuis ce même menu, il pourra se déconnecter de l'application.
+
+<!-- // TODO : Insérer screenshots menu paramètres + edit pwd -->
 
 La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
+
+<!-- TODO : A développer -->
 
 ## 4. <a name='Navigationetergonomie'></a>Navigation et ergonomie
 
 L’application propose un menu apparaissant en permanence en bas de page, et permettant de naviguer entre l’accueil, les listes de quêtes, la carte des hexagones et les paramètres. Un bouton dédié au centre du menu permet de créer rapidement une nouvelle quête, qui viendra s'insérer dans la liste qui lui correspond, et sera accessible dans la modale d'assignation à un hexagone.
 
-// TODO : Insérer screenshots menu x4
+<!-- // TODO : Insérer screenshots menu x4 -->
 
 L’interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l’engagement et la productivité de l’utilisateur.
 
@@ -137,19 +145,22 @@ L’interface est pensée pour être intuitive, responsive et agréable à utili
 
 ## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
 
-// TODO : Ajouter 1:n etc. à chaque liaison
-
+<!-- // TODO : Ajouter 1:n etc. à chaque liaison -->
+<!-- TODO : refaire avec le nouveau modèle -->
 <img src="images/mcd.png" />
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
-//TODO : Ajouter Mail avec templates et status d'envoi (succès/échec)
+<!-- //TODO : Ajouter Mail avec templates et status d'envoi (succès/échec) -->
+<!-- TODO : refaire avec le nouveau modèle -->
 
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, ...)
 - Table **Quest** (Id PK, Title, Description, EstimatedTime, Priority, IsDone, IsAssigned, UserId FK, HexAssignmentId FK)
 - Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, UserId FK)
 
 ## 3. <a name='Descriptiondesentitsetrelations'></a>Description des entités et relations
+
+<!-- TODO : refaire avec le nouveau modèle -->
 
 - Un utilisateur peut créer plusieurs quêtes.
   Il possède :
@@ -190,7 +201,7 @@ L’interface est pensée pour être intuitive, responsive et agréable à utili
 
 ## 1. <a name='Vuedensemble'></a> Vue d’ensemble
 
-L’architecture d’HexaPlanning repose sur un frontend Angular, un backend .NET et une base de données PostgreSQL. Elle fait également appel à Brevo pour permettre l'envoi de mails. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
+L’architecture d’Hexaplanning repose sur un frontend Angular (avec PrimeNG pour les composants de base), un backend .NET et une base de données PostgreSQL. Elle fait également appel à Brevo pour permettre l'envoi de mails. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
 
 ### <a name='Schmaglobal'></a>Schéma global
 
@@ -243,7 +254,7 @@ Cette architecture garantit robustesse, évolutivité et sécurité, tout en per
 
 # V. Qualité logicielle et tests
 
-La qualité logicielle d’HexaPlanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
+La qualité logicielle d’Hexaplanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
 
 ## 1. <a name='Testsunitairesbackend'></a> Tests unitaires (backend)
 
@@ -385,7 +396,7 @@ Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
 # VII. Sécurité
 
-La sécurité est un pilier central d’HexaPlanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
+La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
 ## 1. <a name='Authentificationetgestiondesaccs'></a> Authentification et gestion des accès
 
@@ -418,7 +429,7 @@ Cette approche globale permet de garantir un haut niveau de sécurité pour les 
 
 # VIII. Technologies utilisées
 
-Le projet HexaPlanning s’appuie sur un ensemble de technologies modernes, choisies pour leur robustesse, leur écosystème et leur adéquation avec les besoins fonctionnels et non fonctionnels du projet.
+Le projet Hexaplanning s’appuie sur un ensemble de technologies modernes, choisies pour leur robustesse, leur écosystème et leur adéquation avec les besoins fonctionnels et non fonctionnels du projet.
 
 ## 1. <a name='Frontend'></a> Frontend
 
@@ -454,13 +465,13 @@ Ces choix technologiques assurent la robustesse, la sécurité et l’évolutivi
 
 ## 1. <a name='Bilanduprojet'></a> Bilan du projet
 
-HexaPlanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
+Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L’architecture modulaire et la conteneurisation facilitent la maintenance et l’évolutivité.
 
 ## 2. <a name='Perspectivesdvolution'></a> Perspectives d’évolution
 
-Les évolutions futures d’HexaPlanning s’articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
+Les évolutions futures d’Hexaplanning s’articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
 - **Sécurité et gestion des comptes**
 
