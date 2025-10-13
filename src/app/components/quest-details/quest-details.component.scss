@@ -1,3 +1,8 @@
+.return:focus {
+  outline-color: var(--theme-color) !important;
+  box-shadow: 0 0 0 2px var(--theme-color) !important;
+}
+
 .quest-form-group {
   display: flex;
   flex-direction: column;
