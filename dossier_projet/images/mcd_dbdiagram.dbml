@@ -1,0 +1,74 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table USERAPP {
+  Id Guid [pk]
+  FirstName string [not null]
+  LastName string [not null]
+  Email string [not null, unique]
+  PasswordHash string [not null]
+  CreatedAt DateTime [not null, default: `now()`]
+  UpdatedAt DateTime
+  IsArchived bool [not null, default: false]
+}
+
+Table QUEST {
+  Id Guid [pk]
+  Title string(100) [not null]
+  Description text
+  EstimatedTime int
+  Advancement int
+  UserId Guid [ref: > USERAPP.Id, not null]
+  PriorityId Guid [ref: > PRIORITY.Id, not null]
+  StatusId Guid [ref: > STATUS.Id, not null]
+  HexAssignmentId Guid [ref: - HEXASSIGNMENT.Id]
+  CreatedAt DateTime [not null, default: `now()`]
+  UpdatedAt DateTime
+  IsArchived bool [not null, default: false]
+}
+
+Table PRIORITY {
+  Id Guid [pk]
+  Name string [not null]
+  Color string [not null]
+  BorderColor string
+  Icon string
+  CreatedAt DateTime [not null, default: `now()`]
+  UpdatedAt DateTime
+  IsArchived bool [not null, default: false]
+}
+
+Table STATUS {
+  Id Guid [pk]
+  Name string [not null]
+  Color string [not null]
+  Icon string
+  CreatedAt DateTime [not null, default: `now()`]
+  UpdatedAt DateTime
+  IsArchived bool [not null, default: false]
+}
+
+Table HEXASSIGNMENT {
+  Id Guid [pk]
+  Q int [not null]
+  R int [not null]
+  S int [not null]
+  QuestId Guid [ref: - QUEST.Id, not null]
+  CreatedAt DateTime [not null, default: `now()`]
+  UpdatedAt DateTime
+  IsArchived bool [not null, default: false]
+}
+
+Table MAIL {
+  MailTo string
+  MailSubject string
+  MailBody text
+  MailFrom string
+  Receiver Guid [ref: > USERAPP.Id]
+}
+
+// Relationships are defined inline with [ref: ] syntax
+// > : one-to-many
+// - : one-to-one
+// < : many-to-one
+// <> : many-to-many

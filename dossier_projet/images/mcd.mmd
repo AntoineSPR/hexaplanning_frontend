@@ -1,30 +1,71 @@
 erDiagram
-   USERAPP ||--o{ QUEST : possède
-   QUEST }o--|| HEXASSIGNMENT : "est assignée à"
-
-   USERAPP {
-      Guid Id PK
-      string FirstName
-      string LastName
-      string Email
-      string PasswordHash
-   }
-   QUEST {
-      Guid Id PK
-      string Title
-      string Description
-      int EstimatedTime
-      string Priority
-      bool IsDone
-      bool IsAssigned
-   Guid UserId FK
-   int HexAssignmentId FK
-   }
-   HEXASSIGNMENT {
-      int Id PK
-      int Q
-      int R
-      int S
-      Guid QuestId FK
-      Guid UserId FK
-   }
+    USERAPP ||--o{ QUEST : possède
+    QUEST }o--|| PRIORITY : "a une"
+    QUEST }o--|| STATUS : "a un"
+    QUEST ||--o| HEXASSIGNMENT : "peut être assignée à"
+    
+    USERAPP {
+        Guid Id PK
+        string FirstName
+        string LastName
+        string Email
+        string PasswordHash
+        DateTime CreatedAt
+        DateTime UpdatedAt
+        bool IsArchived
+    }
+    
+    QUEST {
+        Guid Id PK
+        string Title
+        string Description
+        int EstimatedTime
+        int Advancement
+        Guid UserId FK
+        Guid PriorityId FK
+        Guid StatusId FK
+        Guid HexAssignmentId FK
+        DateTime CreatedAt
+        DateTime UpdatedAt
+        bool IsArchived
+    }
+    
+    PRIORITY {
+        Guid Id PK
+        string Name
+        string Color
+        string BorderColor
+        string Icon
+        DateTime CreatedAt
+        DateTime UpdatedAt
+        bool IsArchived
+    }
+    
+    STATUS {
+        Guid Id PK
+        string Name
+        string Color
+        string Icon
+        DateTime CreatedAt
+        DateTime UpdatedAt
+        bool IsArchived
+    }
+    
+    HEXASSIGNMENT {
+        Guid Id PK
+        int Q
+        int R
+        int S
+        Guid QuestId FK
+        DateTime CreatedAt
+        DateTime UpdatedAt
+        bool IsArchived
+    }
+    
+    MAIL {
+        string MailTo
+        string MailSubject
+        string MailBody
+        string MailFrom
+        UserApp Receiver
+    }

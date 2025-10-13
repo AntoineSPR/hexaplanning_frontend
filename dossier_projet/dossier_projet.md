@@ -131,7 +131,7 @@ L’utilisateur peut également changer son mot de passe depuis l’interface : 
 
 La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
 
-<!-- TODO : A développer -->
+<!-- TODO : A développer (dans une autre section ?) -->
 
 ## 4. <a name='Navigationetergonomie'></a>Navigation et ergonomie
 
@@ -146,56 +146,87 @@ L’interface est pensée pour être intuitive, responsive et agréable à utili
 ## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
 
 <!-- // TODO : Ajouter 1:n etc. à chaque liaison -->
-<!-- TODO : refaire avec le nouveau modèle -->
+<!-- TODO : peaufiner le nouveau modèle -->
 <img src="images/mcd.png" />
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
-<!-- //TODO : Ajouter Mail avec templates et status d'envoi (succès/échec) -->
-<!-- TODO : refaire avec le nouveau modèle -->
-
-- Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, ...)
-- Table **Quest** (Id PK, Title, Description, EstimatedTime, Priority, IsDone, IsAssigned, UserId FK, HexAssignmentId FK)
-- Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, UserId FK)
+- Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, CreatedAt, UpdatedAt, IsArchived, ...)
+- Table **Quest** (Id PK, Title, Description, EstimatedTime, Advancement, UserId FK, PriorityId FK, StatusId FK, HexAssignmentId FK, CreatedAt, UpdatedAt, IsArchived)
+- Table **Priority** (Id PK, Name, Color, BorderColor, Icon, CreatedAt, UpdatedAt, IsArchived)
+- Table **Status** (Id PK, Name, Color, Icon, CreatedAt, UpdatedAt, IsArchived)
+- Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, CreatedAt, UpdatedAt, IsArchived)
+- Table **Mail** (MailTo, MailSubject, MailBody, MailFrom, Receiver)
 
 ## 3. <a name='Descriptiondesentitsetrelations'></a>Description des entités et relations
 
-<!-- TODO : refaire avec le nouveau modèle -->
+### UserApp (Utilisateur)
 
 - Un utilisateur peut créer plusieurs quêtes.
   Il possède :
-
   - Un nom et un prénom.
-  - Une adresse e-mail.
+  - Une adresse e-mail unique.
   - Un mot de passe (hashé dans la base de données).
   - Une liste de quêtes.
-  - Un token d'authentification lié à la session.
+  - Des métadonnées : date de création, date de mise à jour, statut d'archivage.
+
+### Quest (Quête)
 
 - Une quête appartient à un seul utilisateur.
   Elle possède :
-
   - Un titre (limité à 100 caractères).
-  - Une priorité choisie dans un enum composé de 3 options (par défaut TERTIARY).
   - Optionnellement, une description.
   - Optionnellement, un temps estimé.
+  - Un pourcentage d'avancement (Advancement) pour les quêtes en cours.
   - Un UserId pour la rattacher à son utilisateur.
-  - Optionnellement, un HexAssignment pour l'assigner à un hexagone.
-  - Un booléen isDone pour déterminer son état.
-  - Un booléen isAssigned pour déterminer son assignation éventuelle et pouvoir l'afficher dans la liste des quêtes assignables, ou non.
+  - Un PriorityId pour définir sa priorité.
+  - Un StatusId pour définir son statut.
+  - Optionnellement, un HexAssignmentId pour l'assigner à un hexagone.
+  - Des métadonnées : date de création, date de mise à jour, statut d'archivage.
 
-- Une quête peut être assignée à un hexagone (HexAssignment) ou non.
+### Priority (Priorité)
 
-- Un hexagone (HexAssignment) est lié à une seule quête et à un seul utilisateur (pour la personnalisation de la map). Il possède :
+- Une priorité peut être associée à plusieurs quêtes.
+  Elle possède :
+  - Un nom (PRIMARY, SECONDARY, TERTIARY).
+  - Une couleur principale.
+  - Une couleur de bordure (BorderColor) pour l'affichage sur la carte.
+  - Optionnellement, une icône.
+  - Des métadonnées : date de création, date de mise à jour, statut d'archivage.
 
-  - Un jeu de coordonnées q, r, s qui lui est unique.
-  - Une quêtes assignée éventuellement.
-  - Un utilisateur auquel il appartient.
+### Status (Statut)
 
-- Un mail est indépendant et permet d'envoyer un lien de réinitialisation de mot de passe, et plus tard un message de bienvenue et un lien d'activation de compte, ou tout autre communication nécessaire au bon fonctionnement de l'application. Il possède :
-  - Un sujet.
-  - Un corps de message.
-  - Un destinataire.
-  - Un expéditeur.
+- Un statut peut être associé à plusieurs quêtes.
+  Il possède :
+  - Un nom (en attente, en cours, terminée).
+  - Une couleur pour l'affichage.
+  - Optionnellement, une icône.
+  - Des métadonnées : date de création, date de mise à jour, statut d'archivage.
+
+### HexAssignment (Assignation d'hexagone)
+
+- Un hexagone (HexAssignment) est lié à une seule quête.
+  Il possède :
+  - Un jeu de coordonnées q, r, s qui lui est unique (système de coordonnées hexagonales).
+  - Un QuestId pour la quête assignée.
+  - Des métadonnées : date de création, date de mise à jour, statut d'archivage.
+
+### Mail
+
+- Un mail est indépendant et permet d'envoyer des communications (réinitialisation de mot de passe, bienvenue, etc.).
+  Il possède :
+  - Un destinataire (MailTo).
+  - Un sujet (MailSubject).
+  - Un corps de message (MailBody).
+  - Un expéditeur (MailFrom).
+  - Un destinataire lié à un utilisateur (Receiver).
+
+### Relations principales :
+
+- **UserApp 1:N Quest** : Un utilisateur possède plusieurs quêtes.
+- **Quest N:1 Priority** : Une quête a une priorité.
+- **Quest N:1 Status** : Une quête a un statut.
+- **Quest 1:1 HexAssignment** : Une quête peut être assignée à un hexagone (optionnel).
 
 # IV. Architecture technique
 
