@@ -24,12 +24,5 @@
     {{ quest.title }}
   </span>
 
-  <img
-    class="priority-icon"
-    [src]="priorityImagePath"
-    [alt]="priorityAltText"
-    tabindex="0"
-    (click)="$event.stopPropagation()"
-    (keydown.enter)="$event.stopPropagation()"
-    [class]="'priority-' + priorityKey" />
+  <img class="priority-icon" [src]="priorityImagePath" [alt]="priorityAltText" [class]="'priority-' + priorityKey" />
 </button>

@@ -1,9 +1,21 @@
 <nav class="menubar" role="navigation" aria-label="Navigation principale">
-  <div [routerLink]="['/']" class="menu-item" tabindex="0" role="menuitem" aria-label="Accueil - Tableau de bord">
+  <div
+    [routerLink]="['/']"
+    class="menu-item"
+    tabindex="0"
+    role="menuitem"
+    aria-label="Accueil - Tableau de bord"
+    (keydown)="onKeydownNavigation($event, '/')">
     <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'home' }">home</i>
   </div>
 
-  <div [routerLink]="['/quest-list']" class="menu-item" tabindex="0" role="menuitem" aria-label="Liste des quêtes">
+  <div
+    [routerLink]="['/quest-list']"
+    class="menu-item"
+    tabindex="0"
+    role="menuitem"
+    aria-label="Liste des quêtes"
+    (keydown)="onKeydownNavigation($event, '/quest-list')">
     <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'quest-list' }">format_list_bulleted</i>
   </div>
 
@@ -18,11 +30,23 @@
     <i class="pi pi-plus icon" [ngClass]="{ active: activeIcon === 'plus' }"></i>
   </div>
 
-  <div [routerLink]="['/map']" class="menu-item" tabindex="0" role="menuitem" aria-label="Carte hexagonale">
+  <div
+    [routerLink]="['/map']"
+    class="menu-item"
+    tabindex="0"
+    role="menuitem"
+    aria-label="Carte hexagonale"
+    (keydown)="onKeydownNavigation($event, '/map')">
     <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'map' }">hexagon</i>
   </div>
 
-  <div [routerLink]="['/settings']" class="menu-item" tabindex="0" role="menuitem" aria-label="Paramètres de l'application">
+  <div
+    [routerLink]="['/settings']"
+    class="menu-item"
+    tabindex="0"
+    role="menuitem"
+    aria-label="Paramètres de l'application"
+    (keydown)="onKeydownNavigation($event, '/settings')">
     <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'settings' }">settings</i>
   </div>
 </nav>
