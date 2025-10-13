@@ -1,7 +1,7 @@
 <form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
   <div class="flex gap-2 justify-content-start align-content-start">
     <!-- BOUTON RETOUR -->
-    <button type="button" class="pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
+    <button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
     <!-- TITRE -->
     <div class="title">
       <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
