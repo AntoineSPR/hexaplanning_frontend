@@ -9,10 +9,11 @@
 
 **II. [Fonctionnalités principales](#ii-fonctionnalités-principales)**
 
-1.  [Gestion des quêtes (tâches)](#ii-1-gestion-des-quêtes-tâches)
-2.  [Affichage visuel en hexagones (carte)](#ii-2-affichage-visuel-en-hexagones-map)
-3.  [Système d’authentification et gestion des utilisateurs](#ii-3-système-d-authentification-et-gestion-des-utilisateurs)
-4.  [Navigation et ergonomie](#ii-4-navigation-et-ergonomie)
+1.  [Page d'accueil](#ii-1-page-d-accueil)
+2.  [Gestion des quêtes (tâches)](#ii-2-gestion-des-quêtes-tâches)
+3.  [Affichage visuel en hexagones (carte)](#ii-3-affichage-visuel-en-hexagones-map)
+4.  [Système d'authentification et gestion des utilisateurs](#ii-4-système-d-authentification-et-gestion-des-utilisateurs)
+5.  [Navigation et ergonomie](#ii-5-navigation-et-ergonomie)
 
 **III. [Modélisation des données](#iii-modélisation-des-données)**
 
@@ -87,67 +88,218 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 # II. Fonctionnalités principales
 
-## 1. <a name='Gestiondesqutestches'></a>Gestion des quêtes (tâches)
+## 1. <a name='PagedAccueil'></a>Page d'accueil
+
+<div align="center">
+<img src="images/dashboard.png" width="200" />
+</div>
+
+<div align="center">
+<em>Page d'accueil d'Hexaplanning.</em>
+</div>
+
+La page d'accueil apparaît dès la connexion de l'utilisateur, et affiche le nombre de quêtes qu'il lui reste à accomplir
+
+## 2. <a name='Gestiondesqutestches'></a>Gestion des quêtes (tâches)
 
 Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre, un statut (en attente, en cours et terminée) et une priorité (primaire, secondaire ou tertiaire, avec une icône et un code couleur associés), ainsi qu’une description et un temps estimé en option, ainsi qu'un pourcentage de progression (associé à une barre de progression) dans le cas des quêtes en cours. L’utilisateur peut créer, éditer ou supprimer une quête, la marquer rapidement comme terminée ou la remettre en attente, et l'associer à un hexagone sur la carte prévue à cet effet.
 
-<!-- // TODO : Insérer screenshot détail de quête -->
+<div align="center">
+<img src="images/details-quete.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale de détails d'une quête.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/edition-quete.png" width="200" />
+</div>
+
+<div align="center">
+<em>Edition d'une quête existante.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/modale-suppression.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale de suppression d'une quête.</em>
+</div>
 
 Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets. Les quêtes à accomplir sont triées par ordre de priorité.
 
-<!-- // TODO : Insérer screenshot liste de quêtes -->
+<div align="center">
+<img src="images/liste-quetes-non-accomplies.png" width="200" />
+</div>
+
+<div align="center">
+<em>Liste des quêtes non accomplies.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/liste-quetes-accomplies.png" width="200" />
+</div>
+
+<div align="center">
+<em>Listes des quêtes accomplies.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/toast.png" width="200" />
+</div>
+
+<div align="center">
+<em>Toast de succès : quête accomplie.</em>
+</div>
 
 Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée. Si la quête est indiquée comme "en cours", la barre de progression s'affiche directement sur l'aperçu de la quête, la remplissant progressivement d'une couleur plus sombre. Les quêtes terminées sont entièrement remplies.
 
-## 2. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (carte)
+## 3. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (carte)
 
 L’originalité d’Hexaplanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement sa priorité (orangé pour les principales, argenté pour les secondaires, et aucun liseré pour les tertiaires). Les quêtes terminées apparaissent avec un fond plus sombre, et les quêtes en cours disposent d'une barre de progression radiale qui remplit progressivement l'hexagone avec cette couleur, à la manière d'une horloge.
 
-<!-- // TODO : Insérer screenshot map -->
+<div align="center">
+<img src="images/carte.png" width="200" />
+</div>
 
-L’utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone vide, faisant apparaître une modale contenant la liste de toutes les quêtes non accomplies, et en sélectionnant la quête de son choix. Il pourra ensuite la désassigner d’un simple clic sur l'icône de croix au-dessus du titre de la quête, ce qui déclenchera une modale de confirmation.
+<div align="center">
+<em>Page de la carte d'hexagones.</em>
+</div>
 
-<!-- // TODO : Insérer screenshot modale d'assignation -->
+L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone vide, faisant apparaître une modale contenant la liste de toutes les quêtes non accomplies, et en sélectionnant la quête de son choix. Il pourra ensuite la désassigner d'un simple clic sur l'icône de croix au-dessus du titre de la quête, ce qui déclenchera une modale de confirmation.
+
+<div align="center">
+<img src="images/modale-assignation.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale d'assignation d'une quête à un hexagone.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/modale-desassignation.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale de désassignation d'une quête à un hexagone.</em>
+</div>
 
 Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un hexagone associé à une quête pour afficher les détails de la quête en question, et éventuellement modifier ou supprimer la quête (ce qui la fera disparaître de la carte et des listes).
 
-## 3. <a name='Systmedauthentificationetgestiondesutilisateurs'></a>Système d’authentification et gestion des utilisateurs
+## 4. <a name='Systmedauthentificationetgestiondesutilisateurs'></a>Système d'authentification et gestion des utilisateurs
 
 L’accès à l’application nécessite la création d’un compte et une authentification sécurisée. L'utilisateur devra accepter les CGU et la politique de confidentialité, accessibles via des liens sur le formulaire de création de compte. Le mot de passe choisi devra respecter les normes standard : au minimum 8 caractères dont 1 lettre majuscule, 1 lettre minuscule, 1 chiffre et 1 caractère spécial. Après son enregistrement, l'utilisateur sera redirigé vers la page de connexion, et il peut aisément naviguer entre la connexion et la création de compte via un lien en bas de page.
 
-<!-- // TODO : Insérer screenshots écran register + login -->
+<div align="center">
+<img src="images/register.png" width="200" />
+</div>
 
-Un système de gestion des mots de passe oubliés est en place, avec envoi d’email pour la réinitialisation. Lorsque l'utilisateur clique sur "mot de passe oublié", une modale s'ouvre. Si l'utilisateur avait déjà rentré son adresse e-mail dans le champ de connexion, il sera automatiquement reporté dans le champ de la modale. Au clic sur le bouton d'envoi, un toast informe l'utilisateur qu'un mail a été délivré à l'adresse indiquée, si elle existe. En effet, il s'agit de ne pas confirmer ou infirmer la présence de cette adresse e-mail dans la base de données. De plus, il ne peut y avoir qu'une seule requête vers la même adresse toutes les 5 minutes, afin d'éviter le spam d'une adresse e-mail et la saturation du service de mail.
+<div align="center">
+<em>Page de création de compte.</em>
+</div>
+<br />
 
-<!-- // TODO : Insérer screenshot modale mdp oublié -->
+<div align="center">
+<img src="images/login.png" width="200" />
+</div>
+
+<div align="center">
+<em>Page de connexion.</em>
+</div>
+
+Un système de gestion des mots de passe oubliés est en place, avec envoi d'email pour la réinitialisation. Lorsque l'utilisateur clique sur "mot de passe oublié", une modale s'ouvre. Si l'utilisateur avait déjà rentré son adresse e-mail dans le champ de connexion, il sera automatiquement reporté dans le champ de la modale. Au clic sur le bouton d'envoi, un toast informe l'utilisateur qu'un mail a été délivré à l'adresse indiquée, si elle existe. En effet, il s'agit de ne pas confirmer ou infirmer la présence de cette adresse e-mail dans la base de données. De plus, il ne peut y avoir qu'une seule requête vers la même adresse toutes les 5 minutes, afin d'éviter le spam d'une adresse e-mail et la saturation du service de mail.
+
+<div align="center">
+<img src="images/modale-mdp-oublie.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale de mot de passe oublié.</em>
+</div>
 
 Le destinataire recevera un mail contenant un lien de réinitialisation de mot de passe. Ce lien le redirigera vers la page prévue à cet effet, avec dans l'url un token valable une heure, et l'adresse e-mail du compte à modifier. Sans ces deux éléments valides, la requête ne pourra être acceptée. L'utilisateur n'a plus qu'à rentrer son nouveau mot de passe et à le confirmer, avant d'être redirigé vers la page de connexion.
 
-<!-- // TODO : Insérer screenshots mail + écran reset -->
+<div align="center">
+<img src="images/mail-reset-password.png" width="200" />
+</div>
 
-L’utilisateur peut également changer son mot de passe depuis l’interface : en accédant au menu des paramètres, il aura la possibilité d'ouvrir une modale lui demandant son mot de passe actuel ainsi que le nouveau. Depuis ce même menu, il pourra se déconnecter de l'application.
+<div align="center">
+<em>Mail de réinitialisation de mot de passe.</em>
+</div>
+<br />
 
-<!-- // TODO : Insérer screenshots menu paramètres + edit pwd -->
+<div align="center">
+<img src="images/page-reset-password.png" width="200" />
+</div>
+
+<div align="center">
+<em>Page de réinitialisation de mot de passe.</em>
+</div>
+
+L'utilisateur peut également changer son mot de passe depuis l'interface : en accédant au menu des paramètres, il aura la possibilité d'ouvrir une modale lui demandant son mot de passe actuel ainsi que le nouveau. Depuis ce même menu, il pourra se déconnecter de l'application.
+
+<div align="center">
+<img src="images/parametres.png" width="200" />
+</div>
+
+<div align="center">
+<em>Page de paramètres.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/modale-changement-mdp.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale de changement de mot de passe.</em>
+</div>
+<br />
+
+<div align="center">
+<img src="images/modale-deconnexion.png" width="200" />
+</div>
+
+<div align="center">
+<em>Modale de déconnexion.</em>
+</div>
 
 La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
 
 <!-- TODO : A développer (dans une autre section ?) -->
 
-## 4. <a name='Navigationetergonomie'></a>Navigation et ergonomie
+## 5. <a name='Navigationetergonomie'></a>Navigation et ergonomie
 
 L’application propose un menu apparaissant en permanence en bas de page, et permettant de naviguer entre l’accueil, les listes de quêtes, la carte des hexagones et les paramètres. Un bouton dédié au centre du menu permet de créer rapidement une nouvelle quête, qui viendra s'insérer dans la liste qui lui correspond, et sera accessible dans la modale d'assignation à un hexagone.
 
-<!-- // TODO : Insérer screenshots menu x4 -->
+<div align="center">
+<img src="images/nouvelle-quete.png" width="200" />
+</div>
 
-L’interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l’engagement et la productivité de l’utilisateur.
+<div align="center">
+<em>Modale de création de quête.</em>
+</div>
+
+L'interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l'engagement et la productivité de l'utilisateur.
 
 # III. Modélisation des données
 
 ## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
 
-<!-- // TODO : Ajouter 1:n etc. à chaque liaison -->
-<!-- TODO : peaufiner le nouveau modèle -->
+<div align="center">
 <img src="images/mcd.png" />
+</div>
+
+<div align="center">
+<em>Schéma de la base de données relationnelle d'Hexaplanning, réalisé avec dbdiagram.io.</em>
+</div>
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
@@ -236,7 +388,13 @@ L’architecture d’Hexaplanning repose sur un frontend Angular (avec PrimeNG p
 
 ### <a name='Schmaglobal'></a>Schéma global
 
+<div align="center">
 <img src="images/schemaglobal.png" />
+</div>
+
+<div align="center">
+<em>Schéma global de l'architecture d'Hexaplanning.</em>
+</div>
 
 ## 2. <a name='FrontendAngular'></a> Frontend (Angular)
 
