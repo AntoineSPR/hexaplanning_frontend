@@ -281,3 +281,14 @@ input.quest-checkbox[type='checkbox'] {
 .p-select.priority-tertiary .p-select-label {
   color: var(--tertiary-priority-bg-color) !important;
 }
+
+/** Register/Login/Reset Password **/
+.form-label {
+  font-weight: 600;
+  color: gray;
+  font-size: 0.9rem;
+}
+
+.requirements-list {
+  font-weight: normal;
+}

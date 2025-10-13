@@ -5,6 +5,8 @@ import { QuestListPageComponent } from './pages/quest-list-page/quest-list-page.
 import { RegisterComponent } from './pages/register/register.component';
 import { LoginComponent } from './pages/login/login.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
+import { CguComponent } from './pages/cgu/cgu.component';
+import { RgpdComponent } from './pages/rgpd/rgpd.component';
 import { MapComponent } from './components/map/map.component';
 import { isLoggedInGuard, isLoggedOutGuard } from './guards/is-logged-in.guard';
 
@@ -43,5 +45,13 @@ export const routes: Routes = [
     canActivate: [isLoggedInGuard],
     path: 'map',
     component: MapComponent,
+  },
+  {
+    path: 'cgu',
+    component: CguComponent,
+  },
+  {
+    path: 'rgpd',
+    component: RgpdComponent,
   },
 ];
