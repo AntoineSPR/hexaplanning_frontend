@@ -187,6 +187,22 @@ export class MapComponent implements OnInit {
     });
   }
 
+  handleHexKeydown(event: KeyboardEvent, hex: Hex): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.handleHexClick(hex);
+    }
+  }
+
+  getHexAriaLabel(hex: Hex): string {
+    if (hex.quest) {
+      const statusText = hex.quest.statusId === this._questService.statusDoneId ? 'terminée' : 'en cours';
+      return `Hexagone avec quête: ${hex.quest.title}, ${statusText}. Niveau ${hex.level}`;
+    } else {
+      return `Hexagone vide, niveau ${hex.level}. Cliquer pour assigner une quête`;
+    }
+  }
+
   openQuestDetails(questId: string): void {
     this._questService.getQuestById(questId).subscribe(quest => {
       this._questModalService.openQuestDetails(quest);
