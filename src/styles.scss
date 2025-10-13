@@ -153,6 +153,7 @@ h1 {
   justify-content: center;
   align-items: center;
   text-align: center;
+  pointer-events: none;
 }
 
 .done-toast .p-toast-message {
@@ -164,6 +165,7 @@ h1 {
   color: white;
   border-radius: 8px;
   animation: pop-in 300ms ease-out;
+  pointer-events: none;
 
   .p-toast-message-content {
     display: flex;
