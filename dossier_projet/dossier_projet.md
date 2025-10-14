@@ -1346,9 +1346,9 @@ La carte hexagonale supporte la navigation au clavier avec des attributs ARIA ap
 - **`aria-label`** : Description dynamique du contenu de l'hexagone
 - **`keydown`** : Support de l'activation au clavier (Enter/Space)
 
-### Cartes de quêtes
+### Liste de quêtes
 
-Les cartes de quêtes sont accessibles au clavier et incluent des labels appropriés :
+Les quêtes sont accessibles au clavier et incluent des labels appropriés :
 
 ```html
 <button type="button" class="quest-card" (click)="openDetails()" (keydown.enter)="openDetails()">
@@ -1500,19 +1500,15 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
   - Système de notifications.
   - Persistance des données utilisateurs en les stockant sur l'AsyncStorage de l'appareil afin d'éviter d'avoir à se reconnecter à chaque ouverture de l'app.
 
-## 3. <a name='xi-3-améliorations-futures'></a> Améliorations futures possibles
-
 L'architecture actuelle, modulaire et évolutive, permet d'intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
 
-Les améliorations envisagées s'appuient sur les retours d'utilisation et les évolutions technologiques pour enrichir l'expérience utilisateur tout en respectant les contraintes de performance et de sécurité établies.
+## 3. <a name='xi-3-apport-projet'></a> Ce que ce projet m'a apporté
 
-## 4. <a name='xi-4-apport-projet'></a> Ce que ce projet m'a apporté
-
-Ce projet d'application web complète a été une expérience formatrice exceptionnelle, me permettant d'acquérir et de consolider des compétences techniques et méthodologiques essentielles au développement moderne.
+Ce projet d'application web complète a été une expérience formatrice, me permettant d'acquérir et de consolider des compétences techniques et méthodologiques essentielles au développement moderne.
 
 **Compétences techniques acquises :**
 
-- Maîtrise complète de l'écosystème Angular et de l'architecture frontend moderne
+- Maîtrise de l'écosystème Angular et de l'architecture frontend moderne
 - Développement d'API REST robustes avec .NET Core et Entity Framework
 - Intégration et optimisation de bases de données PostgreSQL
 - Mise en place de pipelines CI/CD complets avec Docker et automatisation
@@ -1526,6 +1522,6 @@ Ce projet d'application web complète a été une expérience formatrice excepti
 - Gestion de projet agile avec documentation technique complète
 - Déploiement et monitoring d'applications en production
 
-Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack moderne, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
+Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
 ---
