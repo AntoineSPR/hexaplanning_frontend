@@ -596,7 +596,7 @@ git push origin feature/quest-management
 
 ## 1. <a name='vi-1-vue-d-ensemble'></a> Vue d'ensemble
 
-Hexaplanning adopte une architecture moderne en trois couches (3-tier architecture) avec une séparation claire des responsabilités. Le choix des technologies s'est fait en privilégiant la robustesse, la maintenabilité et l'écosystème de chaque solution. L'architecture repose sur :
+Hexaplanning adopte une architecture moderne en trois couches avec une séparation claire des responsabilités. Le choix des technologies s'est fait en privilégiant la robustesse, la maintenabilité et l'écosystème de chaque solution. L'architecture repose sur :
 
 - **Frontend** : Angular 18 avec PrimeNG pour une interface utilisateur moderne et responsive
 - **Backend** : ASP.NET Core 8 pour une API REST performante et sécurisée
@@ -620,17 +620,14 @@ Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurit
 
 ### Choix technologiques et justifications
 
-- **Angular 18** : Framework SPA reconnu pour sa structure modulaire, sa maintenabilité et sa communauté active. Il facilite la création d'interfaces dynamiques, responsives et testables. Le choix de la version 18 apporte les dernières optimisations de performance et les nouveautés du framework.
+- **Angular 18** : Framework SPA reconnu pour sa structure modulaire, sa maintenabilité et sa communauté active. Il facilite la création d'interfaces dynamiques, responsives et testables. Le choix de la version 18 apporte les dernières optimisations de performance et les nouveautés du framework. L'utilisation de Typescript facilite la maintenance et réduit les erreurs de développement.
 
-- **PrimeNG** : Bibliothèque de composants UI riche et moderne pour Angular, fournissant les éléments d'interface (modales, formulaires, boutons, toasts) avec un design cohérent et professionnel. Alternative considérée : Angular Material, mais PrimeNG offre plus de composants spécialisés out-of-the-box.
-
-- **TypeScript** : Apporte la sécurité de typage et la clarté du code, essentielle pour un projet d'envergure. Facilite la maintenance et réduit les erreurs de développement.
+- **PrimeNG** : Bibliothèque de composants UI riche et moderne pour Angular, fournissant les éléments d'interface (modales, formulaires, boutons, toasts) avec un design cohérent et professionnel. Alternative considérée : Angular Material, mais PrimeNG est plus intuitif et facilement personnalisable.
 
 ### Architecture et organisation
 
-- **Structure modulaire** : Organisation en modules fonctionnels (auth, quest, hexagon, settings), composants, services et modèles TypeScript
-- **Approche mobile-first** : Interface responsive optimisée pour les appareils mobiles
-- **State management** : Services Angular pour la gestion d'état partagé
+- **Structure modulaire** : Organisation en pages faisant appel à des composants réutilisables, des services, des pipes et des modèles de DTO. Routes avec guards et interceptors.
+- **Approche mobile-first** : Interface responsive optimisée pour les appareils mobiles.
 
 ### Responsabilités principales
 
@@ -659,7 +656,7 @@ Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurit
 
 - **ASP.NET Core 8** : Framework backend performant, sécurisé et multiplateforme, idéal pour exposer une API REST robuste et scalable. La version 8 LTS garantit la stabilité et le support à long terme.
 
-- **Entity Framework Core** : ORM facilitant la gestion et la migration de la base de données, tout en assurant la cohérence des modèles. Alternative considérée : Dapper, mais EF Core offre une approche Code-First plus adaptée au projet.
+- **Entity Framework Core** : ORM facilitant la gestion et la migration de la base de données, tout en assurant la cohérence des modèles.
 
 - **ASP.NET Identity** : Système d'authentification et d'autorisation intégré, robuste et éprouvé pour la gestion des utilisateurs et des mots de passe.
 
@@ -689,7 +686,7 @@ public abstract class BaseModel
 }
 ```
 
-**BaseModelOption - Pour les entités de référence :**
+**BaseModelOption - Pour les options de priorité et de statut des quêtes :**
 
 ```csharp
 public abstract class BaseModelOption : BaseModel
@@ -700,7 +697,7 @@ public abstract class BaseModelOption : BaseModel
 }
 ```
 
-**Utilisation dans les entités métier :**
+**Utilisation dans les entités métier (exemples avec une partie de la classe Quest, et avec la classe Priority) :**
 
 ```csharp
 public class Quest : BaseModel
@@ -725,94 +722,48 @@ public class Priority : BaseModelOption
 - **Cohérence** : Toutes les entités partagent les mêmes métadonnées
 - **Maintenance** : Modifications centralisées dans BaseModel
 - **Audit** : Traçabilité automatique (CreatedAt, UpdatedAt)
-- **Soft Delete** : Gestion uniforme de l'archivage (IsArchived)
-
-### Responsabilités principales
-
-- **API RESTful** : Exposition des endpoints pour toutes les opérations CRUD
-- **Authentification JWT** : Génération et validation des tokens d'authentification
-- **Logique métier** : Création/gestion des quêtes, hexagones, utilisateurs, priorités, statuts
-- **Validation des données** : Contrôles de cohérence et de sécurité des données
-- **Envoi d'e-mails** : Service intégré s'appuyant sur Brevo pour les notifications (réinitialisation de mot de passe, bienvenue)
+- **Préparation aux améliorations futures** : avec une option d'archivage.
 
 ### Sécurité intégrée
 
 - **Middleware JWT** : Authentification automatique sur tous les endpoints protégés
 - **Validation des entrées** : Contrôles stricts sur toutes les données reçues
-- **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
 - **Protection anti-attaques** : Guards contre l'injection SQL, XSS, CSRF
 - **Rate limiting** : Protection contre les tentatives de force brute
+- **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
 
 ### Mécanisme CheckUser - Isolation des données utilisateur
 
 L'API implémente un **système de vérification automatique** (`CheckUser`) garantissant que chaque utilisateur ne peut accéder qu'à ses propres ressources :
 
-**Implémentation dans les contrôleurs :**
-
 ```csharp
-[HttpGet("{id}")]
-[Authorize]
-public async Task<ActionResult<QuestDto>> GetQuest(int id)
+public class CheckUserAttribute : ActionFilterAttribute
 {
-    var quest = await _questService.GetQuestByIdAsync(id);
-    if (quest == null) return NotFound();
-
-    // Vérification automatique de propriété
-    if (!CheckUser(quest.UserId))
+    public override void OnActionExecuting(ActionExecutingContext context)
     {
-        return Forbid("Accès non autorisé à cette ressource");
+        var user = context.HttpContext.User;
+        var userId = CheckUser.GetUserIdFromClaim(user);
+
+        if (!userId.HasValue)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
+        context.HttpContext.Items["UserId"] = userId.Value;
+
+        base.OnActionExecuting(context);
     }
-
-    return Ok(quest);
 }
 ```
 
-**Méthode CheckUser centralisée :**
-
-```csharp
-protected bool CheckUser(int resourceUserId)
-{
-    // Extraction de l'ID utilisateur depuis le JWT
-    var currentUserId = GetCurrentUserId();
-    return currentUserId == resourceUserId;
-}
-
-protected int GetCurrentUserId()
-{
-    var userIdClaim = User.FindFirst("UserId")?.Value;
-    return int.Parse(userIdClaim ?? "0");
-}
-```
-
-**Protection sur tous les endpoints sensibles :**
-
-```csharp
-// Quêtes
-[HttpPut("{id}")]
-public async Task<IActionResult> UpdateQuest(int id, QuestDto questDto)
-{
-    var existingQuest = await _questService.GetQuestByIdAsync(id);
-    if (!CheckUser(existingQuest.UserId)) return Forbid();
-    // ... logique de mise à jour
-}
-
-// Assignations hexagonales
-[HttpDelete("{id}")]
-public async Task<IActionResult> DeleteHexAssignment(int id)
-{
-    var hexAssignment = await _hexService.GetByIdAsync(id);
-    var quest = await _questService.GetQuestByIdAsync(hexAssignment.QuestId);
-    if (!CheckUser(quest.UserId)) return Forbid();
-    // ... logique de suppression
-}
-```
+Chaque méthode des contrôleurs qui nécessite d'avoir un utilisateur précis est alors décorée par [CheckUser].
 
 **Avantages du système CheckUser :**
 
 - **Sécurité renforcée** : Impossible d'accéder aux données d'autres utilisateurs
 - **Validation automatique** : Contrôle systématique sur toutes les opérations
 - **Code centralisé** : Logique de vérification réutilisable dans tous les contrôleurs
-- **Audit trail** : Traçabilité des tentatives d'accès non autorisées
 - **Performance** : Vérification rapide basée sur les claims JWT
 
 ### Tests et qualité
@@ -825,13 +776,11 @@ public async Task<IActionResult> DeleteHexAssignment(int id)
 
 ### Choix technologique et justifications
 
-- **PostgreSQL** : SGBD open source reconnu pour sa fiabilité, ses performances et ses capacités avancées (transactions ACID, indexation complexe, support JSON, etc.). Alternatives considérées : MySQL (moins de fonctionnalités avancées), SQL Server (coût des licences).
+- **PostgreSQL** : SGBD open source reconnu pour sa fiabilité et ses performances, plus robuste que MySQL par exemple, si l'application continue d'évoluer.
 
 ### Modélisation et structure
 
 - **Respect du MCD/MLD** : Implementation fidèle du modèle conceptuel présenté au chapitre III
-- **Relations normalisées** : Base de données en 3ème forme normale pour éviter la redondance
-- **Entités principales** : UserApp, Quest, Priority, Status, HexAssignment, Mail
 - **Contraintes d'intégrité** : Clés étrangères, contraintes CHECK et UNIQUE pour la cohérence des données
 
 ### Gestion et évolution
@@ -841,18 +790,11 @@ public async Task<IActionResult> DeleteHexAssignment(int id)
 - **Seeding** : Données initiales (priorités, statuts) injectées automatiquement
 - **Backup et restauration** : Stratégies de sauvegarde régulières en production
 
-### Performance et optimisation
-
-- **Indexation** : Index sur les clés étrangères et champs de recherche fréquents
-- **Requêtes optimisées** : Utilisation d'LINQ pour des requêtes efficaces
-- **Connection pooling** : Gestion optimale des connexions base de données
-
 ### Sécurité
 
-- **Accès restreint** : Connexion uniquement via l'API backend, aucun accès direct
-- **Chiffrement** : Connexions SSL/TLS obligatoires
+- **Accès restreint** : Connexion uniquement via l'API backend.
 - **Isolation des données** : Chaque utilisateur accède uniquement à ses propres données
-- **Credentials sécurisés** : Mots de passe hashés avec ASP.NET Identity
+- **Mots de passe sécurisés** : Hashés avec ASP.NET Identity
 
 ## 5. <a name='CommunicationAPIREST'></a> Communication API REST
 
@@ -894,79 +836,22 @@ public async Task<IActionResult> DeleteHexAssignment(int id)
 
 ### Intégration et déploiement continu
 
-- **GitHub Actions** : Automatisation des pipelines CI/CD pour des livraisons rapides et sûres. Pipelines séparés pour le frontend et le backend avec tests automatisés.
-
+- **GitHub Actions** : Automatisation des pipelines CI/CD. Pipelines séparés pour le frontend et le backend avec tests automatisés.
 - **Workflow CI** : Tests unitaires et d'intégration automatiques avant chaque déploiement
 - **Workflow CD** : Build, push vers Docker Hub et déploiement automatique sur le VPS
 
 ### Hébergement et infrastructure
 
 - **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge. Serveur Linux Ubuntu avec Docker et docker-compose installés.
-
 - **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy. Interface web pour la configuration des routes et des certificats Let's Encrypt automatiques.
-
-### Monitoring et maintenance
-
-- **Logs centralisés** : Collecte et analyse des logs applicatifs pour le debugging
-- **Health checks** : Surveillance de l'état des services Docker
-- **Backup automatique** : Sauvegardes régulières de la base de données
-- **Mises à jour sécurisées** : Processus de mise à jour des dépendances et images Docker
 
 ## 7. <a name='Servicesexternes'></a> Services externes
 
 ### Brevo (ex-Sendinblue)
 
 - **Service d'emailing transactionnel** : Solution cloud fiable et simple à intégrer pour l'envoi d'e-mails automatisés
-- **Utilisation** : Envoi de mails de réinitialisation de mot de passe, messages de bienvenue, notifications importantes
-- **Avantages** : API simple, bonne délivrabilité, tarification adaptée aux petits volumes
-- **Alternative considérée** : SendGrid, mais Brevo offre une interface plus intuitive et des tarifs plus avantageux pour un projet de cette envergure
-
-### Justification du choix
-
-L'externalisation de l'envoi d'e-mails vers Brevo permet :
-
-- **Fiabilité** : Infrastructure spécialisée avec haute disponibilité
-- **Délivrabilité** : Réputation IP préservée et conformité aux standards anti-spam
-- **Simplicité** : Pas de gestion de serveur SMTP interne
-- **Coût** : Solution économique par rapport à l'hébergement d'un serveur mail
-
-## 8. <a name='Scuritetbonnespratiques'></a> Sécurité et bonnes pratiques
-
-L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
-
-### Authentification et gestion des identités
-
-- **ASP.NET Identity** : Framework robuste intégré à .NET Core pour la gestion complète des utilisateurs
-- **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique
-- **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
-- **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe
-- **Validation d'email** : Confirmation d'identité via email avec tokens d'activation
-
-### Protection contre les attaques web
-
-- **CSRF Protection** : Tokens anti-contrefaçon sur toutes les opérations sensibles
-- **XSS Prevention** : Échappement automatique des données utilisateur, Content Security Policy stricte
-- **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées
-- **Validation des entrées** : Sanitisation côté serveur et client avec Data Annotations
-- **Rate Limiting** : Protection contre les attaques par déni de service et force brute
-
-### Sécurité de l'infrastructure
-
-- **HTTPS obligatoire** : Chiffrement TLS 1.2+ en production avec redirection automatique
-- **Headers de sécurité** : HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
-- **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
-- **Isolation des conteneurs** : Docker avec utilisateurs non-privilégiés et réseaux isolés
-- **Variables d'environnement** : Secrets stockés de manière sécurisée, jamais dans le code source
-
-### Bonnes pratiques de développement
-
-- **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
-- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations
-- **Logging sécurisé** : Traçabilité des actions sensibles sans exposition de données personnelles
-- **Mise à jour régulière** : Surveillance et application des correctifs de sécurité
-- **Tests de sécurité** : Validation automatisée des vulnérabilités connues
-
-Cette architecture garantit robustesse, évolutivité et sécurité, tout en permettant une expérience utilisateur fluide et moderne.
+- **Utilisation** : Envoi de mails de réinitialisation de mot de passe
+- **Avantages** : API simple et tarification adaptée aux petits volumes, plus simple et plus économique qu'un serveur mail à héberger
 
 # VII. Qualité logicielle et tests
 
@@ -1111,6 +996,44 @@ Cette chaîne CI/CD garantit des livraisons rapides, sûres et automatisées, to
 Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
 # IX. Sécurité
+
+<!-- ## 8. <a name='Scuritetbonnespratiques'></a> Sécurité et bonnes pratiques
+
+L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
+
+### Authentification et gestion des identités
+
+- **ASP.NET Identity** : Framework robuste intégré à .NET Core pour la gestion complète des utilisateurs
+- **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique
+- **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
+- **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe
+- **Validation d'email** : Confirmation d'identité via email avec tokens d'activation
+
+### Protection contre les attaques web
+
+- **CSRF Protection** : Tokens anti-contrefaçon sur toutes les opérations sensibles
+- **XSS Prevention** : Échappement automatique des données utilisateur, Content Security Policy stricte
+- **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées
+- **Validation des entrées** : Sanitisation côté serveur et client avec Data Annotations
+- **Rate Limiting** : Protection contre les attaques par déni de service et force brute
+
+### Sécurité de l'infrastructure
+
+- **HTTPS obligatoire** : Chiffrement TLS 1.2+ en production avec redirection automatique
+- **Headers de sécurité** : HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
+- **Isolation des conteneurs** : Docker avec utilisateurs non-privilégiés et réseaux isolés
+- **Variables d'environnement** : Secrets stockés de manière sécurisée, jamais dans le code source
+
+### Bonnes pratiques de développement
+
+- **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
+- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations
+- **Logging sécurisé** : Traçabilité des actions sensibles sans exposition de données personnelles
+- **Mise à jour régulière** : Surveillance et application des correctifs de sécurité
+- **Tests de sécurité** : Validation automatisée des vulnérabilités connues
+
+Cette architecture garantit robustesse, évolutivité et sécurité, tout en permettant une expérience utilisateur fluide et moderne. -->
 
 La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
