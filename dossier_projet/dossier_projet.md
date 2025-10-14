@@ -56,10 +56,33 @@
 4.  [Sécurité de la conteneurisation et du déploiement](#vii-4-sécurité-de-la-conteneurisation-et-du-déploiement)
 5.  [Surveillance et audit](#vii-5-surveillance-et-audit)
 
-**VIII. [Conclusion et perspectives](#viii-conclusion-et-perspectives)**
+**VIII. [Environnement de développement et gestion de projet](#viii-environnement-de-développement-et-gestion-de-projet)**
 
-1.  [Bilan du projet](#viii-1-bilan-du-projet)
-2.  [Perspectives d'évolution](#viii-2-perspectives-d-évolution)
+1.  [Outils de développement](#viii-1-outils-de-développement)
+2.  [Versioning et collaboration](#viii-2-versioning-et-collaboration)
+3.  [Conteneurisation des services](#viii-3-conteneurisation-des-services)
+4.  [Documentation technique](#viii-4-documentation-technique)
+5.  [Gestion de projet](#viii-5-gestion-de-projet)
+
+**IX. [Conception et analyse](#ix-conception-et-analyse)**
+
+1.  [Analyse des besoins](#ix-1-analyse-des-besoins)
+2.  [Maquettage et design](#ix-2-maquettage-et-design)
+3.  [Composants métier](#ix-3-composants-métier)
+4.  [Interfaces utilisateur](#ix-4-interfaces-utilisateur)
+
+**X. [Procédures de déploiement](#x-procédures-de-déploiement)**
+
+1.  [Plan de tests complet](#x-1-plan-de-tests-complet)
+2.  [Environnements de test](#x-2-environnements-de-test)
+3.  [Procédures de déploiement](#x-3-procédures-de-déploiement)
+4.  [Scripts et automatisation](#x-4-scripts-et-automatisation)
+5.  [Veille technologique](#x-5-veille-technologique)
+
+**XI. [Conclusion et perspectives](#xi-conclusion-et-perspectives)**
+
+1.  [Bilan du projet](#xi-1-bilan-du-projet)
+2.  [Perspectives d'évolution](#xi-2-perspectives-d-évolution)
 
 ---
 
@@ -798,9 +821,786 @@ La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niv
 
 Cette approche globale permet de garantir un haut niveau de sécurité pour les utilisateurs et les données de la plateforme.
 
-# VIII. Conclusion et perspectives
+# VIII. Environnement de développement et gestion de projet
 
-## 1. <a name='viii-1-bilan-du-projet'></a> Bilan du projet
+L'environnement de développement d'Hexaplanning respecte les standards professionnels et intègre les outils nécessaires pour garantir la qualité, la collaboration et la maintenabilité du code.
+
+## 1. <a name='viii-1-outils-de-développement'></a> Outils de développement
+
+### Environnement de développement intégré
+
+- **Visual Studio Code** : IDE principal avec extensions spécialisées
+  - Extension Angular Language Service pour la coloration syntaxique et l'autocomplétion
+  - Extension C# Dev Kit pour le développement .NET
+  - Extension Docker pour la gestion des conteneurs
+  - Extension GitLens pour l'historique Git avancé
+
+### Outils de développement installés
+
+- **Node.js 18+** : Runtime JavaScript pour Angular et les outils de build
+- **.NET 8 SDK** : Kit de développement pour l'API backend
+- **Angular CLI 18** : Outils en ligne de commande Angular
+- **Docker Desktop** : Environnement de conteneurisation
+- **PostgreSQL** : Base de données locale pour les tests
+
+### Gestionnaires de paquets
+
+- **npm** : Gestion des dépendances frontend
+- **NuGet** : Gestion des packages .NET
+- **Docker Hub** : Registre d'images de conteneurs
+
+## 2. <a name='viii-2-versioning-et-collaboration'></a> Versioning et collaboration
+
+### Contrôle de version
+
+- **Git** : Système de contrôle de version distribué
+- **GitHub** : Plateforme d'hébergement avec fonctionnalités collaboratives
+- **Branches** : Stratégie de branching avec branches de fonctionnalités
+- **Pull Requests** : Revue de code systématique avant fusion
+
+### Outils de collaboration
+
+- **GitHub Issues** : Suivi des tâches et des bugs
+- **GitHub Projects** : Planification et suivi des sprints
+- **GitHub Actions** : Intégration et déploiement continus
+- **Markdown** : Documentation standardisée
+
+### Standards de développement
+
+- **Conventional Commits** : Format standardisé des messages de commit
+- **ESLint** : Linting du code TypeScript/JavaScript
+- **Prettier** : Formatage automatique du code
+- **EditorConfig** : Configuration cohérente de l'éditeur
+
+## 3. <a name='viii-3-conteneurisation-des-services'></a> Conteneurisation des services
+
+### Architecture conteneurisée
+
+Tous les services de l'application sont conteneurisés pour garantir la portabilité et la cohérence entre les environnements :
+
+- **Frontend Angular** : Image Nginx optimisée pour la production
+- **Backend .NET** : Image basée sur ASP.NET Core runtime
+- **Base de données PostgreSQL** : Image officielle PostgreSQL
+- **Proxy inverse** : Nginx Proxy Manager pour la gestion des domaines
+
+### Configuration Docker
+
+```yaml
+# docker-compose.yml - Services requis
+version: '3.8'
+services:
+  frontend:
+    image: antoinespr/hexaplanning-front:dev1
+    ports:
+      - '80:80'
+
+  backend:
+    image: antoinespr/hexaplanning-api:dev1
+    environment:
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION}
+    ports:
+      - '5000:8080'
+
+  database:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=hexaplanning
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+```
+
+### Isolation et sécurité
+
+- **Utilisateurs non-privilégiés** dans les conteneurs
+- **Réseaux isolés** pour chaque service
+- **Variables d'environnement** pour la configuration sensible
+- **Volumes persistants** pour les données
+
+## 4. <a name='viii-4-documentation-technique'></a> Documentation technique
+
+### Documentation multilingue
+
+La documentation technique est rédigée en français avec des éléments en anglais selon les standards internationaux (niveau B1 minimum) :
+
+- **README.md** : Instructions d'installation et de démarrage
+- **API Documentation** : Endpoints documentés avec Swagger/OpenAPI
+- **Architecture Decision Records** : Justifications des choix techniques
+- **Code Comments** : Commentaires en anglais dans le code source
+
+### Types de documentation
+
+- **Documentation utilisateur** : Guide d'utilisation de l'application
+- **Documentation développeur** : Instructions de développement et contribution
+- **Documentation API** : Spécifications techniques des endpoints
+- **Documentation déploiement** : Procédures de mise en production
+
+### Standards de documentation
+
+- **Markdown** : Format standardisé pour la documentation
+- **Diagrammes Mermaid** : Schémas techniques intégrés
+- **Captures d'écran** : Interface utilisateur documentée
+- **Liens de navigation** : Table des matières interactive
+
+## 5. <a name='viii-5-gestion-de-projet'></a> Gestion de projet
+
+### Planification et suivi
+
+- **Méthodologie Agile** : Développement itératif par sprints
+- **GitHub Projects** : Tableau Kanban pour le suivi des tâches
+- **Milestones** : Objectifs et échéances définis
+- **Estimations** : Complexité évaluée pour chaque tâche
+
+### Procédures qualité
+
+- **Code Review** : Revue systématique par les pairs
+- **Tests automatisés** : Validation continue de la qualité
+- **Convention de nommage** : Standards appliqués au code
+- **Documentation du code** : Commentaires et documentation technique
+
+### Environnement de développement
+
+L'environnement de développement est configuré pour respecter l'architecture de production :
+
+- **Conteneurs locaux** : Développement en environnement isolé
+- **Base de données locale** : PostgreSQL via Docker
+- **Hot reload** : Rechargement automatique du code
+- **Debugging** : Outils de débogage intégrés
+
+### Outils collaboratifs
+
+- **Git Flow** : Workflow de développement standardisé
+- **Communication** : Documentation des décisions techniques
+- **Partage de connaissances** : Wiki et documentation partagée
+- **Intégration continue** : Validation automatique des modifications
+
+# IX. Conception et analyse
+
+Ce chapitre détaille les aspects de conception, d'analyse des besoins et de développement des composants métier, en respectant les standards de qualité et les bonnes pratiques de développement.
+
+## 1. <a name='ix-1-analyse-des-besoins'></a> Analyse des besoins
+
+### Couverture des exigences du cahier des charges
+
+L'analyse fonctionnelle d'Hexaplanning couvre exhaustivement les exigences définies dans le cahier des charges :
+
+**Besoins fonctionnels identifiés :**
+
+- **Gestion des tâches** : Création, modification, suppression et suivi des quêtes
+- **Système de priorités** : Classification des tâches par niveau d'importance
+- **Visualisation hexagonale** : Représentation graphique innovante des tâches
+- **Authentification sécurisée** : Gestion des comptes utilisateurs
+- **Réinitialisation de mot de passe** : Processus sécurisé par email
+
+**Besoins non fonctionnels :**
+
+- **Performance** : Temps de réponse < 2 secondes
+- **Sécurité** : Chiffrement des données sensibles
+- **Scalabilité** : Architecture modulaire extensible
+- **Disponibilité** : Déploiement containerisé fiable
+
+### Conformité aux spécifications
+
+La documentation technique respecte les standards internationaux (français/anglais niveau B1) et inclut :
+
+- Spécifications fonctionnelles détaillées
+- Diagrammes d'architecture en anglais technique
+- Documentation API multilingue
+- Instructions de déploiement standardisées
+
+## 2. <a name='ix-2-maquettage-et-design'></a> Maquettage et design
+
+### Maquettes conformes aux standards
+
+Les maquettes d'Hexaplanning respectent les principes d'ergonomie et d'accessibilité :
+
+**Maquettes principales réalisées :**
+
+- **Page d'accueil** : Présentation claire de l'application
+- **Dashboard utilisateur** : Vue d'ensemble des quêtes
+- **Liste des quêtes** : Interface de gestion des tâches
+- **Carte hexagonale** : Visualisation interactive
+- **Formulaires** : Création et édition des quêtes
+- **Authentification** : Connexion et inscription
+
+### Charte graphique respectée
+
+**Design System cohérent :**
+
+- **Palette de couleurs** : Bleus et verts harmonieux
+- **Typographie** : Police lisible et moderne
+- **Composants** : Bibliothèque PrimeNG standardisée
+- **Iconographie** : Icônes cohérentes et intuitives
+- **Responsive design** : Adaptation mobile et desktop
+
+### Réglementation respectée
+
+**Conformité RGPD :**
+
+- Consentement explicite pour les données
+- Droit à l'effacement des données
+- Chiffrement des données personnelles
+- Politique de confidentialité accessible
+
+**Accessibilité :**
+
+- Contraste suffisant pour la lisibilité
+- Navigation au clavier possible
+- Textes alternatifs pour les images
+- Structure sémantique HTML
+
+## 3. <a name='ix-3-composants-métier'></a> Composants métier
+
+### Programmation orientée objet respectée
+
+L'architecture backend .NET Core respecte les principes OOP :
+
+**Encapsulation :**
+
+```csharp
+public class Quest : BaseModel
+{
+    private string _title;
+    public string Title
+    {
+        get => _title;
+        set => _title = ValidateTitle(value);
+    }
+
+    private string ValidateTitle(string title)
+    {
+        if (string.IsNullOrEmpty(title))
+            throw new ArgumentException("Le titre est requis");
+        return title.Trim();
+    }
+}
+```
+
+**Héritage :**
+
+- `BaseModel` : Classe abstraite avec propriétés communes (Id, CreatedAt, UpdatedAt)
+- `BaseModelOption` : Classe pour les entités de référence (Priority, Status)
+
+**Polymorphisme :**
+
+- Interfaces pour les services (`IQuestService`, `IUserService`)
+- Injection de dépendances pour les implémentations
+
+### Sécurité des composants serveurs
+
+**Validation des entrées :**
+
+```csharp
+[Required(ErrorMessage = "Le titre est requis")]
+[StringLength(255, ErrorMessage = "Le titre ne peut dépasser 255 caractères")]
+public string Title { get; set; }
+
+[Range(1, int.MaxValue, ErrorMessage = "La priorité doit être positive")]
+public int PriorityId { get; set; }
+```
+
+### Nommage conforme aux normes
+
+**Conventions C# respectées :**
+
+- PascalCase pour classes et méthodes : `QuestService`, `GetQuestById`
+- camelCase pour variables locales : `questDto`, `userId`
+- Constantes en UPPER_CASE : `MAX_QUEST_TITLE_LENGTH`
+
+**Conventions Angular respectées :**
+
+- kebab-case pour les sélecteurs : `app-quest-card`
+- camelCase pour propriétés : `questTitle`, `isCompleted`
+- PascalCase pour classes : `QuestComponent`, `QuestService`
+
+### Code documenté
+
+**Documentation XML pour .NET :**
+
+```csharp
+/// <summary>
+/// Crée une nouvelle quête pour l'utilisateur spécifié
+/// </summary>
+/// <param name="questDto">Données de la quête à créer</param>
+/// <param name="userId">Identifiant de l'utilisateur</param>
+/// <returns>La quête créée avec son identifiant</returns>
+public async Task<Quest> CreateQuestAsync(QuestDto questDto, string userId)
+```
+
+### Tests unitaires réalisés
+
+**Couverture de tests backend (xUnit) :**
+
+```csharp
+[Fact]
+public async Task CreateQuestAsync_ValidData_ReturnsCreatedQuest()
+{
+    // Arrange
+    var questDto = new QuestDto { Title = "Test Quest", Description = "Test" };
+    var userId = "user123";
+
+    // Act
+    var result = await _questService.CreateQuestAsync(questDto, userId);
+
+    // Assert
+    Assert.NotNull(result);
+    Assert.Equal(questDto.Title, result.Title);
+    Assert.Equal(userId, result.UserId);
+}
+```
+
+## 4. <a name='ix-4-interfaces-utilisateur'></a> Interfaces utilisateur
+
+### Interface conforme au dossier de conception
+
+L'interface d'Hexaplanning respecte fidèlement les spécifications du dossier de conception :
+
+**Éléments conformes :**
+
+- **Navigation principale** : Menu latéral avec sections définies
+- **Carte hexagonale** : Visualisation selon les maquettes
+- **Formulaires** : Structure et validation conformes
+- **États des quêtes** : Couleurs et indicateurs spécifiés
+
+### Interface responsive et adaptée au support
+
+**Breakpoints définis :**
+
+```css
+/* Mobile First Approach */
+.quest-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .quest-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .quest-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+```
+
+### Tests unitaires des interfaces
+
+**Tests d'interaction :**
+
+```typescript
+it('should emit questCompleted when checkbox is clicked', () => {
+  spyOn(component.questCompleted, 'emit');
+
+  const checkbox = fixture.debugElement.query(By.css('input[type="checkbox"]'));
+  checkbox.triggerEventHandler('change', { target: { checked: true } });
+
+  expect(component.questCompleted.emit).toHaveBeenCalledWith(component.quest);
+});
+```
+
+# X. Procédures de déploiement
+
+Ce chapitre détaille les procédures complètes de tests, de déploiement et d'automatisation mises en place pour garantir la qualité et la fiabilité des livraisons.
+
+## 1. <a name='x-1-plan-de-tests-complet'></a> Plan de tests complet
+
+### Couverture de toutes les fonctionnalités
+
+Le plan de tests d'Hexaplanning couvre l'ensemble des fonctionnalités de l'application :
+
+**Tests fonctionnels :**
+
+- **Authentification** : Connexion, inscription, réinitialisation mot de passe
+- **Gestion des quêtes** : CRUD complet (création, lecture, mise à jour, suppression)
+- **Visualisation** : Affichage liste et carte hexagonale
+- **Navigation** : Transitions entre pages et états
+- **Responsive** : Adaptation aux différentes tailles d'écran
+
+**Tests non-fonctionnels :**
+
+- **Performance** : Temps de réponse et charge
+- **Sécurité** : Authentification, autorisation, validation
+- **Compatibilité** : Navigateurs et appareils
+- **Accessibilité** : Conformité WCAG
+
+### Plan de tests structuré
+
+```markdown
+# Plan de Tests - Hexaplanning v1.0
+
+## 1. Tests Unitaires
+
+### Backend (.NET Core)
+
+- [ ] QuestService - CreateQuestAsync
+- [ ] QuestService - GetQuestByIdAsync
+- [ ] QuestService - UpdateQuestAsync
+- [ ] QuestService - DeleteQuestAsync
+- [ ] UserService - AuthenticateAsync
+- [ ] UserService - RegisterAsync
+
+### Frontend (Angular)
+
+- [ ] QuestCardComponent - Display
+- [ ] QuestCardComponent - Interaction
+- [ ] QuestListComponent - Filtering
+- [ ] MapComponent - Hexagon rendering
+
+## 2. Tests d'Intégration
+
+- [ ] API Authentication flow
+- [ ] Quest CRUD operations
+- [ ] Database transactions
+- [ ] Email notifications
+
+## 3. Tests E2E (Cypress)
+
+- [ ] User registration journey
+- [ ] Quest creation workflow
+- [ ] Map interaction scenarios
+- [ ] Mobile responsiveness
+```
+
+## 2. <a name='x-2-environnements-de-test'></a> Environnements de test
+
+### Environnement de test créé
+
+**Infrastructure de test isolée :**
+
+```yaml
+# docker-compose.test.yml
+version: '3.8'
+services:
+  test-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=hexaplanning_test
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_pass
+    ports:
+      - '5433:5432'
+
+  test-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Testing
+      - ConnectionStrings__DefaultConnection=Host=test-db;Database=hexaplanning_test;Username=test_user;Password=test_pass
+    depends_on:
+      - test-db
+    ports:
+      - '5001:8080'
+```
+
+### Environnements définis
+
+**1. Environnement de développement local :**
+
+- Base de données PostgreSQL locale
+- Hot reload activé
+- Debugging tools intégrés
+- Mock services pour tests
+
+**2. Environnement de test automatisé :**
+
+- Conteneurs Docker isolés
+- Base de données éphémère
+- Services mockés
+- Exécution en CI/CD
+
+**3. Environnement de staging :**
+
+- Réplique de production
+- Données de test représentatives
+- Tests de performance
+- Validation finale
+
+**4. Environnement de production :**
+
+- Infrastructure sécurisée OVH
+- Base de données persistante
+- Monitoring actif
+- Backup automatisé
+
+## 3. <a name='x-3-procédures-de-déploiement'></a> Procédures de déploiement
+
+### Procédure de déploiement rédigée
+
+**Checklist de déploiement :**
+
+````markdown
+# Procédure de Déploiement Hexaplanning
+
+## Pré-déploiement
+
+- [ ] Tests unitaires passants (100% success)
+- [ ] Tests d'intégration validés
+- [ ] Code review approuvé
+- [ ] Documentation mise à jour
+- [ ] Variables d'environnement configurées
+
+## Déploiement Backend
+
+1. Build de l'image Docker
+   ```bash
+   docker build -t antoinespr/hexaplanning-api:latest .
+   ```
+````
+
+2. Push vers Docker Hub
+
+   ```bash
+   docker push antoinespr/hexaplanning-api:latest
+   ```
+
+3. Déploiement sur serveur
+   ```bash
+   ssh ubuntu@vps-server
+   docker pull antoinespr/hexaplanning-api:latest
+   docker-compose down backend
+   docker-compose up -d backend
+   ```
+
+## Déploiement Frontend
+
+1. Build de production
+
+   ```bash
+   ng build --configuration production
+   ```
+
+2. Création image Docker
+
+   ```bash
+   docker build --target prod-runtime -t antoinespr/hexaplanning-front:latest .
+   ```
+
+3. Déploiement
+   ```bash
+   docker-compose up -d frontend
+   ```
+
+## Post-déploiement
+
+- [ ] Vérification des services
+- [ ] Tests de smoke
+- [ ] Monitoring des logs
+- [ ] Notification équipe
+
+````
+
+### Scripts de déploiement documentés
+
+**Script de déploiement automatisé :**
+
+```bash
+#!/bin/bash
+# deploy.sh - Script de déploiement Hexaplanning
+
+set -e
+
+echo "🚀 Début du déploiement Hexaplanning"
+
+# Variables
+DOCKER_REGISTRY="antoinespr"
+APP_NAME="hexaplanning"
+VERSION=${1:-latest}
+
+# Fonctions
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
+deploy_backend() {
+    log "Déploiement du backend..."
+    docker build -t $DOCKER_REGISTRY/$APP_NAME-api:$VERSION ./backend
+    docker push $DOCKER_REGISTRY/$APP_NAME-api:$VERSION
+
+    # Déploiement sur serveur
+    ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_HOST << EOF
+        docker pull $DOCKER_REGISTRY/$APP_NAME-api:$VERSION
+        docker-compose -f /home/ubuntu/backend/docker-compose.yml up -d --no-deps backend
+EOF
+}
+
+deploy_frontend() {
+    log "Déploiement du frontend..."
+    docker build --target prod-runtime -t $DOCKER_REGISTRY/$APP_NAME-front:$VERSION ./frontend
+    docker push $DOCKER_REGISTRY/$APP_NAME-front:$VERSION
+
+    # Déploiement sur serveur
+    ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_HOST << EOF
+        docker pull $DOCKER_REGISTRY/$APP_NAME-front:$VERSION
+        docker-compose -f /home/ubuntu/frontend/docker-compose.yml up -d --no-deps frontend
+EOF
+}
+
+# Exécution
+deploy_backend
+deploy_frontend
+
+log "✅ Déploiement terminé avec succès"
+````
+
+## 4. <a name='x-4-scripts-et-automatisation'></a> Scripts et automatisation
+
+### Outils qualité code utilisés
+
+**ESLint et Prettier (Frontend) :**
+
+```json
+{
+  "scripts": {
+    "lint": "ng lint",
+    "lint:fix": "ng lint --fix",
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\""
+  }
+}
+```
+
+**SonarQube (Analyse statique) :**
+
+```yaml
+# sonar-project.properties
+sonar.projectKey=hexaplanning
+sonar.organization=antoinespr
+sonar.sources=src/
+sonar.exclusions=**/*.spec.ts,**/*.test.ts
+sonar.typescript.lcov.reportPaths=coverage/lcov.info
+```
+
+### Outils d'automatisation de tests utilisés
+
+**Jest (Tests unitaires Frontend) :**
+
+```json
+{
+  "jest": {
+    "preset": "jest-preset-angular",
+    "setupFilesAfterEnv": ["<rootDir>/setup-jest.ts"],
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["html", "lcov", "text-summary"]
+  }
+}
+```
+
+**xUnit (Tests unitaires Backend) :**
+
+```xml
+<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+<PackageReference Include="xunit" Version="2.4.1" />
+<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+```
+
+### Scripts CI s'exécutent sans erreur
+
+**Pipeline CI Backend (.github/workflows/ci-api.yml) :**
+
+```yaml
+name: CI Pipeline API
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore ./backend
+
+      - name: Build
+        run: dotnet build ./backend --no-restore
+
+      - name: Test Unitaires
+        run: dotnet test ./backend/TestsUnitaires --no-build --verbosity normal
+
+      - name: Test Intégration
+        run: dotnet test ./backend/TestsIntegration --no-build --verbosity detailed
+```
+
+### Serveur CI paramétré
+
+**Configuration GitHub Actions :**
+
+- **Triggers** : Push sur main, Pull Requests
+- **Environnements** : Test, Staging, Production
+- **Secrets** : Clés API, tokens de déploiement
+- **Notifications** : Slack/Email en cas d'échec
+
+### Rapports CI interprétés
+
+**Métriques surveillées :**
+
+- **Couverture de code** : Minimum 80% requis
+- **Tests passants** : 100% success rate
+- **Temps de build** : < 10 minutes
+- **Déploiement** : Succès/Échec avec logs détaillés
+
+**Dashboard de monitoring :**
+
+```yaml
+# Exemple de métriques CI
+Build Success Rate: 95.2%
+Average Build Time: 8m 32s
+Test Coverage: 87.4%
+Security Vulnerabilities: 0 Critical, 2 Low
+```
+
+## 5. <a name='x-5-veille-technologique'></a> Veille technologique
+
+### Veille techno/sécu liée au déploiement
+
+**Sources de veille surveillées :**
+
+- **Security advisories** : GitHub, NIST, OWASP
+- **Dependencies updates** : Dependabot, Renovate
+- **Docker images** : Base images security updates
+- **Cloud security** : OVH security bulletins
+
+**Processus de mise à jour :**
+
+1. **Monitoring automatisé** : Alertes sur nouvelles vulnérabilités
+2. **Évaluation d'impact** : Analyse des risques et priorités
+3. **Tests en staging** : Validation des correctifs
+4. **Déploiement planifié** : Mise à jour en production
+
+### Documentation technique outils comprise
+
+**Documentation multilingue (FR/EN B1) :**
+
+- **README.md** : Instructions installation/déploiement
+- **DEPLOYMENT.md** : Procédures détaillées de mise en production
+- **SECURITY.md** : Politiques et procédures de sécurité
+- **API-DOCS.md** : Documentation technique des endpoints
+
+**Standards respectés :**
+
+- Terminologie technique en anglais
+- Explications en français
+- Exemples de code commentés
+- Diagrammes explicatifs
+
+# XI. Conclusion et perspectives
+
+## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
 
 Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
 
