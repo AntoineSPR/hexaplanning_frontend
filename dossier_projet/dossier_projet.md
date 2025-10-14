@@ -196,6 +196,7 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 - **Visual Studio Code** : IDE pour le front-end avec extensions spécialisées
 - **Visual Studio** : IDE pour le back-end
+- **GitKraken** : Interface graphique Git intuitive pour la gestion des branches et l'historique des commits
 - **Swagger** : Documentation et accessibilité des endpoints de l'API
 
 ### Outils d'environnement (CI, Git, GitHub, Jest, Docker, Maven, Node.js, Navigateurs...)
@@ -1170,6 +1171,7 @@ Cette approche globale permet de garantir un haut niveau de sécurité pour les 
 
 - **Git** : Système de contrôle de version distribué
 - **GitHub** : Plateforme d'hébergement avec fonctionnalités collaboratives
+- **GitKraken** : Interface graphique Git avancée pour la visualisation des branches et la gestion des conflits
 - **Branches** : Stratégie de branching avec branches de fonctionnalités
 - **Pull Requests** : Revue de code systématique avant fusion
 
