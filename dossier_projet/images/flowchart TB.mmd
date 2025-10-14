@@ -1,0 +1,50 @@
+flowchart TB
+    %% Acteurs
+    User((Utilisateur))
+    
+    %% Cas d'usage - Authentification
+    subgraph Auth ["🔐 Authentification"]
+        UC1["Créer un compte et se connecter"]
+        UC2["Modifier ou réinitialiser son mot de passe"]
+    end
+    
+    %% Cas d'usage - Gestion des quêtes
+    subgraph Quest ["📝 Gestion des Quêtes"]
+        UC3["Créer une quête"]
+        UC4["Lister toutes les quêtes accomplies et non accomplies"]
+        UC5["Accéder aux détails d'une quête, l'éditer ou la supprimer"]
+    end
+    
+    %% Cas d'usage - Carte hexagonale
+    subgraph Map ["🗺️ Carte d'Expédition"]
+        UC6["Assigner une quête non accomplie à un hexagone"]
+        UC7["Visualiser toutes les quêtes assignées et identifier leur priorité et statut"]
+
+    end
+
+    %% Cas d'usage - Dashboard
+    subgraph Dashboard ["📊 Dashboard & Notifications"]
+        UC8["Voir le nombre de quêtes restantes à accomplir"]
+        UC9["Recevoir des notifications éphémères"]
+    end
+    
+    %% Relations utilisateur vers cas d'usage
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC8
+    User --> UC9
+    UC3 --> UC4
+    UC3 --> UC6
+    UC6 --> UC7
+    UC4 --> UC5
+    UC7 --> UC5
+
+
+    %% Styling
+    classDef actor fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef usecase fill:#f3e5f5,stroke:#4a148c,stroke-width:1px,color:#000
+    classDef subgraphStyle fill:#fafafa,stroke:#616161,stroke-width:1px,color:#000
+    
+    class User actor
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9 usecase

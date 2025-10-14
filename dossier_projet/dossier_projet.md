@@ -112,24 +112,54 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 ### Fonctionnalités principales
 
-- **Gestion des utilisateurs** : Inscription, connexion, gestion de profil, réinitialisation de mot de passe
-- **Gestion des quêtes** : Création, modification, suppression, changement de statut
-- **Système de priorités** : Classification en trois niveaux (primaire, secondaire, tertiaire)
-- **Visualisation hexagonale** : Assignation des quêtes sur une carte d'hexagones
-- **Suivi de progression** : Barre de progression et pourcentage d'avancement
+- **Gestion des utilisateurs** : Inscription, connexion, changement et réinitialisation de mot de passe.
+- **Gestion des quêtes** : Création, modification, suppression, changement rapide de statut.
+- **Système de priorités** : Classification en trois niveaux (primaire, secondaire, tertiaire).
+- **Visualisation hexagonale** : Assignation des quêtes sur une carte d'hexagones.
+- **Suivi de progression** : Barre de progression et pourcentage d'avancement.
 
-### Ca d'usage User Storing
+### Cas d'usage (User Stories)
 
-- **Diagramme de cas d'usage** : Utilisateur peut créer un compte, se connecter, gérer ses quêtes
-- **Diagramme de séquence** : Processus d'authentification et de création de quête
-- **Diagramme de données persistantes** : Stockage sécurisé des informations utilisateur
+<div align="center">
+<img src="images/user-stories.png" />
+</div>
+
+<div align="center">
+<em>User Stories en tant qu'utilisateur, réalisées avec Trello.</em>
+</div>
+
+#### Diagramme de cas d'usage
+
+<div align="center">
+<img src="images/flowchart.png" />
+</div>
+
+<div align="center">
+<em>Diagramme de cas d'usage, réalisé avec Mermaid.</em>
+</div>
+
+**Analyse des cas d'usage :**
+
+1. **Authentification (🔐)** : Gestion complète de l'accès utilisateur avec sécurisation des mots de passe
+2. **Gestion des Quêtes (📝)** : CRUD complet sur les tâches avec gestion des statuts et priorités
+3. **Carte d'Expédition (🗺️)** : Visualisation sur une carte composée d'hexagones,avec assignation interactive
+4. **Dashboard & Notifications (📊)** : Vue d'ensemble et notifications éphémères après chaque action
+
+### Maquette (Figma)
+
+<div align="center">
+<img src="images/maquette.png" />
+</div>
+
+<div align="center">
+<em>Version de départ de la maquette, réalisée avec Figma.</em>
+</div>
 
 ### Objectifs pédagogiques du projet
 
 - Développement d'une application web complète (frontend/backend)
 - Mise en pratique des technologies modernes (Angular, .NET Core, PostgreSQL)
 - Intégration de bonnes pratiques de développement (tests, CI/CD, sécurité)
-- Apprentissage des méthodes agiles et du travail collaboratif
 
 ## 2. <a name='ii-2-spécifications-techniques'></a> Spécifications techniques
 
@@ -157,18 +187,18 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 ### Outils de développement
 
-- **Visual Studio Code** : IDE principal avec extensions spécialisées
-- **Git/GitHub** : Contrôle de version et collaboration
-- **Docker** : Conteneurisation pour la portabilité
-- **Postman** : Tests API et documentation
+- **Visual Studio Code** : IDE pour le front-end avec extensions spécialisées
+- **Visual Studio** : IDE pour le back-end
+- **Swagger** : Documentation et accessibilité des endpoints de l'API
 
 ### Outils d'environnement (CI, Git, GitHub, Jest, Docker, Maven, Node.js, Navigateurs...)
 
+- **Git/GitHub** : Contrôle de version et collaboration
 - **GitHub Actions** : Intégration et déploiement continus
 - **Docker** : Conteneurisation des services (frontend, backend, base de données)
 - **Node.js** : Runtime pour les outils de build Angular
 - **npm** : Gestionnaire de packages JavaScript
-- **Navigateurs** : Chrome, Firefox, Safari pour les tests cross-browser
+- **Navigateurs** : Chrome et Firefox pour les tests cross-browser
 
 # III. Fonctionnalités principales
 
@@ -379,7 +409,7 @@ L'interface est pensée pour être intuitive, responsive et agréable à utilise
 
 ### Méthodologie adoptée
 
-Le projet Hexaplanning a été développé en suivant les principes de la méthodologie Agile, adaptée au contexte d'un projet étudiant :
+Le projet Hexaplanning a été développé tout d'abord en collaboration, puis en solo. La méthode Agile a été adoptée au fil du projet :
 
 - **Sprints de 2 semaines** : Cycles de développement courts et itératifs
 - **User Stories** : Fonctionnalités définies du point de vue utilisateur
@@ -390,6 +420,8 @@ Le projet Hexaplanning a été développé en suivant les principes de la métho
 
 **Sprint 1 : Fondations**
 
+- Réalisation du wireframe et de la maquette
+- Mise en place des User Stories
 - Configuration de l'environnement de développement
 - Architecture de base (frontend Angular + backend .NET)
 - Authentification et gestion des utilisateurs
@@ -450,57 +482,16 @@ git push origin feature/quest-management
 
 ### Gestion de projet
 
-- **GitHub Projects** : Tableau Kanban pour le suivi des tâches
-- **GitHub Issues** : Gestion des bugs et demandes de fonctionnalités
-- **Milestones** : Objectifs par sprint avec deadlines
+- **Jira** : Tableau Kanban pour le suivi des tâches
 
 ### Communication
 
-- **Discord/Slack** : Communication instantanée de l'équipe
-- **GitHub Discussions** : Échanges techniques et décisions d'architecture
-- **Zoom/Teams** : Réunions de planification et retrospectives
+- **Discord** : Communication instantanée de l'équipe
 
 ### Documentation partagée
 
-- **Wiki GitHub** : Documentation technique centralisée
+- **Figma** : Maquettes et schémas d'architecture collaboratifs
 - **Confluence/Notion** : Spécifications fonctionnelles et notes de réunion
-- **Miro/Figma** : Maquettes et schémas d'architecture collaboratifs
-
-## 4. <a name='iv-4-communication-organisation-équipe'></a> Communication & organisation de l'équipe
-
-### Organisation du travail
-
-**Rôles et responsabilités :**
-
-- **Product Owner** : Définition des priorités et validation des fonctionnalités
-- **Scrum Master** : Animation des cérémonies Agile et résolution des blocages
-- **Développeurs** : Implémentation des fonctionnalités selon les user stories
-
-### Rituels Agile
-
-**Sprint Planning (début de sprint) :**
-
-- Sélection des user stories pour le sprint
-- Estimation de la complexité (Planning Poker)
-- Définition des critères d'acceptation
-
-**Daily Standup (quotidien) :**
-
-- Ce qui a été fait hier
-- Ce qui sera fait aujourd'hui
-- Blocages identifiés
-
-**Sprint Review (fin de sprint) :**
-
-- Démonstration des fonctionnalités développées
-- Feedback des parties prenantes
-- Validation des critères d'acceptation
-
-**Retrospective (fin de sprint) :**
-
-- Points positifs à conserver
-- Points d'amélioration identifiés
-- Actions correctives pour le prochain sprint
 
 # V. Modélisation des données
 
