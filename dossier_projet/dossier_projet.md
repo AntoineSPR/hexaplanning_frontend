@@ -672,6 +672,60 @@ L'API suit une architecture en couches claire pour séparer les responsabilités
 - **DataContext** : Couche d'accès aux données avec Entity Framework
 - **Utilities** : Classes utilitaires et helpers transversaux
 
+### Modèle générique BaseModel
+
+L'architecture utilise un **modèle générique d'héritage** pour standardiser les entités et éviter la duplication de code :
+
+**BaseModel - Classe abstraite commune :**
+
+```csharp
+public abstract class BaseModel
+{
+    public int Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public bool IsArchived { get; set; }
+}
+```
+
+**BaseModelOption - Pour les entités de référence :**
+
+```csharp
+public abstract class BaseModelOption : BaseModel
+{
+    public string Name { get; set; }
+    public string Color { get; set; }
+    public string Icon { get; set; }
+}
+```
+
+**Utilisation dans les entités métier :**
+
+```csharp
+public class Quest : BaseModel
+{
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public int UserId { get; set; }
+    public int PriorityId { get; set; }
+    public int StatusId { get; set; }
+    // Propriétés héritées automatiquement : Id, CreatedAt, UpdatedAt, IsArchived
+}
+
+public class Priority : BaseModelOption
+{
+    public string BorderColor { get; set; }
+    // Propriétés héritées : Id, Name, Color, Icon, CreatedAt, UpdatedAt, IsArchived
+}
+```
+
+**Avantages de cette approche :**
+
+- **Cohérence** : Toutes les entités partagent les mêmes métadonnées
+- **Maintenance** : Modifications centralisées dans BaseModel
+- **Audit** : Traçabilité automatique (CreatedAt, UpdatedAt)
+- **Soft Delete** : Gestion uniforme de l'archivage (IsArchived)
+
 ### Responsabilités principales
 
 - **API RESTful** : Exposition des endpoints pour toutes les opérations CRUD
@@ -687,6 +741,78 @@ L'API suit une architecture en couches claire pour séparer les responsabilités
 - **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
 - **Protection anti-attaques** : Guards contre l'injection SQL, XSS, CSRF
 - **Rate limiting** : Protection contre les tentatives de force brute
+
+### Mécanisme CheckUser - Isolation des données utilisateur
+
+L'API implémente un **système de vérification automatique** (`CheckUser`) garantissant que chaque utilisateur ne peut accéder qu'à ses propres ressources :
+
+**Implémentation dans les contrôleurs :**
+
+```csharp
+[HttpGet("{id}")]
+[Authorize]
+public async Task<ActionResult<QuestDto>> GetQuest(int id)
+{
+    var quest = await _questService.GetQuestByIdAsync(id);
+    if (quest == null) return NotFound();
+
+    // Vérification automatique de propriété
+    if (!CheckUser(quest.UserId))
+    {
+        return Forbid("Accès non autorisé à cette ressource");
+    }
+
+    return Ok(quest);
+}
+```
+
+**Méthode CheckUser centralisée :**
+
+```csharp
+protected bool CheckUser(int resourceUserId)
+{
+    // Extraction de l'ID utilisateur depuis le JWT
+    var currentUserId = GetCurrentUserId();
+    return currentUserId == resourceUserId;
+}
+
+protected int GetCurrentUserId()
+{
+    var userIdClaim = User.FindFirst("UserId")?.Value;
+    return int.Parse(userIdClaim ?? "0");
+}
+```
+
+**Protection sur tous les endpoints sensibles :**
+
+```csharp
+// Quêtes
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdateQuest(int id, QuestDto questDto)
+{
+    var existingQuest = await _questService.GetQuestByIdAsync(id);
+    if (!CheckUser(existingQuest.UserId)) return Forbid();
+    // ... logique de mise à jour
+}
+
+// Assignations hexagonales
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteHexAssignment(int id)
+{
+    var hexAssignment = await _hexService.GetByIdAsync(id);
+    var quest = await _questService.GetQuestByIdAsync(hexAssignment.QuestId);
+    if (!CheckUser(quest.UserId)) return Forbid();
+    // ... logique de suppression
+}
+```
+
+**Avantages du système CheckUser :**
+
+- **Sécurité renforcée** : Impossible d'accéder aux données d'autres utilisateurs
+- **Validation automatique** : Contrôle systématique sur toutes les opérations
+- **Code centralisé** : Logique de vérification réutilisable dans tous les contrôleurs
+- **Audit trail** : Traçabilité des tentatives d'accès non autorisées
+- **Performance** : Vérification rapide basée sur les claims JWT
 
 ### Tests et qualité
 
