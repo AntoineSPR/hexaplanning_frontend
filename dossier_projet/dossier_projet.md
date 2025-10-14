@@ -1605,7 +1605,7 @@ Cette approche globale de l'accessibilité garantit que Hexaplanning est utilisa
 
 ## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
 
-Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l'expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l'automatisation des tests et du déploiement, ont permis d'atteindre un haut niveau de qualité logicielle.
+Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l'expérience utilisateur et la gamification de la gestion de tâches, avec un découpage clair entre frontend Angular et backend .NET, la modélisation des entités (quêtes, utilisateurs, hexagones), ainsi que l'automatisation des tests et du déploiement.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L'architecture modulaire et la conteneurisation facilitent la maintenance et l'évolutivité.
 
@@ -1621,17 +1621,19 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
 
 - **Liste de quêtes**
 
-  - Ajout d'options de tri pour l'ordre d'affichage des quêtes : par date de création, par priorité ou personnalisé.
+  - Ajout d'options de tri pour l'ordre d'affichage des quêtes : par date de création, par priorité, par temps estimé, ou selon un ordre personnalisé.
   - Ajout du drag & drop pour réorganiser les quêtes dans un ordre personnalisé.
   - Ajout de catégories personnalisables pour faciliter l'organisation.
   - Ajout d'un sélecteur de priorité directement depuis la liste.
   - Implémentation du glissement tactile sur mobile pour naviguer d'un menu à l'autre (quêtes à accomplir / quêtes accomplies).
+  - Implémentation d'un bouton pour ouvrir une quête au hasard dans une catégorie ou un niveau de priorité déterminé, afin de permettre à l'utilisateur d'agir sur une des tâches s'il ne sait pas par où commencer.
 
 - **Détails des quêtes**
 
   - Ajout d'une option pour rendre les quêtes répétables et permettre de les placer plusieurs fois sur la carte d'hexagones.
   - Ajout d'options dates pour organiser les quêtes dans le temps (date d'exécution prévue ou deadline).
   - Regroupement de quêtes en "expédition" avec un objectif final, chaque quête devenant une étape de la progression.
+  - Archivage manuel des quêtes, ou automatique après avoir été marquées comme terminées depuis un certain temps, afin de désencombrer la liste des quêtes accomplies.
 
 - **Carte d'hexagones**
 
@@ -1648,8 +1650,10 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
   - Ajout d'un avatar pour l'utilisateur.
   - Personnalisation des couleurs (thème de l'application, texte des priorités dans les détails de quêtes, liseré des priorités dans la carte d'hexagones).
   - Personnalisation des unités déployables sur la carte (une fois faite l'implémentation d'un ou plusieurs personnages évoluant sur la carte).
+  - Sélection possible de la langue, en stockant tous les textes affichés dans des constantes répertoriées dans différents fichiers (en, fr, etc.) et récupérées via un service de traduction.
 
 - **Déploiement futur**
+
   - Création d'une application mobile en utilisant Ionic, et déploiement sur les stores Android et iOS.
   - Système de notifications.
   - Persistance des données utilisateurs en les stockant sur l'AsyncStorage de l'appareil afin d'éviter d'avoir à se reconnecter à chaque ouverture de l'app.
