@@ -885,13 +885,13 @@ Des fixtures de données sont utilisées pour simuler des volumes importants de 
 
 ## 4. <a name='Stratgiedevalidation'></a> Stratégie de validation
 
-Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dédiés. Les tests sont exécutés automatiquement lors des pipelines CI/CD (GitHub Actions), garantissant l’absence de régressions avant chaque déploiement. La couverture de code est régulièrement analysée pour cibler les zones à renforcer.
+Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dédiés. Les tests sont exécutés automatiquement lors des pipelines CI/CD (GitHub Actions), garantissant l’absence de régressions avant chaque déploiement.
 
 Cette démarche assure un haut niveau de confiance dans la qualité logicielle du backend, tout en facilitant l’évolution continue du projet.
 
 # VIII. CI / CD
 
-L’automatisation du déploiement et de l’intégration continue est assurée par des pipelines GitHub Actions distincts pour le frontend Angular et l’API .NET. Cette organisation garantit des mises en production fiables, rapides et reproductibles.
+L’automatisation du déploiement et de l’intégration continue est assurée par des pipelines GitHub Actions distincts pour le frontend Angular et l’API .NET.
 
 ## 1. <a name='IntgrationcontinueCIdelAPI'></a> Intégration continue (CI) de l’API
 
@@ -941,32 +941,13 @@ jobs:
                docker compose -f /home/ubuntu/backend/docker-compose.yml up -d --force-recreate
 ```
 
+## 3. <a name='DploiementcontinuCDdufrontend'></a> Déploiement continu (CD) du frontend
+
 Le frontend Angular dispose d’un pipeline CD qui automatise la construction, la publication et le déploiement sur le serveur de production :
 
 - **Build Docker** : Construction de l’image Docker de l’application Angular
 - **Push Docker** : Publication de l’image sur Docker Hub
 - **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur via `docker compose`
-
-Extrait du workflow :
-
-```yaml
-jobs:
-   deploy:
-      ...
-      - run: docker build --target prod-runtime -t antoinespr/hexaplanning-front:dev1 .
-      - run: docker push antoinespr/hexaplanning-front:dev1
-      - uses: appleboy/ssh-action@v1.0.0
-         with:
-            script: |
-               docker pull antoinespr/hexaplanning-front:dev1
-               docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
-```
-
-## 3. <a name='DploiementcontinuCDdufrontend'></a> Déploiement continu (CD) du frontend
-
-Le frontend Angular bénéficie d’un pipeline CD dédié, déclenché à chaque mise à jour de la branche principale. Ce pipeline prend en charge l’ensemble du cycle de livraison : il construit l’application en mode production, génère une image Docker optimisée, la publie sur Docker Hub, puis orchestre le déploiement sur le serveur distant. L’automatisation garantit que la dernière version du frontend est toujours disponible en production, sans intervention manuelle.
-
-Le pipeline s’appuie sur GitHub Actions et utilise des secrets pour sécuriser l’accès au registre Docker et au serveur. L’étape de déploiement s’effectue via SSH, assurant un redémarrage fluide du conteneur frontend sans interruption de service pour les utilisateurs.
 
 Extrait du workflow :
 
