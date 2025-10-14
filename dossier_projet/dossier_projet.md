@@ -978,45 +978,82 @@ Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
 # IX. Sécurité
 
-<!-- ## 8. <a name='Scuritetbonnespratiques'></a> Sécurité et bonnes pratiques
-
 L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
 
-### Authentification et gestion des identités
+## 1. <a name='ix-1-authentification-et-gestion-des-accès'></a> Authentification et gestion des accès
+
+### Framework d'authentification
 
 - **ASP.NET Identity** : Framework robuste intégré à .NET Core pour la gestion complète des utilisateurs
-- **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique
-- **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
-- **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe
-- **Validation d'email** : Confirmation d'identité via email avec tokens d'activation
+- **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique. Toutes les opérations sensibles nécessitent un token JWT, généré lors de la connexion et vérifié à chaque requête côté backend
+- **Guards et Intercepteurs** : Le frontend Angular utilise des guards pour protéger les routes et un intercepteur HTTP pour injecter automatiquement le token dans les requêtes API
 
-### Protection contre les attaques web
+### Gestion sécurisée des mots de passe
+
+- **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
+- **Politique de complexité** : Validation des mots de passe selon les standards de sécurité
+- **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe via email (Brevo)
+- **Protection contre la force brute** : Limitation du nombre de tentatives de connexion et gestion des comptes bloqués
+
+## 2. <a name='ix-2-validation-et-intégrité-des-données'></a> Validation et intégrité des données
+
+### Validation des entrées
+
+- **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées
+- **Sanitisation** : Nettoyage des données côté serveur et client avec Data Annotations
+- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations sensibles
+
+### Isolation des données utilisateur
+
+- **Mécanisme CheckUser** : Système de vérification automatique garantissant que chaque utilisateur ne peut accéder qu'à ses propres ressources
+- **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
+
+## 3. <a name='ix-3-protection-contre-les-attaques'></a> Protection contre les attaques
+
+### Attaques web courantes
 
 - **CSRF Protection** : Tokens anti-contrefaçon sur toutes les opérations sensibles
 - **XSS Prevention** : Échappement automatique des données utilisateur, Content Security Policy stricte
-- **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées
-- **Validation des entrées** : Sanitisation côté serveur et client avec Data Annotations
-- **Rate Limiting** : Protection contre les attaques par déni de service et force brute
+- **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées exclusivement
 
-### Sécurité de l'infrastructure
+### Attaques par déni de service
+
+- **Rate Limiting** : Protection contre les attaques par déni de service et force brute
+- **Throttling** : Limitation des requêtes par utilisateur et par endpoint
+
+### Configuration sécurisée
+
+- **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
+- **Headers de sécurité** : HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+
+## 4. <a name='ix-4-sécurité-de-la-conteneurisation-et-du-déploiement'></a> Sécurité de la conteneurisation et du déploiement
+
+### Infrastructure sécurisée
 
 - **HTTPS obligatoire** : Chiffrement TLS 1.2+ en production avec redirection automatique
-- **Headers de sécurité** : HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
-- **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
+- **Reverse proxy** : Nginx Proxy Manager gère les certificats SSL et protège l'accès aux services
 - **Isolation des conteneurs** : Docker avec utilisateurs non-privilégiés et réseaux isolés
+
+### Gestion des secrets
+
 - **Variables d'environnement** : Secrets stockés de manière sécurisée, jamais dans le code source
+- **Séparation des environnements** : Configuration distincte pour développement, test et production
+- **Rotation des clés** : Mise à jour régulière des tokens et certificats
 
-### Bonnes pratiques de développement
+## 5. <a name='ix-5-surveillance-et-audit'></a> Surveillance et audit
 
-- **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
-- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations
+### Journalisation sécurisée
+
 - **Logging sécurisé** : Traçabilité des actions sensibles sans exposition de données personnelles
+- **Audit trail** : Journalisation des actions critiques côté backend pour audit et détection d'anomalies
+
+### Maintenance et mises à jour
+
 - **Mise à jour régulière** : Surveillance et application des correctifs de sécurité
+- **Monitoring des vulnérabilités** : Mise à jour des dépendances et images Docker
 - **Tests de sécurité** : Validation automatisée des vulnérabilités connues
 
-Cette architecture garantit robustesse, évolutivité et sécurité, tout en permettant une expérience utilisateur fluide et moderne. -->
-
-La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
+La sécurité est intégrée à tous les niveaux de l’architecture d'Hexaplanning pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
 ## 1. <a name='Authentificationetgestiondesaccs'></a> Authentification et gestion des accès
 
@@ -1045,156 +1082,7 @@ La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niv
 - **Logs** : Les actions critiques sont journalisées côté backend pour permettre un audit et une détection rapide d’anomalies.
 - **Mises à jour** : Les dépendances et images Docker sont régulièrement mises à jour pour corriger les vulnérabilités.
 
-Cette approche globale permet de garantir un haut niveau de sécurité pour les utilisateurs et les données de la plateforme.
-
-### Environnement de développement intégré
-
-- **Visual Studio Code** : IDE principal avec extensions spécialisées
-  - Extension Angular Language Service pour la coloration syntaxique et l'autocomplétion
-  - Extension C# Dev Kit pour le développement .NET
-  - Extension Docker pour la gestion des conteneurs
-  - Extension GitLens pour l'historique Git avancé
-
-### Outils de développement installés
-
-- **Node.js 18+** : Runtime JavaScript pour Angular et les outils de build
-- **.NET 8 SDK** : Kit de développement pour l'API backend
-- **Angular CLI 18** : Outils en ligne de commande Angular
-- **Docker Desktop** : Environnement de conteneurisation
-- **PostgreSQL** : Base de données locale pour les tests
-
-### Gestionnaires de paquets
-
-- **npm** : Gestion des dépendances frontend
-- **NuGet** : Gestion des packages .NET
-- **Docker Hub** : Registre d'images de conteneurs
-
-## 2. <a name='viii-2-versioning-et-collaboration'></a> Versioning et collaboration
-
-### Contrôle de version
-
-- **Git** : Système de contrôle de version distribué
-- **GitHub** : Plateforme d'hébergement avec fonctionnalités collaboratives
-- **GitKraken** : Interface graphique Git avancée pour la visualisation des branches et la gestion des conflits
-- **Branches** : Stratégie de branching avec branches de fonctionnalités
-- **Pull Requests** : Revue de code systématique avant fusion
-
-### Outils de collaboration
-
-- **GitHub Issues** : Suivi des tâches et des bugs
-- **GitHub Projects** : Planification et suivi des sprints
-- **GitHub Actions** : Intégration et déploiement continus
-- **Markdown** : Documentation standardisée
-
-### Standards de développement
-
-- **Conventional Commits** : Format standardisé des messages de commit
-- **ESLint** : Linting du code TypeScript/JavaScript
-- **Prettier** : Formatage automatique du code
-- **EditorConfig** : Configuration cohérente de l'éditeur
-
-## 3. <a name='viii-3-conteneurisation-des-services'></a> Conteneurisation des services
-
-### Architecture conteneurisée
-
-Tous les services de l'application sont conteneurisés pour garantir la portabilité et la cohérence entre les environnements :
-
-- **Frontend Angular** : Image Nginx optimisée pour la production
-- **Backend .NET** : Image basée sur ASP.NET Core runtime
-- **Base de données PostgreSQL** : Image officielle PostgreSQL
-- **Proxy inverse** : Nginx Proxy Manager pour la gestion des domaines
-
-### Configuration Docker
-
-```yaml
-# docker-compose.yml - Services requis
-version: '3.8'
-services:
-  frontend:
-    image: antoinespr/hexaplanning-front:dev1
-    ports:
-      - '80:80'
-
-  backend:
-    image: antoinespr/hexaplanning-api:dev1
-    environment:
-      - ConnectionStrings__DefaultConnection=${DB_CONNECTION}
-    ports:
-      - '5000:8080'
-
-  database:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=hexaplanning
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-```
-
-### Isolation et sécurité
-
-- **Utilisateurs non-privilégiés** dans les conteneurs
-- **Réseaux isolés** pour chaque service
-- **Variables d'environnement** pour la configuration sensible
-- **Volumes persistants** pour les données
-
-## 4. <a name='viii-4-documentation-technique'></a> Documentation technique
-
-### Documentation multilingue
-
-La documentation technique est rédigée en français avec des éléments en anglais selon les standards internationaux (niveau B1 minimum) :
-
-- **README.md** : Instructions d'installation et de démarrage
-- **API Documentation** : Endpoints documentés avec Swagger/OpenAPI
-- **Architecture Decision Records** : Justifications des choix techniques
-- **Code Comments** : Commentaires en anglais dans le code source
-
-### Types de documentation
-
-- **Documentation utilisateur** : Guide d'utilisation de l'application
-- **Documentation développeur** : Instructions de développement et contribution
-- **Documentation API** : Spécifications techniques des endpoints
-- **Documentation déploiement** : Procédures de mise en production
-
-### Standards de documentation
-
-- **Markdown** : Format standardisé pour la documentation
-- **Diagrammes Mermaid** : Schémas techniques intégrés
-- **Captures d'écran** : Interface utilisateur documentée
-- **Liens de navigation** : Table des matières interactive
-
-## 5. <a name='viii-5-gestion-de-projet'></a> Gestion de projet
-
-### Planification et suivi
-
-- **Méthodologie Agile** : Développement itératif par sprints
-- **GitHub Projects** : Tableau Kanban pour le suivi des tâches
-- **Milestones** : Objectifs et échéances définis
-- **Estimations** : Complexité évaluée pour chaque tâche
-
-### Procédures qualité
-
-- **Code Review** : Revue systématique par les pairs
-- **Tests automatisés** : Validation continue de la qualité
-- **Convention de nommage** : Standards appliqués au code
-- **Documentation du code** : Commentaires et documentation technique
-
-### Environnement de développement
-
-L'environnement de développement est configuré pour respecter l'architecture de production :
-
-- **Conteneurs locaux** : Développement en environnement isolé
-- **Base de données locale** : PostgreSQL via Docker
-- **Hot reload** : Rechargement automatique du code
-- **Debugging** : Outils de débogage intégrés
-
-### Outils collaboratifs
-
-- **Git Flow** : Workflow de développement standardisé
-- **Communication** : Documentation des décisions techniques
-- **Partage de connaissances** : Wiki et documentation partagée
-- **Intégration continue** : Validation automatique des modifications
+Cette approche multicouche garantit un haut niveau de sécurité pour les utilisateurs et les données de la plateforme, tout en maintenant une expérience utilisateur fluide et moderne.
 
 # X. Accessibilité et conformité RGAA
 
