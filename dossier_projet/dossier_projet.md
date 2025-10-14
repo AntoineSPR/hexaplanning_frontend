@@ -1141,14 +1141,13 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 - **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
 - **Politique de complexité** : Validation des mots de passe selon les standards de sécurité
 - **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe via email (Brevo)
-- **Protection contre la force brute** : Limitation du nombre de tentatives de connexion et gestion des comptes bloqués
+- **Protection contre la force brute** : Limitation du nombre de tentatives de connexion
 
 ## 2. <a name='ix-2-validation-et-intégrité-des-données'></a> Validation et intégrité des données
 
 ### Validation des entrées
 
 - **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées
-- **Sanitisation** : Nettoyage des données côté serveur et client avec Data Annotations
 - **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations sensibles
 
 ### Isolation des données utilisateur
@@ -1202,33 +1201,6 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 - **Tests de sécurité** : Validation automatisée des vulnérabilités connues
 
 La sécurité est intégrée à tous les niveaux de l’architecture d'Hexaplanning pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
-
-## 1. <a name='Authentificationetgestiondesaccs'></a> Authentification et gestion des accès
-
-- **JWT (JSON Web Token)** : Toutes les opérations sensibles nécessitent une authentification par token JWT, généré lors de la connexion et vérifié à chaque requête côté backend.
-- **Guards et Intercepteurs** : Le frontend Angular utilise des guards pour protéger les routes et un intercepteur HTTP pour injecter automatiquement le token dans les requêtes API.
-
-## 2. <a name='Validationetintgritdesdonnes'></a> Validation et intégrité des données
-
-- **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées.
-- **Gestion des erreurs** : Les erreurs sont centralisées et les messages d’erreur ne révèlent jamais d’informations sensibles.
-
-## 3. <a name='Protectioncontrelesattaques'></a> Protection contre les attaques
-
-- **Force brute** : Limitation du nombre de tentatives de connexion et gestion des comptes bloqués après plusieurs échecs.
-- **CORS** : Configuration stricte des origines autorisées pour l’API.
-- **Sécurité des mots de passe** : Hashage fort (ASP.NET Identity), politique de complexité et gestion sécurisée du reset via email (Brevo).
-
-## 4. <a name='Scuritdelaconteneurisationetdudploiement'></a> Sécurité de la conteneurisation et du déploiement
-
-- **Isolation** : Chaque composant (frontend, backend, base de données) s’exécute dans un conteneur dédié.
-- **Secrets** : Les secrets (tokens, clés, mots de passe) sont stockés dans les variables d’environnement et jamais dans le code source.
-- **Reverse proxy** : Nginx Proxy Manager gère les certificats SSL et protège l’accès aux services.
-
-## 5. <a name='Surveillanceetaudit'></a> Surveillance et audit
-
-- **Logs** : Les actions critiques sont journalisées côté backend pour permettre un audit et une détection rapide d’anomalies.
-- **Mises à jour** : Les dépendances et images Docker sont régulièrement mises à jour pour corriger les vulnérabilités.
 
 Cette approche multicouche garantit un haut niveau de sécurité pour les utilisateurs et les données de la plateforme, tout en maintenant une expérience utilisateur fluide et moderne.
 
