@@ -7,82 +7,86 @@
 1.  [Présentation du projet](#i-1-présentation-du-projet)
 2.  [Objectifs et contexte](#i-2-objectifs-et-contexte)
 
-**II. [Fonctionnalités principales](#ii-fonctionnalités-principales)**
+**II. [Spécifications du projet](#ii-spécifications-du-projet)**
 
-1.  [Page d'accueil](#ii-1-page-d-accueil)
-2.  [Gestion des quêtes (tâches)](#ii-2-gestion-des-quêtes-tâches)
-3.  [Affichage visuel en hexagones (carte)](#ii-3-affichage-visuel-en-hexagones-map)
-4.  [Système d'authentification et gestion des utilisateurs](#ii-4-système-d-authentification-et-gestion-des-utilisateurs)
-5.  [Navigation et ergonomie](#ii-5-navigation-et-ergonomie)
+1.  [Spécifications fonctionnelles](#ii-1-spécifications-fonctionnelles)
+2.  [Spécifications techniques](#ii-2-spécifications-techniques)
 
-**III. [Modélisation des données](#iii-modélisation-des-données)**
+**III. [Fonctionnalités principales](#iii-fonctionnalités-principales)**
 
-1.  [MCD (Modèle Conceptuel de Données)](#iii-1-mcd-modèle-conceptuel-de-données)
-2.  [MLD (Modèle Logique de Données)](#iii-2-mld-modèle-logique-de-données)
-3.  [Description des entités et relations](#iii-3-description-des-entités-et-relations)
+1.  [Page d'accueil](#iii-1-page-d-accueil)
+2.  [Gestion des quêtes (tâches)](#iii-2-gestion-des-quêtes-tâches)
+3.  [Affichage visuel en hexagones (carte)](#iii-3-affichage-visuel-en-hexagones-map)
+4.  [Système d'authentification et gestion des utilisateurs](#iii-4-système-d-authentification-et-gestion-des-utilisateurs)
+5.  [Navigation et ergonomie](#iii-5-navigation-et-ergonomie)
 
-**IV. [Architecture technique et technologies](#iv-architecture-technique-et-technologies)**
+**IV. [Travail en équipe & méthodologie](#iv-travail-en-équipe-méthodologie)**
 
-1.  [Vue d'ensemble](#iv-1-vue-d-ensemble)
-    - [Schéma global](#iv-1-1-schéma-global)
-2.  [Frontend : Angular et PrimeNG](#iv-2-frontend-angular-et-primeng)
-3.  [Backend : .NET Core](#iv-3-backend-net-core)
-4.  [Base de données : PostgreSQL](#iv-4-base-de-données-postgresql)
-5.  [Communication API REST](#iv-5-communication-api-rest)
-6.  [Infrastructure et DevOps](#iv-6-infrastructure-et-devops)
-7.  [Services externes](#iv-7-services-externes)
-8.  [Sécurité et bonnes pratiques](#iv-8-sécurité-et-bonnes-pratiques)
+1.  [Méthode Agile / Scrum](#iv-1-méthode-agile-scrum)
+2.  [Workflow & branches stratégie](#iv-2-workflow-branches-stratégie)
+3.  [Outils collaboratifs](#iv-3-outils-collaboratifs)
+4.  [Communication & organisation de l'équipe](#iv-4-communication-organisation-équipe)
 
-**V. [Qualité logicielle et tests](#v-qualité-logicielle-et-tests)**
+**V. [Modélisation des données](#v-modélisation-des-données)**
 
-1.  [Tests unitaires (backend)](#v-1-tests-unitaires-backend)
-2.  [Tests d’intégration](#v-2-tests-d-intégration)
-3.  [Tests de charge et fixtures](#v-3-tests-de-charge-et-fixtures)
-4.  [Stratégie de validation](#v-4-stratégie-de-validation)
+1.  [MCD (Modèle Conceptuel de Données)](#v-1-mcd-modèle-conceptuel-de-données)
+2.  [MLD (Modèle Logique de Données)](#v-2-mld-modèle-logique-de-données)
+3.  [Description des entités et relations](#v-3-description-des-entités-et-relations)
 
-**VI. [Déploiement et intégration continue](#vi-déploiement-et-intégration-continue)**
+**VI. [Architecture technique et technologies](#vi-architecture-technique-et-technologies)**
 
-1.  [Intégration continue (CI) de l’API](#vi-1-intégration-continue-ci-de-l-api)
-2.  [Déploiement continu (CD) du backend](#vi-2-déploiement-continu-cd-du-backend)
-3.  [Déploiement continu (CD) du frontend](#vi-3-déploiement-continu-cd-du-frontend)
-4.  [Conteneurisation et orchestration](#vi-4-conteneurisation-et-orchestration)
-5.  [Hébergement et reverse proxy](#vi-5-hébergement-et-reverse-proxy)
+1.  [Vue d'ensemble](#vi-1-vue-d-ensemble)
+    - [Schéma global](#vi-1-1-schéma-global)
+2.  [Frontend : Angular et PrimeNG](#vi-2-frontend-angular-et-primeng)
+3.  [Backend : .NET Core](#vi-3-backend-net-core)
+4.  [Base de données : PostgreSQL](#vi-4-base-de-données-postgresql)
+5.  [Communication API REST](#vi-5-communication-api-rest)
+6.  [Infrastructure et DevOps](#vi-6-infrastructure-et-devops)
+7.  [Services externes](#vi-7-services-externes)
+8.  [Sécurité et bonnes pratiques](#vi-8-sécurité-et-bonnes-pratiques)
 
-**VII. [Sécurité](#vii-sécurité)**
+**VII. [Qualité logicielle et tests](#vii-qualité-logicielle-et-tests)**
 
-1.  [Authentification et gestion des accès](#vii-1-authentification-et-gestion-des-accès)
-2.  [Validation et intégrité des données](#vii-2-validation-et-intégrité-des-données)
-3.  [Protection contre les attaques](#vii-3-protection-contre-les-attaques)
-4.  [Sécurité de la conteneurisation et du déploiement](#vii-4-sécurité-de-la-conteneurisation-et-du-déploiement)
-5.  [Surveillance et audit](#vii-5-surveillance-et-audit)
+1.  [Tests unitaires (backend)](#vii-1-tests-unitaires-backend)
+2.  [Tests d’intégration](#vii-2-tests-d-intégration)
+3.  [Tests de charge et fixtures](#vii-3-tests-de-charge-et-fixtures)
+4.  [Stratégie de validation](#vii-4-stratégie-de-validation)
 
-**VIII. [Environnement de développement et gestion de projet](#viii-environnement-de-développement-et-gestion-de-projet)**
+**VIII. [CI / CD](#viii-ci-cd)**
 
-1.  [Outils de développement](#viii-1-outils-de-développement)
-2.  [Versioning et collaboration](#viii-2-versioning-et-collaboration)
-3.  [Conteneurisation des services](#viii-3-conteneurisation-des-services)
-4.  [Documentation technique](#viii-4-documentation-technique)
-5.  [Gestion de projet](#viii-5-gestion-de-projet)
+1.  [Intégration continue (CI) de l’API](#viii-1-intégration-continue)
+2.  [Déploiement continu (CD) du backend](#viii-2-déploiement-continu)
+3.  [Conteneurisation et orchestration](#viii-3-conteneurisation-et-orchestration)
+4.  [Hébergement et reverse proxy](#viii-4-hébergement-et-reverse-proxy)
 
-**IX. [Conception et analyse](#ix-conception-et-analyse)**
+**IX. [Sécurité](#ix-sécurité)**
 
-1.  [Analyse des besoins](#ix-1-analyse-des-besoins)
-2.  [Maquettage et design](#ix-2-maquettage-et-design)
-3.  [Composants métier](#ix-3-composants-métier)
-4.  [Interfaces utilisateur](#ix-4-interfaces-utilisateur)
+1.  [Authentification et gestion des accès](#ix-1-authentification-et-gestion-des-accès)
+2.  [Validation et intégrité des données](#ix-2-validation-et-intégrité-des-données)
+3.  [Protection contre les attaques](#ix-3-protection-contre-les-attaques)
+4.  [Sécurité de la conteneurisation et du déploiement](#ix-4-sécurité-de-la-conteneurisation-et-du-déploiement)
+5.  [Surveillance et audit](#ix-5-surveillance-et-audit)
 
-**X. [Procédures de déploiement](#x-procédures-de-déploiement)**
+**X. [Conception et analyse](#x-conception-et-analyse)**
 
-1.  [Plan de tests complet](#x-1-plan-de-tests-complet)
-2.  [Environnements de test](#x-2-environnements-de-test)
-3.  [Procédures de déploiement](#x-3-procédures-de-déploiement)
-4.  [Scripts et automatisation](#x-4-scripts-et-automatisation)
-5.  [Veille technologique](#x-5-veille-technologique)
+1.  [Analyse des besoins](#x-1-analyse-des-besoins)
+2.  [Maquettage et design](#x-2-maquettage-et-design)
+3.  [Composants métier](#x-3-composants-métier)
+4.  [Interfaces utilisateur](#x-4-interfaces-utilisateur)
 
-**XI. [Conclusion et perspectives](#xi-conclusion-et-perspectives)**
+**XI. [Procédures de déploiement](#xi-procédures-de-déploiement)**
 
-1.  [Bilan du projet](#xi-1-bilan-du-projet)
-2.  [Perspectives d'évolution](#xi-2-perspectives-d-évolution)
+1.  [Plan de tests complet](#xi-1-plan-de-tests-complet)
+2.  [Environnements de test](#xi-2-environnements-de-test)
+3.  [Procédures de déploiement](#xi-3-procédures-de-déploiement)
+4.  [Scripts et automatisation](#xi-4-scripts-et-automatisation)
+
+**XII. [Conclusion et perspectives](#xii-conclusion-et-perspectives)**
+
+1.  [Bilan du projet](#xii-1-bilan-du-projet)
+2.  [Perspectives d'évolution](#xii-2-perspectives-d-évolution)
+3.  [Améliorations futures possibles](#xii-3-améliorations-futures)
+4.  [Ce que ce projet m'a apporté](#xii-4-apport-projet)
 
 ---
 
@@ -102,7 +106,71 @@ L'application a été développée en mobile-first, favorisant une utilisation q
 
 Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. Hexaplanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
 
-# II. Fonctionnalités principales
+# II. Spécifications du projet
+
+## 1. <a name='ii-1-spécifications-fonctionnelles'></a> Spécifications fonctionnelles
+
+### Fonctionnalités principales
+
+- **Gestion des utilisateurs** : Inscription, connexion, gestion de profil, réinitialisation de mot de passe
+- **Gestion des quêtes** : Création, modification, suppression, changement de statut
+- **Système de priorités** : Classification en trois niveaux (primaire, secondaire, tertiaire)
+- **Visualisation hexagonale** : Assignation des quêtes sur une carte d'hexagones
+- **Suivi de progression** : Barre de progression et pourcentage d'avancement
+
+### Ca d'usage User Storing
+
+- **Diagramme de cas d'usage** : Utilisateur peut créer un compte, se connecter, gérer ses quêtes
+- **Diagramme de séquence** : Processus d'authentification et de création de quête
+- **Diagramme de données persistantes** : Stockage sécurisé des informations utilisateur
+
+### Objectifs pédagogiques du projet
+
+- Développement d'une application web complète (frontend/backend)
+- Mise en pratique des technologies modernes (Angular, .NET Core, PostgreSQL)
+- Intégration de bonnes pratiques de développement (tests, CI/CD, sécurité)
+- Apprentissage des méthodes agiles et du travail collaboratif
+
+## 2. <a name='ii-2-spécifications-techniques'></a> Spécifications techniques
+
+### Technologies et frameworks utilisés
+
+**Frontend :**
+
+- Angular 18 avec TypeScript
+- PrimeNG pour les composants UI
+- SCSS pour le styling responsive
+- Jest et Cypress pour les tests
+
+**Backend :**
+
+- ASP.NET Core 8 avec C#
+- Entity Framework Core pour l'ORM
+- PostgreSQL comme base de données
+- ASP.NET Identity pour l'authentification
+
+### Choix des langages et frameworks
+
+- **Angular** : Framework mature avec une large communauté, TypeScript intégré
+- **ASP.NET Core** : Performance élevée, sécurité intégrée, cross-platform
+- **PostgreSQL** : SGBD relationnel open-source, robuste et performant
+
+### Outils de développement
+
+- **Visual Studio Code** : IDE principal avec extensions spécialisées
+- **Git/GitHub** : Contrôle de version et collaboration
+- **Docker** : Conteneurisation pour la portabilité
+- **Postman** : Tests API et documentation
+
+### Outils d'environnement (CI, Git, GitHub, Jest, Docker, Maven, Node.js, Navigateurs...)
+
+- **GitHub Actions** : Intégration et déploiement continus
+- **Docker** : Conteneurisation des services (frontend, backend, base de données)
+- **Node.js** : Runtime pour les outils de build Angular
+- **npm** : Gestionnaire de packages JavaScript
+- **Navigateurs** : Chrome, Firefox, Safari pour les tests cross-browser
+
+# III. Fonctionnalités principales
 
 ## 1. <a name='PagedAccueil'></a>Page d'accueil
 
@@ -305,7 +373,136 @@ L’application propose un menu apparaissant en permanence en bas de page, et pe
 
 L'interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l'engagement et la productivité de l'utilisateur.
 
-# III. Modélisation des données
+# IV. Travail en équipe & méthodologie
+
+## 1. <a name='iv-1-méthode-agile-scrum'></a> Méthode Agile / Scrum
+
+### Méthodologie adoptée
+
+Le projet Hexaplanning a été développé en suivant les principes de la méthodologie Agile, adaptée au contexte d'un projet étudiant :
+
+- **Sprints de 2 semaines** : Cycles de développement courts et itératifs
+- **User Stories** : Fonctionnalités définies du point de vue utilisateur
+- **Backlog Product** : Priorisation des fonctionnalités selon la valeur métier
+- **Daily Standup** : Points quotidiens sur l'avancement (adaptés selon disponibilité)
+
+### Découpage du projet
+
+**Sprint 1 : Fondations**
+
+- Configuration de l'environnement de développement
+- Architecture de base (frontend Angular + backend .NET)
+- Authentification et gestion des utilisateurs
+
+**Sprint 2 : Fonctionnalités core**
+
+- CRUD des quêtes
+- Système de priorités et statuts
+- Interface de liste des quêtes
+
+**Sprint 3 : Visualisation**
+
+- Développement de la carte hexagonale
+- Assignation des quêtes aux hexagones
+- Interactions et animations
+
+**Sprint 4 : Finalisation**
+
+- Tests et corrections de bugs
+- Documentation
+- Déploiement et mise en production
+
+## 2. <a name='iv-2-workflow-branches-stratégie'></a> Workflow & branches stratégie
+
+### Git Workflow adopté
+
+**Stratégie de branching :**
+
+- **main** : Branche de production, code stable
+- **develop** : Branche de développement, intégration des features
+- **feature/** : Branches pour chaque nouvelle fonctionnalité
+- **hotfix/** : Corrections urgentes sur la production
+
+### Processus de développement
+
+```bash
+# Création d'une nouvelle feature
+git checkout develop
+git pull origin develop
+git checkout -b feature/quest-management
+
+# Développement et commits
+git add .
+git commit -m "feat: add quest creation functionality"
+
+# Push et Pull Request
+git push origin feature/quest-management
+# Création PR sur GitHub : feature/quest-management -> develop
+```
+
+### Code Review
+
+- **Pull Requests obligatoires** : Aucun code ne merge sans review
+- **Critères de validation** : Tests passants, documentation, respect des conventions
+- **Reviewers** : Au moins un autre développeur valide les modifications
+
+## 3. <a name='iv-3-outils-collaboratifs'></a> Outils collaboratifs
+
+### Gestion de projet
+
+- **GitHub Projects** : Tableau Kanban pour le suivi des tâches
+- **GitHub Issues** : Gestion des bugs et demandes de fonctionnalités
+- **Milestones** : Objectifs par sprint avec deadlines
+
+### Communication
+
+- **Discord/Slack** : Communication instantanée de l'équipe
+- **GitHub Discussions** : Échanges techniques et décisions d'architecture
+- **Zoom/Teams** : Réunions de planification et retrospectives
+
+### Documentation partagée
+
+- **Wiki GitHub** : Documentation technique centralisée
+- **Confluence/Notion** : Spécifications fonctionnelles et notes de réunion
+- **Miro/Figma** : Maquettes et schémas d'architecture collaboratifs
+
+## 4. <a name='iv-4-communication-organisation-équipe'></a> Communication & organisation de l'équipe
+
+### Organisation du travail
+
+**Rôles et responsabilités :**
+
+- **Product Owner** : Définition des priorités et validation des fonctionnalités
+- **Scrum Master** : Animation des cérémonies Agile et résolution des blocages
+- **Développeurs** : Implémentation des fonctionnalités selon les user stories
+
+### Rituels Agile
+
+**Sprint Planning (début de sprint) :**
+
+- Sélection des user stories pour le sprint
+- Estimation de la complexité (Planning Poker)
+- Définition des critères d'acceptation
+
+**Daily Standup (quotidien) :**
+
+- Ce qui a été fait hier
+- Ce qui sera fait aujourd'hui
+- Blocages identifiés
+
+**Sprint Review (fin de sprint) :**
+
+- Démonstration des fonctionnalités développées
+- Feedback des parties prenantes
+- Validation des critères d'acceptation
+
+**Retrospective (fin de sprint) :**
+
+- Points positifs à conserver
+- Points d'amélioration identifiés
+- Actions correctives pour le prochain sprint
+
+# V. Modélisation des données
 
 ## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
 
@@ -396,9 +593,9 @@ L'interface est pensée pour être intuitive, responsive et agréable à utilise
 - **Quest N:1 Status** : Une quête a un statut.
 - **Quest 1:1 HexAssignment** : Une quête peut être assignée à un hexagone (optionnel).
 
-# IV. Architecture technique et technologies
+# VI. Architecture technique et technologies
 
-## 1. <a name='Vuedensemble'></a> Vue d'ensemble
+## 1. <a name='vi-1-vue-d-ensemble'></a> Vue d'ensemble
 
 Hexaplanning adopte une architecture moderne en trois couches (3-tier architecture) avec une séparation claire des responsabilités. Le choix des technologies s'est fait en privilégiant la robustesse, la maintenabilité et l'écosystème de chaque solution. L'architecture repose sur :
 
@@ -646,7 +843,7 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 
 Cette architecture garantit robustesse, évolutivité et sécurité, tout en permettant une expérience utilisateur fluide et moderne.
 
-# V. Qualité logicielle et tests
+# VII. Qualité logicielle et tests
 
 La qualité logicielle d’Hexaplanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
 
@@ -682,7 +879,7 @@ Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dé
 
 Cette démarche assure un haut niveau de confiance dans la qualité logicielle du backend, tout en facilitant l’évolution continue du projet.
 
-# VI. Déploiement et intégration continue
+# VIII. CI / CD
 
 L’automatisation du déploiement et de l’intégration continue est assurée par des pipelines GitHub Actions distincts pour le frontend Angular et l’API .NET. Cette organisation garantit des mises en production fiables, rapides et reproductibles.
 
@@ -788,7 +985,7 @@ Cette chaîne CI/CD garantit des livraisons rapides, sûres et automatisées, to
 
 Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
-# VII. Sécurité
+# IX. Sécurité
 
 La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niveaux de l’architecture pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
@@ -820,12 +1017,6 @@ La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niv
 - **Mises à jour** : Les dépendances et images Docker sont régulièrement mises à jour pour corriger les vulnérabilités.
 
 Cette approche globale permet de garantir un haut niveau de sécurité pour les utilisateurs et les données de la plateforme.
-
-# VIII. Environnement de développement et gestion de projet
-
-L'environnement de développement d'Hexaplanning respecte les standards professionnels et intègre les outils nécessaires pour garantir la qualité, la collaboration et la maintenabilité du code.
-
-## 1. <a name='viii-1-outils-de-développement'></a> Outils de développement
 
 ### Environnement de développement intégré
 
@@ -975,7 +1166,7 @@ L'environnement de développement est configuré pour respecter l'architecture d
 - **Partage de connaissances** : Wiki et documentation partagée
 - **Intégration continue** : Validation automatique des modifications
 
-# IX. Conception et analyse
+# X. Conception et analyse
 
 Ce chapitre détaille les aspects de conception, d'analyse des besoins et de développement des composants métier, en respectant les standards de qualité et les bonnes pratiques de développement.
 
@@ -1203,7 +1394,7 @@ it('should emit questCompleted when checkbox is clicked', () => {
 });
 ```
 
-# X. Procédures de déploiement
+# XI. Procédures de déploiement
 
 Ce chapitre détaille les procédures complètes de tests, de déploiement et d'automatisation mises en place pour garantir la qualité et la fiabilité des livraisons.
 
@@ -1598,7 +1789,7 @@ Security Vulnerabilities: 0 Critical, 2 Low
 - Exemples de code commentés
 - Diagrammes explicatifs
 
-# XI. Conclusion et perspectives
+# XII. Conclusion et perspectives
 
 ## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
 
