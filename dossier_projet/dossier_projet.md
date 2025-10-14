@@ -1206,400 +1206,242 @@ Cette approche multicouche garantit un haut niveau de sécurité pour les utilis
 
 # X. Accessibilité et conformité RGAA
 
-L'accessibilité numérique est un enjeu majeur pour Hexaplanning, permettant à tous les utilisateurs, y compris ceux en situation de handicap, d'accéder pleinement aux fonctionnalités de l'application. Ce chapitre détaille les mesures d'accessibilité implémentées en conformité avec le Référentiel Général d'Amélioration de l'Accessibilité (RGAA).
+L'accessibilité numérique est un enjeu majeur pour Hexaplanning, permettant à tous les utilisateurs, y compris ceux en situation de handicap, d'accéder pleinement aux fonctionnalités de l'application. Ce chapitre détaille les mesures d'accessibilité implémentées dans l'application.
 
 ## 1. <a name='x-1-conformité-rgaa-et-standards-d-accessibilité'></a> Conformité RGAA et standards d'accessibilité
 
-### Standards et référentiels appliqués
+### Standards respectés
 
-L'application Hexaplanning respecte les recommandations d'accessibilité suivantes :
+L'application Hexaplanning a été développée en tenant compte des recommandations d'accessibilité suivantes :
 
 - **RGAA 4.1** : Référentiel français d'accessibilité numérique
-- **WCAG 2.1 niveau AA** : Web Content Accessibility Guidelines
-- **Section 508** : Standards américains d'accessibilité
-- **EN 301 549** : Norme européenne d'accessibilité
+- **WCAG 2.1** : Web Content Accessibility Guidelines
+- Contraste de couleurs suffisant
+- Navigation au clavier
+- Structure sémantique HTML
 
-### Principes d'accessibilité respectés
+### Focus management global
 
-**1. Perceptible** : L'information est présentée de manière que tous les utilisateurs puissent la percevoir
+Une gestion globale du focus a été implémentée pour améliorer la navigation au clavier :
 
-- Contraste de couleurs suffisant (ratio 4.5:1 minimum)
-- Textes alternatifs pour les images et icônes
+```css
+// Accessibility: Focus management
+*:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #667eea !important;
+}
+```
 
-**2. Utilisable** : L'interface peut être utilisée par tous
-
-- Navigation complète au clavier
-- Prévention des crises d'épilepsie (pas de clignotements)
-
-**3. Compréhensible** : L'information et l'utilisation de l'interface sont compréhensibles
-
-- Langue du contenu identifiée
-- Navigation cohérente
-
-**4. Robuste** : Le contenu est suffisamment robuste pour être interprété de manière fiable
-
-- Code HTML valide et sémantique
-- Compatibilité avec les technologies d'assistance (screen-readers)
+Cette règle CSS garantit que tous les éléments focalisables ont un indicateur visuel clair et visible.
 
 ## 2. <a name='x-2-accessibilité-des-formulaires'></a> Accessibilité des formulaires
 
-### Formulaire de connexion (Login)
+### Formulaire de connexion
 
-Le formulaire de connexion implémente l'ensemble des bonnes pratiques d'accessibilité :
+Le formulaire de connexion implémente plusieurs bonnes pratiques d'accessibilité :
 
 **Attributs sémantiques et ARIA :**
 
+- **`role="form"`** : Identification claire du formulaire
+- **`aria-label`** : Description accessible du formulaire
+- **`autocomplete`** : Assistance à la saisie pour les champs email et mot de passe
+- **`aria-describedby`** : Association avec les messages d'erreur
+- **`aria-invalid`** : État de validation dynamique
+- **`aria-live="polite"`** : Annonce des erreurs de validation
+
+**Exemple d'implémentation :**
+
 ```html
-<form role="form" novalidate>
-  <div class="field">
-    <label for="email">Adresse e-mail</label>
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()" role="form" aria-label="Formulaire de connexion">
+  <div class="form-field">
+    <label for="email" class="form-label">Email *</label>
     <input
       id="email"
       type="email"
-      autocomplete="email"
-      aria-label="Saisissez votre adresse e-mail"
-      aria-describedby="email-error"
-      aria-invalid="false"
-      formControlName="email" />
-    <div id="email-error" aria-live="polite" class="p-error">
-      <!-- Message d'erreur dynamique -->
-    </div>
-  </div>
-
-  <div class="field">
-    <label for="password">Mot de passe</label>
-    <input
-      id="password"
-      type="password"
-      autocomplete="current-password"
-      aria-label="Saisissez votre mot de passe"
-      aria-describedby="password-error"
-      formControlName="password" />
-    <div id="password-error" aria-live="polite" class="p-error">
-      <!-- Message d'erreur dynamique -->
-    </div>
+      formControlName="email"
+      [attr.aria-describedby]="hasEmailError ? 'email-error' : null"
+      [attr.aria-invalid]="hasEmailError"
+      autocomplete="email" />
+    @if (hasEmailError) {
+    <small class="p-error" id="email-error" role="alert" aria-live="polite"> {{ emailError }} </small>
+    }
   </div>
 </form>
 ```
 
-**Fonctionnalités d'accessibilité :**
+### Formulaire d'inscription
 
-- **`role="form"`** : Identification claire du formulaire
-- **`type="email"`** : Type de champ approprié pour la validation
-- **`autocomplete`** : Assistance à la saisie automatique
-- **`aria-label`** : Description accessible des champs
-- **`aria-describedby`** : Association avec les messages d'erreur
-- **`aria-invalid`** : État de validation dynamique
-- **`aria-live="polite"`** : Annonce des erreurs sans interrompre
-
-### Formulaire d'inscription (Register)
-
-Le formulaire d'inscription étend les fonctionnalités d'accessibilité avec des éléments additionnels :
+Le formulaire d'inscription étend les fonctionnalités d'accessibilité :
 
 **Structure sémantique avancée :**
 
+- **`<fieldset>` et `<legend>`** : Regroupement sémantique des conditions d'utilisation
+- **Classes `.visually-hidden`** : Labels cachés visuellement mais accessibles aux lecteurs d'écran
+- **Descriptions détaillées** : Exigences de mot de passe clairement indiquées
+
+**Implémentation des conditions d'utilisation :**
+
 ```html
-<form role="form">
-  <fieldset>
-    <legend>Informations personnelles</legend>
-    <div class="field">
-      <label for="firstName">Prénom</label>
-      <input
-        id="firstName"
-        type="text"
-        autocomplete="given-name"
-        class="p-invalid"
-        aria-labelledby="firstName-label"
-        aria-describedby="firstName-error firstName-help"
-        formControlName="firstName" />
-      <small id="firstName-help">Saisissez votre prénom</small>
-      <div id="firstName-error" class="p-error">
-        <!-- Message d'erreur -->
-      </div>
+<fieldset class="checkbox-fieldset">
+  <legend class="visually-hidden">Acceptation des conditions</legend>
+
+  <div class="form-field">
+    <div class="checkbox-container">
+      <p-checkbox formControlName="acceptCgu" inputId="acceptCgu" [attr.aria-describedby]="hasAcceptCguError ? 'acceptCgu-error' : null">
+      </p-checkbox>
+      <label for="acceptCgu" class="checkbox-label">
+        J'accepte les
+        <a routerLink="/cgu" target="_blank" aria-label="Conditions Générales d'Utilisation (ouvre dans un nouvel onglet)">
+          Conditions Générales d'Utilisation </a
+        >.
+      </label>
     </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Informations de connexion</legend>
-    <!-- Champs email et mot de passe -->
-  </fieldset>
-</form>
+  </div>
+</fieldset>
 ```
 
-**Améliorations spécifiques :**
+### Modale de mot de passe oublié
 
-- **`<fieldset>` et `<legend>`** : Regroupement sémantique des champs
-- **Classes conditionnelles `p-invalid`** : Indication visuelle d'erreur
-- **`aria-labelledby`** : Référence aux labels multiples
-- **`autocomplete`** : Assistance pour tous les types de champs
-
-### Gestion des erreurs de formulaire
-
-**Annonce dynamique des erreurs :**
-
-```typescript
-// Service d'accessibilité pour les erreurs
-@Injectable()
-export class AccessibilityService {
-  announceError(fieldName: string, errorMessage: string): void {
-    const errorElement = document.getElementById(`${fieldName}-error`);
-    if (errorElement) {
-      errorElement.textContent = errorMessage;
-      errorElement.setAttribute('aria-live', 'polite');
-    }
-  }
-
-  clearError(fieldName: string): void {
-    const errorElement = document.getElementById(`${fieldName}-error`);
-    if (errorElement) {
-      errorElement.textContent = '';
-      errorElement.removeAttribute('aria-live');
-    }
-  }
-}
-```
-
-## 3. <a name='x-3-navigation-au-clavier-et-focus-management'></a> Navigation au clavier et focus management
-
-### Navigation globale au clavier
-
-L'application garantit une navigation complète au clavier sur tous les éléments interactifs :
-
-**Éléments navigables :**
-
-- Boutons et liens : `Tab` / `Shift+Tab`
-- Menu principal : Flèches directionnelles
-- Carte hexagonale : `Tab` pour les hexagones, `Enter` pour sélection
-- Listes de quêtes : Flèches haut/bas, `Enter` pour détails
-
-### Focus trap dans les modales
-
-**Implémentation du focus trap :**
-
-```typescript
-// Directive pour le focus trap
-@Directive({
-  selector: '[focusTrap]',
-})
-export class FocusTrapDirective implements OnInit, OnDestroy {
-  private focusableElements: HTMLElement[] = [];
-  private firstFocusableElement: HTMLElement;
-  private lastFocusableElement: HTMLElement;
-
-  ngOnInit(): void {
-    this.setFocusableElements();
-    this.firstFocusableElement?.focus();
-    document.addEventListener('keydown', this.handleKeyDown);
-  }
-
-  private handleKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'Tab') {
-      if (event.shiftKey) {
-        if (document.activeElement === this.firstFocusableElement) {
-          event.preventDefault();
-          this.lastFocusableElement.focus();
-        }
-      } else {
-        if (document.activeElement === this.lastFocusableElement) {
-          event.preventDefault();
-          this.firstFocusableElement.focus();
-        }
-      }
-    }
-  };
-}
-```
-
-**Application dans les modales :**
+La modale de récupération de mot de passe utilise des attributs ARIA appropriés :
 
 ```html
-<p-dialog [visible]="displayModal" [modal]="true" focusTrap="true" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-content">
-  <h2 id="modal-title">Changement de mot de passe</h2>
-  <div id="modal-content" focusTrap>
-    <!-- Contenu de la modale -->
+<p-dialog
+  [(visible)]="forgotPasswordModalVisible"
+  [modal]="true"
+  role="dialog"
+  aria-labelledby="forgot-password-title"
+  aria-describedby="forgot-password-description">
+  <ng-template pTemplate="header">
+    <h3 id="forgot-password-title">Mot de passe oublié</h3>
+  </ng-template>
+
+  <div class="forgot-password-container">
+    <p id="forgot-password-description">Entrez votre adresse email et nous vous enverrons un lien...</p>
   </div>
 </p-dialog>
 ```
 
+## 3. <a name='x-3-navigation-au-clavier-et-focus-management'></a> Navigation au clavier et focus management
+
 ### Navigation dans la carte hexagonale
 
-**Support clavier pour la carte :**
+La carte hexagonale supporte la navigation au clavier avec des attributs ARIA appropriés :
 
-```typescript
-@Component({
-  selector: 'app-map',
-  template: `
-    <div class="hex-grid" role="grid" aria-label="Carte des quêtes hexagonale" (keydown)="handleKeyboardNavigation($event)">
-      <div
-        *ngFor="let hex of hexagons; let i = index"
-        class="hexagon"
-        role="gridcell"
-        [tabindex]="i === activeHexIndex ? 0 : -1"
-        [attr.aria-label]="getHexAriaLabel(hex)"
-        (click)="selectHex(hex)"
-        (keydown.enter)="selectHex(hex)"
-        (keydown.space)="selectHex(hex)">
-        <!-- Contenu hexagone -->
-      </div>
-    </div>
-  `,
-})
-export class MapComponent {
-  activeHexIndex = 0;
+```html
+<polygon
+  [attr.points]="getHexPoints(h.cx, h.cy)"
+  (click)="handleHexClick(h)"
+  (keydown)="handleHexKeydown($event, h)"
+  tabindex="0"
+  role="button"
+  [attr.aria-label]="getHexAriaLabel(h)"
+  class="hex-polygon" />
+```
 
-  handleKeyboardNavigation(event: KeyboardEvent): void {
-    switch (event.key) {
-      case 'ArrowRight':
-        this.moveToNextHex();
-        break;
-      case 'ArrowLeft':
-        this.moveToPreviousHex();
-        break;
-      case 'ArrowDown':
-        this.moveToHexBelow();
-        break;
-      case 'ArrowUp':
-        this.moveToHexAbove();
-        break;
-    }
-  }
+**Fonctionnalités implémentées :**
+
+- **`tabindex="0"`** : Navigation séquentielle au clavier
+- **`role="button"`** : Indication du rôle interactif
+- **`aria-label`** : Description dynamique du contenu de l'hexagone
+- **`keydown`** : Support de l'activation au clavier (Enter/Space)
+
+### Cartes de quêtes
+
+Les cartes de quêtes sont accessibles au clavier et incluent des labels appropriés :
+
+```html
+<button type="button" class="quest-card" (click)="openDetails()" (keydown.enter)="openDetails()">
+  <input
+    type="checkbox"
+    class="quest-checkbox"
+    [checked]="quest.statusId === _questService.statusDoneId"
+    (change)="toggleStatus()"
+    aria-label="Marquer cette tâche comme terminée" />
+
+  <span class="quest-title">{{ quest.title }}</span>
+</button>
+```
+
+### Gestion du focus dans les menus
+
+Le menu de navigation a une gestion spécialisée du focus pour améliorer l'expérience utilisateur :
+
+```css
+// Remove default focus outline for menu items
+.menu-item:focus {
+  outline: none;
+}
+
+// Apply precise focus shadow to icons when their container is focused
+.menu-item:focus .icon {
+  box-shadow: 0 0 0 2px #667eea !important;
+  border-radius: 50%;
+}
+
+// Special focus style for the losange (diamond shape)
+.losange:focus {
+  box-shadow: 0 0 0 2px #667eea !important;
 }
 ```
 
 ## 4. <a name='x-4-technologies-d-assistance-et-lecteurs-d-écran'></a> Technologies d'assistance et lecteurs d'écran
 
-### Support des lecteurs d'écran
+### Classes pour lecteurs d'écran
 
-**Classes pour lecteurs d'écran uniquement :**
+Une classe `.visually-hidden` a été implémentée pour masquer visuellement du contenu tout en le gardant accessible aux lecteurs d'écran :
 
 ```css
 .visually-hidden {
+  border: 0;
+  padding: 0;
+  margin: 0;
   position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 ```
 
-**Utilisation dans les modales de confirmation :**
+### Utilisation dans les formulaires
+
+Cette classe est utilisée pour les légendes de fieldset et les labels contextuels :
 
 ```html
-<p-dialog [visible]="showDeleteConfirm" [modal]="true">
-  <h2 id="delete-title">
-    Confirmation de suppression
-    <span class="visually-hidden"> de la quête {{ questToDelete?.title }} </span>
-  </h2>
+<fieldset class="checkbox-fieldset">
+  <legend class="visually-hidden">Acceptation des conditions</legend>
+  <!-- Contenu du fieldset -->
+</fieldset>
 
-  <p id="delete-description">
-    Êtes-vous sûr de vouloir supprimer cette quête ?
-    <span class="visually-hidden"> Cette action est irréversible. </span>
-  </p>
-
-  <div class="dialog-actions">
-    <button type="button" class="p-button-secondary" aria-describedby="delete-description">
-      <span class="visually-hidden">Ne pas supprimer et </span>
-      Annuler
-    </button>
-    <button type="button" class="p-button-danger" aria-describedby="delete-description">
-      <span class="visually-hidden">Confirmer la suppression de la quête</span>
-      Supprimer
-    </button>
-  </div>
-</p-dialog>
+<label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''"> Titre : </label>
 ```
 
-### Annonces live pour les actions utilisateur
+### Messages d'erreur dynamiques
 
-**Service d'annonces dynamiques :**
+Les messages d'erreur utilisent `role="alert"` et `aria-live="polite"` pour être annoncés automatiquement :
 
-```typescript
-@Injectable()
-export class LiveAnnouncerService {
-  private liveRegion: HTMLElement;
-
-  constructor() {
-    this.createLiveRegion();
-  }
-
-  private createLiveRegion(): void {
-    this.liveRegion = document.createElement('div');
-    this.liveRegion.setAttribute('aria-live', 'polite');
-    this.liveRegion.setAttribute('aria-atomic', 'true');
-    this.liveRegion.className = 'visually-hidden';
-    document.body.appendChild(this.liveRegion);
-  }
-
-  announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
-    this.liveRegion.setAttribute('aria-live', priority);
-    this.liveRegion.textContent = message;
-
-    // Nettoyer après annonce
-    setTimeout(() => {
-      this.liveRegion.textContent = '';
-    }, 1000);
-  }
+```html
+@if (hasEmailError) {
+<small class="p-error" id="email-error" role="alert" aria-live="polite"> {{ emailError }} </small>
 }
 ```
 
-**Utilisation pour les actions de quête :**
+### Boutons avec descriptions contextuelles
 
-```typescript
-// Annonce lors de la complétion d'une quête
-completeQuest(quest: Quest): void {
-  this.questService.markAsCompleted(quest.id).subscribe(() => {
-    this.liveAnnouncer.announce(
-      `Quête "${quest.title}" marquée comme terminée. Félicitations !`,
-      'polite'
-    );
-  });
-}
+Les boutons incluent des descriptions appropriées selon leur état :
 
-// Annonce lors de la création d'une quête
-createQuest(questData: QuestDto): void {
-  this.questService.create(questData).subscribe(() => {
-    this.liveAnnouncer.announce(
-      `Nouvelle quête "${questData.title}" créée avec succès`,
-      'polite'
-    );
-  });
-}
+```html
+<p-button type="submit" label="Se connecter" [loading]="isLoading" [attr.aria-label]="isLoading ? 'Connexion en cours...' : 'Se connecter'">
+</p-button>
+
+<button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
 ```
 
-### Tests d'accessibilité
-
-**Outils de validation utilisés :**
-
-- **axe-core** : Audit automatisé d'accessibilité
-- **WAVE** : Web Accessibility Evaluation Tool
-- **Lighthouse** : Audit d'accessibilité intégré Chrome
-- **NVDA/JAWS** : Tests manuels avec lecteurs d'écran
-
-**Pipeline de tests d'accessibilité :**
-
-```typescript
-// Tests automatisés d'accessibilité
-describe('Accessibility Tests', () => {
-  it('should have no accessibility violations on login page', async () => {
-    const { container } = render(LoginComponent);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-
-  it('should support keyboard navigation on map', () => {
-    const component = new MapComponent();
-    const keyEvent = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-    component.handleKeyboardNavigation(keyEvent);
-    expect(component.activeHexIndex).toBe(1);
-  });
-});
-```
-
-Cette approche globale de l'accessibilité garantit que Hexaplanning est utilisable par tous, respectant ainsi les exigences légales et éthiques d'inclusion numérique.
+Cette approche d'accessibilité garantit qu'Hexaplanning peut être utilisé efficacement par tous les utilisateurs, y compris ceux qui utilisent des technologies d'assistance, tout en respectant les standards d'accessibilité web modernes.
 
 # XI. Conclusion et perspectives
 
