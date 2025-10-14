@@ -21,16 +21,17 @@
 2.  [MLD (Modèle Logique de Données)](#iii-2-mld-modèle-logique-de-données)
 3.  [Description des entités et relations](#iii-3-description-des-entités-et-relations)
 
-**IV. [Architecture technique](#iv-architecture-technique)**
+**IV. [Architecture technique et technologies](#iv-architecture-technique-et-technologies)**
 
-1.  [Vue d’ensemble](#iv-1-vue-d-ensemble)
+1.  [Vue d'ensemble](#iv-1-vue-d-ensemble)
     - [Schéma global](#iv-1-1-schéma-global)
-2.  [Frontend (Angular)](#iv-2-frontend-angular)
-3.  [Backend (.NET)](#iv-3-backend-net)
-4.  [Base de données (PostgreSQL)](#iv-4-base-de-données-postgresql)
-5.  [Communication API](#iv-5-communication-api)
-6.  [Conteneurisation et déploiement](#iv-6-conteneurisation-et-déploiement)
-7.  [Sécurité et bonnes pratiques](#iv-7-sécurité-et-bonnes-pratiques)
+2.  [Frontend : Angular et PrimeNG](#iv-2-frontend-angular-et-primeng)
+3.  [Backend : .NET Core](#iv-3-backend-net-core)
+4.  [Base de données : PostgreSQL](#iv-4-base-de-données-postgresql)
+5.  [Communication API REST](#iv-5-communication-api-rest)
+6.  [Infrastructure et DevOps](#iv-6-infrastructure-et-devops)
+7.  [Services externes](#iv-7-services-externes)
+8.  [Sécurité et bonnes pratiques](#iv-8-sécurité-et-bonnes-pratiques)
 
 **V. [Qualité logicielle et tests](#v-qualité-logicielle-et-tests)**
 
@@ -55,18 +56,10 @@
 4.  [Sécurité de la conteneurisation et du déploiement](#vii-4-sécurité-de-la-conteneurisation-et-du-déploiement)
 5.  [Surveillance et audit](#vii-5-surveillance-et-audit)
 
-**VIII. [Technologies utilisées](#viii-technologies-utilisées)**
+**VIII. [Conclusion et perspectives](#viii-conclusion-et-perspectives)**
 
-1.  [Frontend](#viii-1-frontend)
-2.  [Backend](#viii-2-backend)
-3.  [Base de données](#viii-3-base-de-données)
-4.  [Infrastructure et DevOps](#viii-4-infrastructure-et-devops)
-5.  [Services externes](#viii-5-services-externes)
-
-**IX. [Conclusion et perspectives](#ix-conclusion-et-perspectives)**
-
-1.  [Bilan du projet](#ix-1-bilan-du-projet)
-2.  [Perspectives d’évolution](#ix-2-perspectives-d-évolution)
+1.  [Bilan du projet](#viii-1-bilan-du-projet)
+2.  [Perspectives d'évolution](#viii-2-perspectives-d-évolution)
 
 ---
 
@@ -380,11 +373,19 @@ L'interface est pensée pour être intuitive, responsive et agréable à utilise
 - **Quest N:1 Status** : Une quête a un statut.
 - **Quest 1:1 HexAssignment** : Une quête peut être assignée à un hexagone (optionnel).
 
-# IV. Architecture technique
+# IV. Architecture technique et technologies
 
-## 1. <a name='Vuedensemble'></a> Vue d’ensemble
+## 1. <a name='Vuedensemble'></a> Vue d'ensemble
 
-L’architecture d’Hexaplanning repose sur un frontend Angular (avec PrimeNG pour les composants de base), un backend .NET et une base de données PostgreSQL. Elle fait également appel à Brevo pour permettre l'envoi de mails. Cette approche modulaire facilite la maintenance, l’évolutivité et la sécurité de l’application. La communication entre les différentes couches s’effectue via une API REST sécurisée.
+Hexaplanning adopte une architecture moderne en trois couches (3-tier architecture) avec une séparation claire des responsabilités. Le choix des technologies s'est fait en privilégiant la robustesse, la maintenabilité et l'écosystème de chaque solution. L'architecture repose sur :
+
+- **Frontend** : Angular 18 avec PrimeNG pour une interface utilisateur moderne et responsive
+- **Backend** : ASP.NET Core 8 pour une API REST performante et sécurisée
+- **Base de données** : PostgreSQL pour la persistance des données
+- **Infrastructure** : Docker et GitHub Actions pour le déploiement et l'intégration continue
+- **Services externes** : Brevo pour l'envoi d'e-mails transactionnels
+
+Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurité de l'application. La communication entre les couches s'effectue via une API REST sécurisée par JWT.
 
 ### <a name='Schmaglobal'></a>Schéma global
 
@@ -396,48 +397,229 @@ L’architecture d’Hexaplanning repose sur un frontend Angular (avec PrimeNG p
 <em>Schéma global de l'architecture d'Hexaplanning.</em>
 </div>
 
-## 2. <a name='FrontendAngular'></a> Frontend (Angular)
+## 2. <a name='FrontendAngularetPrimeNG'></a> Frontend : Angular et PrimeNG
 
-- **Technologie** : Angular 18
-- **Structure** : Organisation en modules, composants, services et modèles TypeScript.
-- **Responsabilité** : Gestion de l’interface utilisateur, navigation, appels API, gestion du token JWT, affichage dynamique de la carte d’hexagones, gestion des quêtes.
-- **Sécurité** : Intercepteur HTTP pour l’ajout automatique du JWT, guards de navigation pour protéger les routes sensibles.
-- **Tests** : Utilisation de Jest et Cypress pour les tests unitaires et end-to-end.
+### Choix technologiques et justifications
 
-## 3. <a name='Backend.NET'></a> Backend (.NET)
+- **Angular 18** : Framework SPA reconnu pour sa structure modulaire, sa maintenabilité et sa communauté active. Il facilite la création d'interfaces dynamiques, responsives et testables. Le choix de la version 18 apporte les dernières optimisations de performance et les nouveautés du framework.
 
-- **Technologie** : ASP.NET Core 8
-- **Structure** : Architecture en couches (Controllers, Services, Models, DataContext, Utilities).
-- **Responsabilité** : Exposition d’une API RESTful, gestion de l’authentification (JWT), logique métier (création/gestion des quêtes, hexagones, utilisateurs), validation et sécurisation des données. Un service d’envoi d’e-mails est intégré pour la gestion du mot de passe oublié et d’autres notifications : il s’appuie sur la solution Brevo (anciennement Sendinblue), permettant l’envoi fiable et sécurisé de courriels transactionnels depuis l’API .NET.
-- **Sécurité** : Middleware d’authentification JWT, validation des entrées, gestion des droits d’accès, protection contre les attaques courantes.
-- **Tests** : Couverture par des tests unitaires (xUnit) et des tests d’intégration.
+- **PrimeNG** : Bibliothèque de composants UI riche et moderne pour Angular, fournissant les éléments d'interface (modales, formulaires, boutons, toasts) avec un design cohérent et professionnel. Alternative considérée : Angular Material, mais PrimeNG offre plus de composants spécialisés out-of-the-box.
 
-## 4. <a name='BasededonnesPostgreSQL'></a> Base de données (PostgreSQL)
+- **TypeScript** : Apporte la sécurité de typage et la clarté du code, essentielle pour un projet d'envergure. Facilite la maintenance et réduit les erreurs de développement.
 
-- **Modélisation** : Respect du MCD/MLD présenté plus haut.
-- **Gestion** : Migrations Entity Framework Core pour la création et l’évolution du schéma.
-- **Sécurité** : Accès restreint via le backend uniquement, aucune exposition directe.
+### Architecture et organisation
 
-## 5. <a name='CommunicationAPI'></a> Communication API
+- **Structure modulaire** : Organisation en modules fonctionnels (auth, quest, hexagon, settings), composants, services et modèles TypeScript
+- **Approche mobile-first** : Interface responsive optimisée pour les appareils mobiles
+- **State management** : Services Angular pour la gestion d'état partagé
 
-- **Format** : JSON via HTTP(S)
-- **Endpoints** : Authentification, gestion des quêtes, gestion des hexagones, gestion des utilisateurs.
-- **Sécurité** : Toutes les routes sensibles sont protégées par JWT, CORS configuré pour limiter les origines autorisées.
+### Responsabilités principales
 
-## 6. <a name='Conteneurisationetdploiement'></a> Conteneurisation et déploiement
+- Gestion de l'interface utilisateur et de l'expérience utilisateur
+- Navigation entre les différentes pages et modales
+- Appels API vers le backend et gestion des réponses
+- Gestion du token JWT pour l'authentification
+- Affichage dynamique de la carte d'hexagones avec coordonnées hexagonales
+- CRUD des quêtes avec validation côté client
 
-- **Docker** : Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile pour faciliter le déploiement et l’isolation.
-- **Orchestration** : Utilisation de docker-compose pour le développement local et le déploiement sur serveur.
-- **Reverse Proxy** : Nginx Proxy Manager pour la gestion des domaines et des certificats SSL.
-- **CI/CD** : Pipelines GitHub Actions pour l’intégration et le déploiement continus.
+### Sécurité
 
-## 7. <a name='Scuritetbonnespratiques'></a> Sécurité et bonnes pratiques
+- **Intercepteur HTTP** : Ajout automatique du JWT dans toutes les requêtes API
+- **Guards de navigation** : Protection des routes sensibles (authentification requise)
+- **Validation des formulaires** : Contrôles côté client avant envoi au backend
 
-- **Authentification JWT** pour toutes les opérations sensibles.
-- **Validation systématique** des données côté backend.
-- **Gestion des erreurs** centralisée.
-- **Logs** pour le suivi et l’audit des actions critiques.
-- **Séparation stricte** des responsabilités entre frontend et backend.
+### Tests et qualité
+
+- **Jest** : Tests unitaires des composants et services
+- **Cypress** : Tests end-to-end pour valider les parcours utilisateur complets
+- **ESLint** : Analyse statique du code pour maintenir la qualité
+
+## 3. <a name='BackendNETCore'></a> Backend : .NET Core
+
+### Choix technologiques et justifications
+
+- **ASP.NET Core 8** : Framework backend performant, sécurisé et multiplateforme, idéal pour exposer une API REST robuste et scalable. La version 8 LTS garantit la stabilité et le support à long terme.
+
+- **Entity Framework Core** : ORM facilitant la gestion et la migration de la base de données, tout en assurant la cohérence des modèles. Alternative considérée : Dapper, mais EF Core offre une approche Code-First plus adaptée au projet.
+
+- **ASP.NET Identity** : Système d'authentification et d'autorisation intégré, robuste et éprouvé pour la gestion des utilisateurs et des mots de passe.
+
+### Architecture en couches
+
+L'API suit une architecture en couches claire pour séparer les responsabilités :
+
+- **Controllers** : Points d'entrée API, gestion des requêtes HTTP et des réponses
+- **Services** : Logique métier, règles de gestion et orchestration des opérations
+- **Models** : Entités de domaine et DTOs pour le transfert de données
+- **DataContext** : Couche d'accès aux données avec Entity Framework
+- **Utilities** : Classes utilitaires et helpers transversaux
+
+### Responsabilités principales
+
+- **API RESTful** : Exposition des endpoints pour toutes les opérations CRUD
+- **Authentification JWT** : Génération et validation des tokens d'authentification
+- **Logique métier** : Création/gestion des quêtes, hexagones, utilisateurs, priorités, statuts
+- **Validation des données** : Contrôles de cohérence et de sécurité des données
+- **Envoi d'e-mails** : Service intégré s'appuyant sur Brevo pour les notifications (réinitialisation de mot de passe, bienvenue)
+
+### Sécurité intégrée
+
+- **Middleware JWT** : Authentification automatique sur tous les endpoints protégés
+- **Validation des entrées** : Contrôles stricts sur toutes les données reçues
+- **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
+- **Protection anti-attaques** : Guards contre l'injection SQL, XSS, CSRF
+- **Rate limiting** : Protection contre les tentatives de force brute
+
+### Tests et qualité
+
+- **xUnit** : Framework de tests unitaires moderne et flexible, intégré à l'écosystème .NET
+- **Tests d'intégration** : Validation complète des endpoints avec base de données de test
+- **Testcontainers** : Tests sur PostgreSQL réel pour une validation authentique
+
+## 4. <a name='BasededonnesPostgreSQL'></a> Base de données : PostgreSQL
+
+### Choix technologique et justifications
+
+- **PostgreSQL** : SGBD open source reconnu pour sa fiabilité, ses performances et ses capacités avancées (transactions ACID, indexation complexe, support JSON, etc.). Alternatives considérées : MySQL (moins de fonctionnalités avancées), SQL Server (coût des licences).
+
+### Modélisation et structure
+
+- **Respect du MCD/MLD** : Implementation fidèle du modèle conceptuel présenté au chapitre III
+- **Relations normalisées** : Base de données en 3ème forme normale pour éviter la redondance
+- **Entités principales** : UserApp, Quest, Priority, Status, HexAssignment, Mail
+- **Contraintes d'intégrité** : Clés étrangères, contraintes CHECK et UNIQUE pour la cohérence des données
+
+### Gestion et évolution
+
+- **Migrations Entity Framework Core** : Versioning automatique du schéma de base de données
+- **Code-First approach** : Génération du schéma à partir des modèles C#
+- **Seeding** : Données initiales (priorités, statuts) injectées automatiquement
+- **Backup et restauration** : Stratégies de sauvegarde régulières en production
+
+### Performance et optimisation
+
+- **Indexation** : Index sur les clés étrangères et champs de recherche fréquents
+- **Requêtes optimisées** : Utilisation d'LINQ pour des requêtes efficaces
+- **Connection pooling** : Gestion optimale des connexions base de données
+
+### Sécurité
+
+- **Accès restreint** : Connexion uniquement via l'API backend, aucun accès direct
+- **Chiffrement** : Connexions SSL/TLS obligatoires
+- **Isolation des données** : Chaque utilisateur accède uniquement à ses propres données
+- **Credentials sécurisés** : Mots de passe hashés avec ASP.NET Identity
+
+## 5. <a name='CommunicationAPIREST'></a> Communication API REST
+
+### Architecture RESTful
+
+- **Format de données** : JSON via HTTP(S) pour tous les échanges
+- **Verbes HTTP** : Utilisation sémantique (GET, POST, PUT, DELETE)
+- **Codes de réponse** : Status codes HTTP appropriés (200, 201, 400, 401, 404, 500)
+- **Structure des URLs** : Routes RESTful cohérentes (`/api/quests`, `/api/users/{id}`)
+
+### Endpoints principaux
+
+- **Authentification** : `/api/auth/login`, `/api/auth/register`, `/api/auth/reset-password`
+- **Gestion des quêtes** : CRUD complet sur `/api/quests` avec filtrage par utilisateur
+- **Gestion des hexagones** : `/api/hexassignments` pour l'assignation des quêtes
+- **Gestion des utilisateurs** : `/api/users` pour les profils et paramètres
+- **Données de référence** : `/api/priorities`, `/api/statuses` pour les listes déroulantes
+
+### Sécurité et authentification
+
+- **JWT Bearer Token** : Toutes les routes sensibles protégées par authentification
+- **CORS configuré** : Origines autorisées limitées aux domaines de l'application
+- **Rate limiting** : Protection contre les abus et attaques par déni de service
+- **Validation des données** : Contrôles stricts sur tous les inputs API
+
+### Gestion des erreurs
+
+- **Réponses structurées** : Format JSON consistent pour les erreurs
+- **Messages explicites** : Informations claires pour le débogage côté frontend
+- **Logs centralisés** : Traçabilité complète des erreurs serveur
+
+## 6. <a name='InfrastructureetDevOps'></a> Infrastructure et DevOps
+
+### Conteneurisation
+
+- **Docker** : Conteneurisation de chaque composant pour garantir la portabilité, l'isolation et la reproductibilité des environnements. Chaque service (frontend, backend, base de données) dispose de son propre Dockerfile optimisé.
+
+- **docker-compose** : Orchestration simplifiée du déploiement multi-conteneurs. Gestion des dépendances entre services, des variables d'environnement et des volumes persistants.
+
+### Intégration et déploiement continu
+
+- **GitHub Actions** : Automatisation des pipelines CI/CD pour des livraisons rapides et sûres. Pipelines séparés pour le frontend et le backend avec tests automatisés.
+
+- **Workflow CI** : Tests unitaires et d'intégration automatiques avant chaque déploiement
+- **Workflow CD** : Build, push vers Docker Hub et déploiement automatique sur le VPS
+
+### Hébergement et infrastructure
+
+- **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge. Serveur Linux Ubuntu avec Docker et docker-compose installés.
+
+- **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy. Interface web pour la configuration des routes et des certificats Let's Encrypt automatiques.
+
+### Monitoring et maintenance
+
+- **Logs centralisés** : Collecte et analyse des logs applicatifs pour le debugging
+- **Health checks** : Surveillance de l'état des services Docker
+- **Backup automatique** : Sauvegardes régulières de la base de données
+- **Mises à jour sécurisées** : Processus de mise à jour des dépendances et images Docker
+
+## 7. <a name='Servicesexternes'></a> Services externes
+
+### Brevo (ex-Sendinblue)
+
+- **Service d'emailing transactionnel** : Solution cloud fiable et simple à intégrer pour l'envoi d'e-mails automatisés
+- **Utilisation** : Envoi de mails de réinitialisation de mot de passe, messages de bienvenue, notifications importantes
+- **Avantages** : API simple, bonne délivrabilité, tarification adaptée aux petits volumes
+- **Alternative considérée** : SendGrid, mais Brevo offre une interface plus intuitive et des tarifs plus avantageux pour un projet de cette envergure
+
+### Justification du choix
+
+L'externalisation de l'envoi d'e-mails vers Brevo permet :
+
+- **Fiabilité** : Infrastructure spécialisée avec haute disponibilité
+- **Délivrabilité** : Réputation IP préservée et conformité aux standards anti-spam
+- **Simplicité** : Pas de gestion de serveur SMTP interne
+- **Coût** : Solution économique par rapport à l'hébergement d'un serveur mail
+
+## 8. <a name='Scuritetbonnespratiques'></a> Sécurité et bonnes pratiques
+
+L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
+
+### Authentification et gestion des identités
+
+- **ASP.NET Identity** : Framework robuste intégré à .NET Core pour la gestion complète des utilisateurs
+- **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique
+- **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
+- **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe
+- **Validation d'email** : Confirmation d'identité via email avec tokens d'activation
+
+### Protection contre les attaques web
+
+- **CSRF Protection** : Tokens anti-contrefaçon sur toutes les opérations sensibles
+- **XSS Prevention** : Échappement automatique des données utilisateur, Content Security Policy stricte
+- **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées
+- **Validation des entrées** : Sanitisation côté serveur et client avec Data Annotations
+- **Rate Limiting** : Protection contre les attaques par déni de service et force brute
+
+### Sécurité de l'infrastructure
+
+- **HTTPS obligatoire** : Chiffrement TLS 1.2+ en production avec redirection automatique
+- **Headers de sécurité** : HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
+- **Isolation des conteneurs** : Docker avec utilisateurs non-privilégiés et réseaux isolés
+- **Variables d'environnement** : Secrets stockés de manière sécurisée, jamais dans le code source
+
+### Bonnes pratiques de développement
+
+- **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
+- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations
+- **Logging sécurisé** : Traçabilité des actions sensibles sans exposition de données personnelles
+- **Mise à jour régulière** : Surveillance et application des correctifs de sécurité
+- **Tests de sécurité** : Validation automatisée des vulnérabilités connues
 
 Cette architecture garantit robustesse, évolutivité et sécurité, tout en permettant une expérience utilisateur fluide et moderne.
 
@@ -616,49 +798,15 @@ La sécurité est un pilier central d’Hexaplanning, intégrée à tous les niv
 
 Cette approche globale permet de garantir un haut niveau de sécurité pour les utilisateurs et les données de la plateforme.
 
-# VIII. Technologies utilisées
+# VIII. Conclusion et perspectives
 
-Le projet Hexaplanning s’appuie sur un ensemble de technologies modernes, choisies pour leur robustesse, leur écosystème et leur adéquation avec les besoins fonctionnels et non fonctionnels du projet.
-
-## 1. <a name='Frontend'></a> Frontend
-
-- **Angular 18** : Framework SPA reconnu pour sa structure modulaire, sa maintenabilité et sa communauté active. Il facilite la création d’interfaces dynamiques, responsives et testables.
-- **TypeScript** : Apporte la sécurité de typage et la clarté du code, essentielle pour un projet d’envergure.
-- **Jest & Cypress** : Outils de référence pour les tests unitaires et end-to-end, assurant la fiabilité de l’interface utilisateur.
-
-## 2. <a name='Backend'></a> Backend
-
-- **ASP.NET Core 8** : Framework backend performant, sécurisé et multiplateforme, idéal pour exposer une API REST robuste et scalable.
-- **Entity Framework Core** : ORM facilitant la gestion et la migration de la base de données, tout en assurant la cohérence des modèles.
-- **xUnit** : Framework de tests unitaires moderne et flexible, intégré à l’écosystème .NET.
-
-## 3. <a name='Basededonnes'></a> Base de données
-
-- **PostgreSQL** : SGBD open source reconnu pour sa fiabilité, ses performances et ses capacités avancées (transactions, indexation, JSON, etc.).
-
-## 4. <a name='InfrastructureetDevOps'></a> Infrastructure et DevOps
-
-- **Docker** : Conteneurisation de chaque composant pour garantir la portabilité, l’isolation et la reproductibilité des environnements.
-- **docker-compose** : Orchestration simplifiée du déploiement multi-conteneurs.
-- **GitHub Actions** : Automatisation des pipelines CI/CD pour des livraisons rapides et sûres.
-- **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy.
-- **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge.
-
-## 5. <a name='Servicesexternes'></a> Services externes
-
-- **Brevo (ex-Sendinblue)** : Service d’envoi d’e-mails transactionnels fiable et simple à intégrer.
-
-Ces choix technologiques assurent la robustesse, la sécurité et l’évolutivité de la plateforme, tout en facilitant la maintenance et l’intégration de nouvelles fonctionnalités.
-
-# IX. Conclusion et perspectives
-
-## 1. <a name='Bilanduprojet'></a> Bilan du projet
+## 1. <a name='viii-1-bilan-du-projet'></a> Bilan du projet
 
 Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L’architecture modulaire et la conteneurisation facilitent la maintenance et l’évolutivité.
 
-## 2. <a name='Perspectivesdvolution'></a> Perspectives d’évolution
+## 2. <a name='viii-2-perspectives-d-évolution'></a> Perspectives d'évolution
 
 Les évolutions futures d’Hexaplanning s’articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
