@@ -67,26 +67,33 @@
 4.  [Sécurité de la conteneurisation et du déploiement](#ix-4-sécurité-de-la-conteneurisation-et-du-déploiement)
 5.  [Surveillance et audit](#ix-5-surveillance-et-audit)
 
-**X. [Conception et analyse](#x-conception-et-analyse)**
+**X. [Accessibilité et conformité RGAA](#x-accessibilité-et-conformité-rgaa)**
 
-1.  [Analyse des besoins](#x-1-analyse-des-besoins)
-2.  [Maquettage et design](#x-2-maquettage-et-design)
-3.  [Composants métier](#x-3-composants-métier)
-4.  [Interfaces utilisateur](#x-4-interfaces-utilisateur)
+1.  [Conformité RGAA et standards d'accessibilité](#x-1-conformité-rgaa-et-standards-d-accessibilité)
+2.  [Accessibilité des formulaires](#x-2-accessibilité-des-formulaires)
+3.  [Navigation au clavier et focus management](#x-3-navigation-au-clavier-et-focus-management)
+4.  [Technologies d'assistance et lecteurs d'écran](#x-4-technologies-d-assistance-et-lecteurs-d-écran)
 
-**XI. [Procédures de déploiement](#xi-procédures-de-déploiement)**
+**XI. [Conception et analyse](#xi-conception-et-analyse)**
 
-1.  [Plan de tests complet](#xi-1-plan-de-tests-complet)
-2.  [Environnements de test](#xi-2-environnements-de-test)
-3.  [Procédures de déploiement](#xi-3-procédures-de-déploiement)
-4.  [Scripts et automatisation](#xi-4-scripts-et-automatisation)
+1.  [Analyse des besoins](#xi-1-analyse-des-besoins)
+2.  [Maquettage et design](#xi-2-maquettage-et-design)
+3.  [Composants métier](#xi-3-composants-métier)
+4.  [Interfaces utilisateur](#xi-4-interfaces-utilisateur)
 
-**XII. [Conclusion et perspectives](#xii-conclusion-et-perspectives)**
+**XII. [Procédures de déploiement](#xii-procédures-de-déploiement)**
 
-1.  [Bilan du projet](#xii-1-bilan-du-projet)
-2.  [Perspectives d'évolution](#xii-2-perspectives-d-évolution)
-3.  [Améliorations futures possibles](#xii-3-améliorations-futures)
-4.  [Ce que ce projet m'a apporté](#xii-4-apport-projet)
+1.  [Plan de tests complet](#xii-1-plan-de-tests-complet)
+2.  [Environnements de test](#xii-2-environnements-de-test)
+3.  [Procédures de déploiement](#xii-3-procédures-de-déploiement)
+4.  [Scripts et automatisation](#xii-4-scripts-et-automatisation)
+
+**XIII. [Conclusion et perspectives](#xiii-conclusion-et-perspectives)**
+
+1.  [Bilan du projet](#xiii-1-bilan-du-projet)
+2.  [Perspectives d'évolution](#xiii-2-perspectives-d-évolution)
+3.  [Améliorations futures possibles](#xiii-3-améliorations-futures)
+4.  [Ce que ce projet m'a apporté](#xiii-4-apport-projet)
 
 ---
 
@@ -1157,11 +1164,408 @@ L'environnement de développement est configuré pour respecter l'architecture d
 - **Partage de connaissances** : Wiki et documentation partagée
 - **Intégration continue** : Validation automatique des modifications
 
-# X. Conception et analyse
+# X. Accessibilité et conformité RGAA
+
+L'accessibilité numérique est un enjeu majeur pour Hexaplanning, permettant à tous les utilisateurs, y compris ceux en situation de handicap, d'accéder pleinement aux fonctionnalités de l'application. Ce chapitre détaille les mesures d'accessibilité implémentées en conformité avec le Référentiel Général d'Amélioration de l'Accessibilité (RGAA).
+
+## 1. <a name='x-1-conformité-rgaa-et-standards-d-accessibilité'></a> Conformité RGAA et standards d'accessibilité
+
+### Standards et référentiels appliqués
+
+L'application Hexaplanning respecte les recommandations d'accessibilité suivantes :
+
+- **RGAA 4.1** : Référentiel français d'accessibilité numérique
+- **WCAG 2.1 niveau AA** : Web Content Accessibility Guidelines
+- **Section 508** : Standards américains d'accessibilité
+- **EN 301 549** : Norme européenne d'accessibilité
+
+### Principes d'accessibilité respectés
+
+**1. Perceptible** : L'information est présentée de manière que tous les utilisateurs puissent la percevoir
+
+- Contraste de couleurs suffisant (ratio 4.5:1 minimum)
+- Textes alternatifs pour les images et icônes
+
+**2. Utilisable** : L'interface peut être utilisée par tous
+
+- Navigation complète au clavier
+- Prévention des crises d'épilepsie (pas de clignotements)
+
+**3. Compréhensible** : L'information et l'utilisation de l'interface sont compréhensibles
+
+- Langue du contenu identifiée
+- Navigation cohérente
+
+**4. Robuste** : Le contenu est suffisamment robuste pour être interprété de manière fiable
+
+- Code HTML valide et sémantique
+- Compatibilité avec les technologies d'assistance (screen-readers)
+
+## 2. <a name='x-2-accessibilité-des-formulaires'></a> Accessibilité des formulaires
+
+### Formulaire de connexion (Login)
+
+Le formulaire de connexion implémente l'ensemble des bonnes pratiques d'accessibilité :
+
+**Attributs sémantiques et ARIA :**
+
+```html
+<form role="form" novalidate>
+  <div class="field">
+    <label for="email">Adresse e-mail</label>
+    <input
+      id="email"
+      type="email"
+      autocomplete="email"
+      aria-label="Saisissez votre adresse e-mail"
+      aria-describedby="email-error"
+      aria-invalid="false"
+      formControlName="email" />
+    <div id="email-error" aria-live="polite" class="p-error">
+      <!-- Message d'erreur dynamique -->
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="password">Mot de passe</label>
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      aria-label="Saisissez votre mot de passe"
+      aria-describedby="password-error"
+      formControlName="password" />
+    <div id="password-error" aria-live="polite" class="p-error">
+      <!-- Message d'erreur dynamique -->
+    </div>
+  </div>
+</form>
+```
+
+**Fonctionnalités d'accessibilité :**
+
+- **`role="form"`** : Identification claire du formulaire
+- **`type="email"`** : Type de champ approprié pour la validation
+- **`autocomplete`** : Assistance à la saisie automatique
+- **`aria-label`** : Description accessible des champs
+- **`aria-describedby`** : Association avec les messages d'erreur
+- **`aria-invalid`** : État de validation dynamique
+- **`aria-live="polite"`** : Annonce des erreurs sans interrompre
+
+### Formulaire d'inscription (Register)
+
+Le formulaire d'inscription étend les fonctionnalités d'accessibilité avec des éléments additionnels :
+
+**Structure sémantique avancée :**
+
+```html
+<form role="form">
+  <fieldset>
+    <legend>Informations personnelles</legend>
+    <div class="field">
+      <label for="firstName">Prénom</label>
+      <input
+        id="firstName"
+        type="text"
+        autocomplete="given-name"
+        class="p-invalid"
+        aria-labelledby="firstName-label"
+        aria-describedby="firstName-error firstName-help"
+        formControlName="firstName" />
+      <small id="firstName-help">Saisissez votre prénom</small>
+      <div id="firstName-error" class="p-error">
+        <!-- Message d'erreur -->
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Informations de connexion</legend>
+    <!-- Champs email et mot de passe -->
+  </fieldset>
+</form>
+```
+
+**Améliorations spécifiques :**
+
+- **`<fieldset>` et `<legend>`** : Regroupement sémantique des champs
+- **Classes conditionnelles `p-invalid`** : Indication visuelle d'erreur
+- **`aria-labelledby`** : Référence aux labels multiples
+- **`autocomplete`** : Assistance pour tous les types de champs
+
+### Gestion des erreurs de formulaire
+
+**Annonce dynamique des erreurs :**
+
+```typescript
+// Service d'accessibilité pour les erreurs
+@Injectable()
+export class AccessibilityService {
+  announceError(fieldName: string, errorMessage: string): void {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    if (errorElement) {
+      errorElement.textContent = errorMessage;
+      errorElement.setAttribute('aria-live', 'polite');
+    }
+  }
+
+  clearError(fieldName: string): void {
+    const errorElement = document.getElementById(`${fieldName}-error`);
+    if (errorElement) {
+      errorElement.textContent = '';
+      errorElement.removeAttribute('aria-live');
+    }
+  }
+}
+```
+
+## 3. <a name='x-3-navigation-au-clavier-et-focus-management'></a> Navigation au clavier et focus management
+
+### Navigation globale au clavier
+
+L'application garantit une navigation complète au clavier sur tous les éléments interactifs :
+
+**Éléments navigables :**
+
+- Boutons et liens : `Tab` / `Shift+Tab`
+- Menu principal : Flèches directionnelles
+- Carte hexagonale : `Tab` pour les hexagones, `Enter` pour sélection
+- Listes de quêtes : Flèches haut/bas, `Enter` pour détails
+
+### Focus trap dans les modales
+
+**Implémentation du focus trap :**
+
+```typescript
+// Directive pour le focus trap
+@Directive({
+  selector: '[focusTrap]',
+})
+export class FocusTrapDirective implements OnInit, OnDestroy {
+  private focusableElements: HTMLElement[] = [];
+  private firstFocusableElement: HTMLElement;
+  private lastFocusableElement: HTMLElement;
+
+  ngOnInit(): void {
+    this.setFocusableElements();
+    this.firstFocusableElement?.focus();
+    document.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  private handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === 'Tab') {
+      if (event.shiftKey) {
+        if (document.activeElement === this.firstFocusableElement) {
+          event.preventDefault();
+          this.lastFocusableElement.focus();
+        }
+      } else {
+        if (document.activeElement === this.lastFocusableElement) {
+          event.preventDefault();
+          this.firstFocusableElement.focus();
+        }
+      }
+    }
+  };
+}
+```
+
+**Application dans les modales :**
+
+```html
+<p-dialog [visible]="displayModal" [modal]="true" focusTrap="true" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-content">
+  <h2 id="modal-title">Changement de mot de passe</h2>
+  <div id="modal-content" focusTrap>
+    <!-- Contenu de la modale -->
+  </div>
+</p-dialog>
+```
+
+### Navigation dans la carte hexagonale
+
+**Support clavier pour la carte :**
+
+```typescript
+@Component({
+  selector: 'app-map',
+  template: `
+    <div class="hex-grid" role="grid" aria-label="Carte des quêtes hexagonale" (keydown)="handleKeyboardNavigation($event)">
+      <div
+        *ngFor="let hex of hexagons; let i = index"
+        class="hexagon"
+        role="gridcell"
+        [tabindex]="i === activeHexIndex ? 0 : -1"
+        [attr.aria-label]="getHexAriaLabel(hex)"
+        (click)="selectHex(hex)"
+        (keydown.enter)="selectHex(hex)"
+        (keydown.space)="selectHex(hex)">
+        <!-- Contenu hexagone -->
+      </div>
+    </div>
+  `,
+})
+export class MapComponent {
+  activeHexIndex = 0;
+
+  handleKeyboardNavigation(event: KeyboardEvent): void {
+    switch (event.key) {
+      case 'ArrowRight':
+        this.moveToNextHex();
+        break;
+      case 'ArrowLeft':
+        this.moveToPreviousHex();
+        break;
+      case 'ArrowDown':
+        this.moveToHexBelow();
+        break;
+      case 'ArrowUp':
+        this.moveToHexAbove();
+        break;
+    }
+  }
+}
+```
+
+## 4. <a name='x-4-technologies-d-assistance-et-lecteurs-d-écran'></a> Technologies d'assistance et lecteurs d'écran
+
+### Support des lecteurs d'écran
+
+**Classes pour lecteurs d'écran uniquement :**
+
+```css
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+```
+
+**Utilisation dans les modales de confirmation :**
+
+```html
+<p-dialog [visible]="showDeleteConfirm" [modal]="true">
+  <h2 id="delete-title">
+    Confirmation de suppression
+    <span class="visually-hidden"> de la quête {{ questToDelete?.title }} </span>
+  </h2>
+
+  <p id="delete-description">
+    Êtes-vous sûr de vouloir supprimer cette quête ?
+    <span class="visually-hidden"> Cette action est irréversible. </span>
+  </p>
+
+  <div class="dialog-actions">
+    <button type="button" class="p-button-secondary" aria-describedby="delete-description">
+      <span class="visually-hidden">Ne pas supprimer et </span>
+      Annuler
+    </button>
+    <button type="button" class="p-button-danger" aria-describedby="delete-description">
+      <span class="visually-hidden">Confirmer la suppression de la quête</span>
+      Supprimer
+    </button>
+  </div>
+</p-dialog>
+```
+
+### Annonces live pour les actions utilisateur
+
+**Service d'annonces dynamiques :**
+
+```typescript
+@Injectable()
+export class LiveAnnouncerService {
+  private liveRegion: HTMLElement;
+
+  constructor() {
+    this.createLiveRegion();
+  }
+
+  private createLiveRegion(): void {
+    this.liveRegion = document.createElement('div');
+    this.liveRegion.setAttribute('aria-live', 'polite');
+    this.liveRegion.setAttribute('aria-atomic', 'true');
+    this.liveRegion.className = 'visually-hidden';
+    document.body.appendChild(this.liveRegion);
+  }
+
+  announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
+    this.liveRegion.setAttribute('aria-live', priority);
+    this.liveRegion.textContent = message;
+
+    // Nettoyer après annonce
+    setTimeout(() => {
+      this.liveRegion.textContent = '';
+    }, 1000);
+  }
+}
+```
+
+**Utilisation pour les actions de quête :**
+
+```typescript
+// Annonce lors de la complétion d'une quête
+completeQuest(quest: Quest): void {
+  this.questService.markAsCompleted(quest.id).subscribe(() => {
+    this.liveAnnouncer.announce(
+      `Quête "${quest.title}" marquée comme terminée. Félicitations !`,
+      'polite'
+    );
+  });
+}
+
+// Annonce lors de la création d'une quête
+createQuest(questData: QuestDto): void {
+  this.questService.create(questData).subscribe(() => {
+    this.liveAnnouncer.announce(
+      `Nouvelle quête "${questData.title}" créée avec succès`,
+      'polite'
+    );
+  });
+}
+```
+
+### Tests d'accessibilité
+
+**Outils de validation utilisés :**
+
+- **axe-core** : Audit automatisé d'accessibilité
+- **WAVE** : Web Accessibility Evaluation Tool
+- **Lighthouse** : Audit d'accessibilité intégré Chrome
+- **NVDA/JAWS** : Tests manuels avec lecteurs d'écran
+
+**Pipeline de tests d'accessibilité :**
+
+```typescript
+// Tests automatisés d'accessibilité
+describe('Accessibility Tests', () => {
+  it('should have no accessibility violations on login page', async () => {
+    const { container } = render(LoginComponent);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('should support keyboard navigation on map', () => {
+    const component = new MapComponent();
+    const keyEvent = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+    component.handleKeyboardNavigation(keyEvent);
+    expect(component.activeHexIndex).toBe(1);
+  });
+});
+```
+
+Cette approche globale de l'accessibilité garantit que Hexaplanning est utilisable par tous, respectant ainsi les exigences légales et éthiques d'inclusion numérique.
+
+# XI. Conception et analyse
 
 Ce chapitre détaille les aspects de conception, d'analyse des besoins et de développement des composants métier, en respectant les standards de qualité et les bonnes pratiques de développement.
 
-## 1. <a name='ix-1-analyse-des-besoins'></a> Analyse des besoins
+## 1. <a name='xi-1-analyse-des-besoins'></a> Analyse des besoins
 
 ### Couverture des exigences du cahier des charges
 
@@ -1191,7 +1595,7 @@ La documentation technique respecte les standards internationaux (français/angl
 - Documentation API multilingue
 - Instructions de déploiement standardisées
 
-## 2. <a name='ix-2-maquettage-et-design'></a> Maquettage et design
+## 2. <a name='xi-2-maquettage-et-design'></a> Maquettage et design
 
 ### Maquettes conformes aux standards
 
@@ -1232,7 +1636,7 @@ Les maquettes d'Hexaplanning respectent les principes d'ergonomie et d'accessibi
 - Textes alternatifs pour les images
 - Structure sémantique HTML
 
-## 3. <a name='ix-3-composants-métier'></a> Composants métier
+## 3. <a name='xi-3-composants-métier'></a> Composants métier
 
 ### Programmation orientée objet respectée
 
@@ -1332,7 +1736,7 @@ public async Task CreateQuestAsync_ValidData_ReturnsCreatedQuest()
 }
 ```
 
-## 4. <a name='ix-4-interfaces-utilisateur'></a> Interfaces utilisateur
+## 4. <a name='xi-4-interfaces-utilisateur'></a> Interfaces utilisateur
 
 ### Interface conforme au dossier de conception
 
@@ -1385,11 +1789,11 @@ it('should emit questCompleted when checkbox is clicked', () => {
 });
 ```
 
-# XI. Procédures de déploiement
+# XII. Procédures de déploiement
 
 Ce chapitre détaille les procédures complètes de tests, de déploiement et d'automatisation mises en place pour garantir la qualité et la fiabilité des livraisons.
 
-## 1. <a name='x-1-plan-de-tests-complet'></a> Plan de tests complet
+## 1. <a name='xii-1-plan-de-tests-complet'></a> Plan de tests complet
 
 ### Couverture de toutes les fonctionnalités
 
@@ -1448,7 +1852,7 @@ Le plan de tests d'Hexaplanning couvre l'ensemble des fonctionnalités de l'appl
 - [ ] Mobile responsiveness
 ```
 
-## 2. <a name='x-2-environnements-de-test'></a> Environnements de test
+## 2. <a name='xii-2-environnements-de-test'></a> Environnements de test
 
 ### Environnement de test créé
 
@@ -1510,7 +1914,7 @@ services:
 - Monitoring actif
 - Backup automatisé
 
-## 3. <a name='x-3-procédures-de-déploiement'></a> Procédures de déploiement
+## 3. <a name='xii-3-procédures-de-déploiement'></a> Procédures de déploiement
 
 ### Procédure de déploiement rédigée
 
@@ -1630,7 +2034,7 @@ deploy_frontend
 log "✅ Déploiement terminé avec succès"
 ````
 
-## 4. <a name='x-4-scripts-et-automatisation'></a> Scripts et automatisation
+## 4. <a name='xii-4-scripts-et-automatisation'></a> Scripts et automatisation
 
 ### Outils qualité code utilisés
 
@@ -1780,15 +2184,15 @@ Security Vulnerabilities: 0 Critical, 2 Low
 - Exemples de code commentés
 - Diagrammes explicatifs
 
-# XII. Conclusion et perspectives
+# XIII. Conclusion et perspectives
 
-## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
+## 1. <a name='xiii-1-bilan-du-projet'></a> Bilan du projet
 
 Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l’expérience utilisateur et la gamification de la gestion de tâches. Le découpage clair entre frontend Angular et backend .NET, la modélisation soignée des entités (quêtes, utilisateurs, hexagones), ainsi que l’automatisation des tests et du déploiement, ont permis d’atteindre un haut niveau de qualité logicielle.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L’architecture modulaire et la conteneurisation facilitent la maintenance et l’évolutivité.
 
-## 2. <a name='viii-2-perspectives-d-évolution'></a> Perspectives d'évolution
+## 2. <a name='xiii-2-perspectives-d-évolution'></a> Perspectives d'évolution
 
 Les évolutions futures d’Hexaplanning s’articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
