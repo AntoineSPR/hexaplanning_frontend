@@ -1,5 +1,3 @@
-<!-- vscode-markdown-toc -->
-
 <h1 style="text-align: center; font-size: 3em; color: #8a2be2; font-weight: bold; display: block; margin: 100px auto 20px auto; width: 100%;">
 HEXAPLANNING
 </h1>
@@ -20,6 +18,8 @@ Réalisé par Antoine Simper
 2024 - 2025
 </p>
 
+<div style="page-break-before: always;"></div>
+<h5 style="color: transparent;">divider</h5>
 <div style="page-break-before: always;"></div>
 
 # Table des matières
@@ -407,8 +407,6 @@ L'utilisateur peut également changer son mot de passe depuis l'interface : en a
 
 La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
 
-<!-- TODO : A développer (dans une autre section ?) -->
-
 ## 5. <a name='Navigationetergonomie'></a>Navigation et ergonomie
 
 L’application propose un menu apparaissant en permanence en bas de page, et permettant de naviguer entre l’accueil, les listes de quêtes, la carte des hexagones et les paramètres. Un bouton dédié au centre du menu permet de créer rapidement une nouvelle quête, qui viendra s'insérer dans la liste qui lui correspond, et sera accessible dans la modale d'assignation à un hexagone.
@@ -528,8 +526,6 @@ git push origin feature/quest-management
 <div align="center">
 <em>Schéma de la base de données relationnelle d'Hexaplanning, réalisé avec dbdiagram.io.</em>
 </div>
-
-<!-- TODO : Ajouter les interfaces et classes héritées -->
 
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
@@ -700,8 +696,6 @@ L'architecture utilise un **modèle générique d'héritage** pour standardiser 
 
 **BaseModel - Classe abstraite commune :**
 
-<!-- TODO : ajouter qu'elle implémente 3 interfaces - on a crée 3 interfaces qui sont implémentées par BaseModel ET par la classe qui hérite de IdentityUser (UserApp) et donc qui ne peut pas hériter de BaseModel -->
-
 ```csharp
 public abstract class BaseModel
 {
@@ -753,37 +747,68 @@ public class Priority : BaseModelOption
 ### Sécurité intégrée
 
 - **Middleware JWT** : Authentification automatique sur tous les endpoints protégés
-- **Validation des entrées** : Contrôles stricts sur toutes les données reçues
-<!-- TODO : exemple QuestCreateDTO avec un titre limité à 100 caractères -->
-- **Protection anti-attaques** : Guards contre l'injection SQL
-<!-- TODO : exemple protection injection SQL en passant par l'ORM de EF -->
-- **Rate limiting** : Protection contre les tentatives de force brute
-  <!-- TODO : exemple dans Program.cs options.Lockout de IdentityOptions -->
-  <!-- services.Configure<IdentityOptions>(options =>
-  {
-      // Password settings
-      options.Password.RequireDigit = true;
-      options.Password.RequireLowercase = true;
-      options.Password.RequireNonAlphanumeric = true;
-      options.Password.RequireUppercase = true;
-      options.Password.RequiredLength = 8;
-      options.Password.RequiredUniqueChars = 1;
 
-      // Lockout settings
+Exemple dans le contrôleur de quêtes, avec l'attribut Authorize :
+
+```csharp
+/// <summary>
+/// Gestion des quêtes
+/// </summary>
+[Route("[controller]")]
+[Authorize]
+[ApiController]
+[CheckUser]
+public class QuestController : ControllerBase
+{}
+```
+
+- **Validation des entrées** : Contrôles sur toutes les données reçues
+
+Exemple dans une partie du DTO de création de quête avec un titre qui doit être une chaîne de caractères limitée à 100 caractères :
+
+```csharp
+    public class QuestCreateDTO
+    {
+        [Required]
+        [StringLength(100)]
+        public string Title { get; set; }
+
+        public string? Description { get; set; }
+    }
+```
+
+- **Protection anti-attaques** : Protection contre l'injection SQL en utilisant l'ORM Entity Framework
+
+Exemple avec la méthode de récupération de toutes les quêtes d'un utilisateur donnée, dans le QuestService :
+
+```csharp
+/// <summary>
+/// Récupère toutes les quêtes d'un utilisateur spécifique.
+/// </summary>
+/// <param name="userId">L'identifiant unique (GUID) de l'utilisateur.</param>
+/// <returns>
+/// Une liste de <see cref="QuestDTO"/> contenant toutes les quêtes associées à l'utilisateur.
+/// Retourne une liste vide si l'utilisateur n'a aucune quête.
+/// </returns
+public async Task<List<QuestDTO>> GetAllQuestsAsync(Guid userId)
+{
+    var quests = await context.Quests.Where(x => x.UserId == userId).ToListAsync();
+    return quests.Select(QuestDTO.ToQuestDTO).ToList();
+}
+```
+
+- **Rate limiting** : Protection contre les tentatives de force brute
+
+On utilise pour cela les options de Lockout fournies par ASP .NET Identity, qu'on configure dans Program.cs :
+
+```csharp
+services.Configure<IdentityOptions>(options =>
+  {
       options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
       options.Lockout.MaxFailedAccessAttempts = 5;
       options.Lockout.AllowedForNewUsers = true;
-
-      // User settings
-      options.User.AllowedUserNameCharacters =
-          " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-      options.User.RequireUniqueEmail = true;
-
-      // Login settings
-      options.SignIn.RequireConfirmedAccount = false;
-      options.SignIn.RequireConfirmedEmail = false;
-      options.SignIn.RequireConfirmedPhoneNumber = false;
-  }); -->
+  });
+```
 
 - **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
 
@@ -812,10 +837,11 @@ public class CheckUserAttribute : ActionFilterAttribute
 }
 ```
 
-<!-- TODO : explications - on récupère l'ID à partir du token JWT (un des claims) qui est envoyée dans la requête HTTP, puis on ajouter cet Id dans le contexte HTTP (?), pour qu'on puisse vérifier dans toutes les méthodes qui utilisent cet attribut -->
+On récupère l'identifiant de l'utilisateur qui est un des claims du token JWT transmis avec la requête HTTP. On le stocke alors dans le contexte HTTP, pour pouvoir y accéder dans les méthodes qui utilisent l'attribut CheckUser, et vérifier que l'identifiant correspond aux données auxquelles on souhaite accéder.
 
-<!-- Exemple d'application : le contrôleur QuestController a un décorateur CheckUser donc avant de pouvoir accéder au contrôleur, on passe dans le CheckUser qui extrait le userId et l'enregistre dans le contexte HTTP, puis dans les méthodes du contrôleur on récupère le userId du contexte HTTP.
+Exemple d'application dans le contrôleur de quêtes :
 
+```csharp
 [HttpGet]
 public async Task<IActionResult> GetAllQuests()
 {
@@ -825,9 +851,10 @@ public async Task<IActionResult> GetAllQuests()
         return Ok(quests);
     }
     return Unauthorized();
-} -->
+}
+```
 
-Chaque méthode des contrôleurs qui nécessite d'avoir un utilisateur précis est alors décorée par l'attribut [CheckUser].
+Chaque contrôleur qui comporte des méthodes nécessitant de vérifier l'utilisateur dont émane la requête est décoré par l'attribut [CheckUser].
 
 **Avantages du système CheckUser :**
 
@@ -849,7 +876,6 @@ L'architecture backend .NET Core respecte les principes OOP :
 
 - **Encapsulation** : Propriétés privées avec validation dans les setters
 - **Héritage** : Classes `BaseModel` et `BaseModelOption` pour standardiser les entités
-<!-- TODO : C'est quoi le polymorphisme wesh -->
 
 **Conventions de nommage C# :**
 
@@ -859,16 +885,26 @@ L'architecture backend .NET Core respecte les principes OOP :
 
 **Documentation XML pour .NET :**
 
-<!-- TODO : dire que ça apparaît dans swagger (à faire) -->
+Chaque méthode de contrôleur est documentée, ce qui ajoute une description aux endpoints sur Swagger.
+
+Exemple avec la méthode de création de quête :
 
 ```csharp
 /// <summary>
-/// Crée une nouvelle quête pour l'utilisateur spécifié
+/// Crée une nouvelle quête pour l'utilisateur authentifié.
 /// </summary>
-/// <param name="questDto">Données de la quête à créer</param>
-/// <param name="userId">Identifiant de l'utilisateur</param>
-/// <returns>La quête créée avec son identifiant</returns>
-public async Task<Quest> CreateQuestAsync(QuestDto questDto, string userId)
+/// <param name="questDto">Les données de la quête à créer.</param>
+/// <returns>
+/// Une réponse HTTP 201 Created contenant la quête créée avec son identifiant unique,
+/// ainsi qu'un en-tête Location pointant vers l'endpoint de récupération de la quête.
+/// </returns>
+/// <response code="201">La quête a été créée avec succès. Retourne la quête avec son ID généré.</response>
+/// <response code="400">Les données fournies sont invalides (validation échouée).</response>
+/// <response code="401">L'utilisateur n'est pas authentifié ou le token JWT est invalide.</response>
+/// <response code="409">Une quête est déjà associée à cet hexagone (contrainte d'unicité violée).</response>
+[HttpPost]
+public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
+{}
 ```
 
 ## 4. <a name='BasededonnesPostgreSQL'></a> Base de données : PostgreSQL
@@ -891,47 +927,6 @@ public async Task<Quest> CreateQuestAsync(QuestDto questDto, string userId)
 ### Sécurité
 
 - **Accès restreint** : Connexion uniquement via l'API backend.
-<!-- TODO : ajouter sécurisé par CORS :
-
-static void ConfigureCors(IServiceCollection services)
-{
-services.AddCors(options =>
-{
-options.AddDefaultPolicy(builder =>
-{
-builder
-.SetIsOriginAllowed(IsOriginAllowed)
-.AllowAnyMethod()
-.AllowAnyHeader()
-.AllowCredentials();
-});
-});
-}
-
-    static bool IsOriginAllowed(string origin)
-    {
-        List<string> localUrls =
-                new()
-                {
-                        "http://localhost",
-                        "https://localhost",
-                        "https://localhost:4200",
-                        "http://localhost:4200",
-                        "http://localhost:7113",
-                        "https://localhost:7113",
-                        "https://localhost:7168",
-                        "http://hexaplanning.fr",
-                        "https://hexaplanning.fr",
-                        "http://api.hexaplanning.fr",
-                        "https://api.hexaplanning.fr",
-                        Env.API_BACK_URL,
-                        Env.API_FRONT_URL,
-                };
-        return localUrls.Contains(origin);
-    }
-
--->
-
 - **Isolation des données** : Chaque utilisateur accède uniquement à ses propres données
 - **Mots de passe sécurisés** : Hashés avec ASP.NET Identity
 
@@ -989,7 +984,66 @@ builder
 - **Service d'emailing transactionnel** : Solution cloud fiable et simple à intégrer pour l'envoi d'e-mails automatisés
 - **Utilisation** : Envoi de mails de réinitialisation de mot de passe
 - **Avantages** : API simple et tarification adaptée aux petits volumes, plus simple et plus économique qu'un serveur mail à héberger
-<!-- TODO : Ajouter du code -->
+
+Le service d'envoi de mail est pour le moment utilisé uniquement pour la réinitialisation de mot de passe.
+
+Une vérification est effectuée avant l'envoi, pour s'assurer que la requête n'est pas envoyé à la même adresse plus d'une fois toutes les 5 minutes. Pour cela on crée une variable :
+
+```csharp
+private static readonly Dictionary<string, DateTime> _lastResetRequest = new();
+```
+
+Au début de la méthode, on vérifie que la dernière requête n'a pas été effectuée il y a peu, puis on configure le client SMTP, on cherche l'utilisateur associé à l'adresse e-mail renseignée (s'il n'est pas trouvé, on renvoie tout de même un message de succès pour ne pas révéler si l'adresse existe en base de données), puis on génère un token de réinitialisation de mot de passe qu'on insère dans un lien avec l'adresse e-mail, de façon à le transmettre dans le template de mail.
+
+```csharp
+public async Task<bool> SendPasswordResetEmail(string emailAddress)
+{
+    try
+    {
+        if (_lastResetRequest.TryGetValue(emailAddress, out var lastRequest))
+        {
+            if (DateTime.UtcNow - lastRequest < TimeSpan.FromMinutes(5)) return true;
+        }
+        _lastResetRequest[emailAddress] = DateTime.UtcNow;
+
+        var smtpClient = new SmtpClient(Env.SMTP_HOST)
+        {
+            Port = Int32.Parse(Env.SMTP_PORT),
+            Credentials = new NetworkCredential(
+                Env.SMTP_EMAILFROM,
+                Env.SMTP_PASSWORD
+            ),
+            EnableSsl = true
+        };
+
+        var user = await _userManager.FindByEmailAsync(emailAddress);
+        if (user == null)
+        {
+            // Pour des raisons de sécurité, on ne révèle pas si l'email existe
+            return true;
+        }
+
+        var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(resetToken);
+        var resetLink = $"{Env.API_FRONT_URL}/reset-password?token={encodedToken}&email={Uri.EscapeDataString(emailAddress)}";
+
+        var mailMessage = new MailMessage
+        {
+            // Template du mail
+        };
+
+        mailMessage.To.Add(user.Email);
+
+        await smtpClient.SendMailAsync(mailMessage);
+
+        return true;
+    }
+    catch
+    {
+        throw;
+    }
+}
+```
 
 <div style="page-break-before: always;"></div>
 
@@ -1146,30 +1200,111 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 - **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique. Toutes les opérations sensibles nécessitent un token JWT, généré lors de la connexion et vérifié à chaque requête côté backend
 - **Guards et Intercepteurs** : Le frontend Angular utilise des guards pour protéger les routes et un intercepteur HTTP pour injecter automatiquement le token dans les requêtes API
 
-<!-- TODO : ajouter exemples pour 1 guard et 1 intercepteur -->
+Exemple de guards sur la route principale qui renvoie au dashboard (accessible uniquement si l'utilisateur est authentifié), et sur la page de login qui n'est accessible que si l'utilisateur n'est pas authentifié :
+
+```csharp
+export const routes: Routes = [
+  {
+    canActivate: [isLoggedInGuard],
+    path: '',
+    component: DashboardPageComponent,
+  },
+  {
+    canActivate: [isLoggedOutGuard],
+    path: 'login',
+    component: LoginComponent,
+  },
+]
+```
+
+Et le code du premier guard :
+
+```csharp
+export const isLoggedInGuard: CanActivateFn = (route, state) => {
+  const _router = inject(Router);
+
+  if (localStorage.getItem('user') !== null && localStorage.getItem('token') !== null) {
+    return true;
+  }
+  _router.navigate(['/login']);
+  return false;
+};
+```
+
+Intercepteur pour insérer le token d'authentification dans toutes les requêtes HTTP :
+
+```csharp
+export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    req = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+  return next(req);
+};
+```
 
 ### Gestion sécurisée des mots de passe
 
 - **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
-- **Politique de complexité** : Validation des mots de passe selon les standards de sécurité
-<!-- TODO : préciser les prérequis de password -->
+- **Politique de complexité** : Validation des mots de passe selon les standards de sécurité : au minimum 8 caractères, 1 lettre majuscule, 1 lettre minuscule, 1 chiffre, 1 caractère spécial
 - **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe via email (Brevo)
-<!-- TODO : insérer le code -->
 - **Protection contre la force brute** : Limitation du nombre de tentatives de connexion
+
+ASP .NET Identity est configuré dans Program.cs avec le code suivant, assurant la validation des mots de passe dans le backend et la protection contre le brute force :
+
+```csharp
+services.Configure<IdentityOptions>(options =>
+  {
+      // Password settings
+      options.Password.RequireDigit = true;
+      options.Password.RequireLowercase = true;
+      options.Password.RequireNonAlphanumeric = true;
+      options.Password.RequireUppercase = true;
+      options.Password.RequiredLength = 8;
+      options.Password.RequiredUniqueChars = 1;
+
+      // Lockout settings
+      options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
+      options.Lockout.MaxFailedAccessAttempts = 5;
+      options.Lockout.AllowedForNewUsers = true;
+
+      // User settings
+      options.User.AllowedUserNameCharacters =
+          " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+      options.User.RequireUniqueEmail = true;
+  });
+```
 
 ## 2. <a name='ix-2-validation-et-intégrité-des-données'></a> Validation et intégrité des données
 
 ### Validation des entrées
 
 - **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées
-<!-- TODO : donner un exemple (string limité à 100 caractères) -->
 - **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations sensibles, notamment lors de la réinitialisation de mot de passe
 
 ### Isolation des données utilisateur
 
 - **Mécanisme CheckUser** : Système de vérification automatique garantissant que chaque utilisateur ne peut accéder qu'à ses propres ressources
 - **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
-<!-- TODO : parler des enpoints spécialisés type PendingUnassigned qui évitent de faire du tri en front-end -->
+
+Exemple d'endpoint spécialisé : récupération des quêtes en attente et non assignées de l'utilisateur ayant effectué la requête (pour les afficher dans la liste des quêtes à assigner à un hexagone), ce qui évite de refaire un tri en front-end.
+
+```csharp
+        [HttpGet("unassigned_pending")]
+        public async Task<IActionResult> GetAllUnassignedPendingQuests()
+        {
+            if (HttpContext.Items["UserId"] is Guid userId)
+            {
+                var unassigned_pending_quests = await questService.GetAllUnassignedPendingQuestsAsync(userId);
+                return Ok(unassigned_pending_quests);
+            }
+            return Unauthorized();
+        }
+```
 
 ## 3. <a name='ix-3-protection-contre-les-attaques'></a> Protection contre les attaques
 
@@ -1180,6 +1315,40 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 ### Configuration sécurisée
 
 - **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
+
+```csharp
+ static void ConfigureCors(IServiceCollection services)
+ {
+     services.AddCors(options =>
+     {
+         options.AddDefaultPolicy(builder =>
+         {
+             builder
+             .SetIsOriginAllowed(IsOriginAllowed)
+             .AllowAnyMethod()
+             .AllowAnyHeader()
+             .AllowCredentials();
+         });
+     });
+ }
+```
+
+```csharp
+   static bool IsOriginAllowed(string origin)
+   {
+       List<string> localUrls =
+               new()
+               {
+                       "http://hexaplanning.fr",
+                       "https://hexaplanning.fr",
+                       "http://api.hexaplanning.fr",
+                       "https://api.hexaplanning.fr",
+                       Env.API_BACK_URL,
+                       Env.API_FRONT_URL,
+               };
+       return localUrls.Contains(origin);
+   }
+```
 
 ## 4. <a name='ix-4-sécurité-de-la-conteneurisation-et-du-déploiement'></a> Sécurité de la conteneurisation et du déploiement
 
@@ -1521,4 +1690,12 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
-<!-- TODO : ajouter remerciements et crédits des icônes -->
+## 2. <a name='xi-3-remerciements'></a> Remerciements
+
+Je tiens à remercier mon formateur Pierre-Louis Bastin pour son soutien et sa confiance malgré les difficultés.
+Egalement Mahdi Mcheik, mon camarade de formation et ami, pour ses précieux conseils et son aide pour terminer mon projet.
+De même, Jade Jolivet, ma camarade de formation, pour ses notes de cours.
+Enfin, Thomas Pied, mon collègue d'entreprise, qui a pris de son temps pour m'aider à appréhender des concepts complexes afin que je puisse régler des bugs sur une application mobile.
+
+Crédits des icônes utilisées dans l'application : étoiles par GOWI, kornkun2 et meaicon sur flaticon.com
+Autres icônes par PrimeNG.
