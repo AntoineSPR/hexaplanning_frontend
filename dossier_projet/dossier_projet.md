@@ -1,16 +1,24 @@
 <!-- vscode-markdown-toc -->
 
-  <h1 style="text-align: center; font-size: 3em; color: #2c3e50; font-weight: bold; display: block; margin: 50px auto; width: 100%;">
-  HEXAPLANNING
-  </h1>
+<h1 style="text-align: center; font-size: 3em; color: #8a2be2; font-weight: bold; display: block; margin: 100px auto 20px auto; width: 100%;">
+HEXAPLANNING
+</h1>
 
-  <h2 style="text-align: center; font-size: 1.8em; color: #7f8c8d; font-weight: normal; display: block; margin: 0 auto 50px auto; width: 100%;">
-  Gestion de tâches
-  </h2>
+<h2 style="text-align: center; font-size: 1.8em; color: #7f8c8d; font-weight: normal; display: block; margin: 0 auto 50px auto; width: 100%;">
+Carte interactive de gestion de tâches
+</h2>
 
-<div align="center" style="margin-top: 100px;">
-<img src="../public/favicon.ico" width="300" />
+<div align="center" style="margin-top: 200px;">
+<img src="../public/favicon.ico" width="200" />
 </div>
+
+<h3 style="text-align: center; font-size: 1.5em; font-weight: bold; display: block; width: 100%; margin-top: 200px;">
+Réalisé par Antoine Simper
+</h3>
+
+<p style="text-align: center; margin-top: 30px;">
+2024 - 2025
+</p>
 
 <div style="page-break-before: always;"></div>
 
@@ -1513,4 +1521,4 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
-<!-- TODO : ajouter remerciements -->
+<!-- TODO : ajouter remerciements et crédits des icônes -->
