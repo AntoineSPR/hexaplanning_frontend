@@ -1,5 +1,19 @@
 <!-- vscode-markdown-toc -->
 
+  <h1 style="text-align: center; font-size: 3em; color: #2c3e50; font-weight: bold; display: block; margin: 50px auto; width: 100%;">
+  HEXAPLANNING
+  </h1>
+
+  <h2 style="text-align: center; font-size: 1.8em; color: #7f8c8d; font-weight: normal; display: block; margin: 0 auto 50px auto; width: 100%;">
+  Gestion de tâches
+  </h2>
+
+<div align="center" style="margin-top: 100px;">
+<img src="../public/favicon.ico" width="300" />
+</div>
+
+<div style="page-break-before: always;"></div>
+
 # Table des matières
 
 **I. [Introduction](#i-introduction)**
@@ -84,9 +98,7 @@
 3.  [Améliorations futures possibles](#xi-3-améliorations-futures)
 4.  [Ce que ce projet m'a apporté](#xi-4-apport-projet)
 
----
-
----
+<div style="page-break-before: always;"></div>
 
 # I. Introduction
 
@@ -101,6 +113,8 @@ L'application a été développée en mobile-first, favorisant une utilisation q
 ## 2. <a name='Objectifsetcontexte'></a>Objectifs et contexte
 
 Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. Hexaplanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
+
+<div style="page-break-before: always;"></div>
 
 # II. Spécifications du projet
 
@@ -195,6 +209,8 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - **Node.js** : Runtime pour les outils de build Angular
 - **npm** : Gestionnaire de packages JavaScript
 - **Navigateurs** : Chrome et Firefox pour les tests cross-browser
+
+<div style="page-break-before: always;"></div>
 
 # III. Fonctionnalités principales
 
@@ -399,6 +415,8 @@ L’application propose un menu apparaissant en permanence en bas de page, et pe
 
 L'interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l'engagement et la productivité de l'utilisateur.
 
+<div style="page-break-before: always;"></div>
+
 # IV. Travail en équipe & méthodologie
 
 ## 1. <a name='iv-1-méthode-agile-scrum'></a> Méthode Agile / Scrum
@@ -488,6 +506,8 @@ git push origin feature/quest-management
 
 - **Figma** : Maquettes et schémas d'architecture collaboratifs
 - **Confluence/Notion** : Spécifications fonctionnelles et notes de réunion
+
+<div style="page-break-before: always;"></div>
 
 # V. Modélisation des données
 
@@ -581,6 +601,8 @@ git push origin feature/quest-management
 - **Quest N:1 Priority** : Une quête a une priorité.
 - **Quest N:1 Status** : Une quête a un statut.
 - **Quest 1:1 HexAssignment** : Une quête peut être assignée à un hexagone (optionnel).
+
+<div style="page-break-before: always;"></div>
 
 # VI. Architecture technique et technologies
 
@@ -961,6 +983,8 @@ builder
 - **Avantages** : API simple et tarification adaptée aux petits volumes, plus simple et plus économique qu'un serveur mail à héberger
 <!-- TODO : Ajouter du code -->
 
+<div style="page-break-before: always;"></div>
+
 # VII. Qualité logicielle et tests
 
 La qualité logicielle d’Hexaplanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
@@ -995,6 +1019,8 @@ Des fixtures de données sont utilisées pour simuler des volumes importants de 
 Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dédiés. Les tests sont exécutés automatiquement lors des pipelines CI/CD (GitHub Actions), garantissant l’absence de régressions avant chaque déploiement.
 
 Cette démarche assure un haut niveau de confiance dans la qualité logicielle du backend, tout en facilitant l’évolution continue du projet.
+
+<div style="page-break-before: always;"></div>
 
 # VIII. CI / CD
 
@@ -1098,6 +1124,8 @@ Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 }
 ```
 
+<div style="page-break-before: always;"></div>
+
 # IX. Sécurité
 
 L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
@@ -1160,6 +1188,8 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 La sécurité est intégrée à tous les niveaux de l’architecture d'Hexaplanning pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
 Cette approche multicouche garantit un haut niveau de sécurité pour les utilisateurs et les données de la plateforme, tout en maintenant une expérience utilisateur fluide et moderne.
+
+<div style="page-break-before: always;"></div>
 
 # X. Accessibilité et conformité RGAA
 
@@ -1400,6 +1430,8 @@ Les boutons incluent des descriptions appropriées selon leur état :
 
 Cette approche d'accessibilité garantit qu'Hexaplanning peut être utilisé efficacement par tous les utilisateurs, y compris ceux qui utilisent des technologies d'assistance, tout en respectant les standards d'accessibilité web modernes.
 
+<div style="page-break-before: always;"></div>
+
 # XI. Conclusion et perspectives
 
 ## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
@@ -1482,5 +1514,3 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
 <!-- TODO : ajouter remerciements -->
-
----
