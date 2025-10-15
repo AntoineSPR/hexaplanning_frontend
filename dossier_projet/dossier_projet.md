@@ -166,7 +166,6 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - Angular 18 avec TypeScript
 - PrimeNG pour les composants UI
 - SCSS pour le styling responsive
-- Jest et Cypress pour les tests
 
 **Backend :**
 
@@ -502,6 +501,8 @@ git push origin feature/quest-management
 <em>Schéma de la base de données relationnelle d'Hexaplanning, réalisé avec dbdiagram.io.</em>
 </div>
 
+<!-- TODO : Ajouter les interfaces et classes héritées -->
+
 ## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
 
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, CreatedAt, UpdatedAt, IsArchived, ...)
@@ -635,8 +636,6 @@ Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurit
 
 ### Tests et qualité
 
-- **Jest** : Tests unitaires des composants et services
-- **Cypress** : Tests end-to-end pour valider les parcours utilisateur complets
 - **ESLint** : Analyse statique du code pour maintenir la qualité
 
 ### Conventions Angular respectées
@@ -670,6 +669,8 @@ L'API suit une architecture en couches claire pour séparer les responsabilités
 L'architecture utilise un **modèle générique d'héritage** pour standardiser les entités et éviter la duplication de code :
 
 **BaseModel - Classe abstraite commune :**
+
+<!-- TODO : ajouter qu'elle implémente 3 interfaces - on a crée 3 interfaces qui sont implémentées par BaseModel ET par la classe qui hérite de IdentityUser (UserApp) et donc qui ne peut pas hériter de BaseModel -->
 
 ```csharp
 public abstract class BaseModel
@@ -723,13 +724,42 @@ public class Priority : BaseModelOption
 
 - **Middleware JWT** : Authentification automatique sur tous les endpoints protégés
 - **Validation des entrées** : Contrôles stricts sur toutes les données reçues
-- **Protection anti-attaques** : Guards contre l'injection SQL, XSS, CSRF
+<!-- TODO : exemple QuestCreateDTO avec un titre limité à 100 caractères -->
+- **Protection anti-attaques** : Guards contre l'injection SQL
+<!-- TODO : exemple protection injection SQL en passant par l'ORM de EF -->
 - **Rate limiting** : Protection contre les tentatives de force brute
+  <!-- TODO : exemple dans Program.cs options.Lockout de IdentityOptions -->
+  <!-- services.Configure<IdentityOptions>(options =>
+  {
+      // Password settings
+      options.Password.RequireDigit = true;
+      options.Password.RequireLowercase = true;
+      options.Password.RequireNonAlphanumeric = true;
+      options.Password.RequireUppercase = true;
+      options.Password.RequiredLength = 8;
+      options.Password.RequiredUniqueChars = 1;
+
+      // Lockout settings
+      options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
+      options.Lockout.MaxFailedAccessAttempts = 5;
+      options.Lockout.AllowedForNewUsers = true;
+
+      // User settings
+      options.User.AllowedUserNameCharacters =
+          " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+      options.User.RequireUniqueEmail = true;
+
+      // Login settings
+      options.SignIn.RequireConfirmedAccount = false;
+      options.SignIn.RequireConfirmedEmail = false;
+      options.SignIn.RequireConfirmedPhoneNumber = false;
+  }); -->
+
 - **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
 
 ### Mécanisme CheckUser - Isolation des données utilisateur
 
-L'API implémente un **système de vérification automatique** (`CheckUser`) garantissant que chaque utilisateur ne peut accéder qu'à ses propres ressources :
+L'API implémente un **système de vérification automatique** (`CheckUser`) de façon à ce que chaque utilisateur ne puisse accéder qu'à ses propres ressources :
 
 ```csharp
 public class CheckUserAttribute : ActionFilterAttribute
@@ -752,7 +782,22 @@ public class CheckUserAttribute : ActionFilterAttribute
 }
 ```
 
-Chaque méthode des contrôleurs qui nécessite d'avoir un utilisateur précis est alors décorée par [CheckUser].
+<!-- TODO : explications - on récupère l'ID à partir du token JWT (un des claims) qui est envoyée dans la requête HTTP, puis on ajouter cet Id dans le contexte HTTP (?), pour qu'on puisse vérifier dans toutes les méthodes qui utilisent cet attribut -->
+
+<!-- Exemple d'application : le contrôleur QuestController a un décorateur CheckUser donc avant de pouvoir accéder au contrôleur, on passe dans le CheckUser qui extrait le userId et l'enregistre dans le contexte HTTP, puis dans les méthodes du contrôleur on récupère le userId du contexte HTTP.
+
+[HttpGet]
+public async Task<IActionResult> GetAllQuests()
+{
+    if (HttpContext.Items["UserId"] is Guid userId)
+    {
+        var quests = await questService.GetAllQuestsAsync(userId);
+        return Ok(quests);
+    }
+    return Unauthorized();
+} -->
+
+Chaque méthode des contrôleurs qui nécessite d'avoir un utilisateur précis est alors décorée par l'attribut [CheckUser].
 
 **Avantages du système CheckUser :**
 
@@ -764,8 +809,7 @@ Chaque méthode des contrôleurs qui nécessite d'avoir un utilisateur précis e
 ### Tests et qualité
 
 - **xUnit** : Framework de tests unitaires moderne et flexible, intégré à l'écosystème .NET
-- **Tests d'intégration** : Validation complète des endpoints avec base de données de test
-- **Testcontainers** : Tests sur PostgreSQL réel pour une validation authentique
+- **Tests d'intégration** : Validation complète des endpoints avec base de données de test, qui utilisent des Testcontainers pour générer une base de donénes PostgreSQL et effectuer une validation réelle.
 
 ### Standards de développement et qualité du code
 
@@ -775,7 +819,7 @@ L'architecture backend .NET Core respecte les principes OOP :
 
 - **Encapsulation** : Propriétés privées avec validation dans les setters
 - **Héritage** : Classes `BaseModel` et `BaseModelOption` pour standardiser les entités
-- **Polymorphisme** : Interfaces pour les services (`IQuestService`, `IUserService`) avec injection de dépendances
+<!-- TODO : C'est quoi le polymorphisme wesh -->
 
 **Conventions de nommage C# :**
 
@@ -784,6 +828,8 @@ L'architecture backend .NET Core respecte les principes OOP :
 - **Constantes en UPPER_CASE** : `MAX_QUEST_TITLE_LENGTH`
 
 **Documentation XML pour .NET :**
+
+<!-- TODO : dire que ça apparaît dans swagger (à faire) -->
 
 ```csharp
 /// <summary>
@@ -811,11 +857,51 @@ public async Task<Quest> CreateQuestAsync(QuestDto questDto, string userId)
 - **Migrations Entity Framework Core** : Versioning automatique du schéma de base de données
 - **Code-First approach** : Génération du schéma à partir des modèles C#
 - **Seeding** : Données initiales (priorités, statuts) injectées automatiquement
-- **Backup et restauration** : Stratégies de sauvegarde régulières en production
 
 ### Sécurité
 
 - **Accès restreint** : Connexion uniquement via l'API backend.
+<!-- TODO : ajouter sécurisé par CORS :
+
+static void ConfigureCors(IServiceCollection services)
+{
+services.AddCors(options =>
+{
+options.AddDefaultPolicy(builder =>
+{
+builder
+.SetIsOriginAllowed(IsOriginAllowed)
+.AllowAnyMethod()
+.AllowAnyHeader()
+.AllowCredentials();
+});
+});
+}
+
+    static bool IsOriginAllowed(string origin)
+    {
+        List<string> localUrls =
+                new()
+                {
+                        "http://localhost",
+                        "https://localhost",
+                        "https://localhost:4200",
+                        "http://localhost:4200",
+                        "http://localhost:7113",
+                        "https://localhost:7113",
+                        "https://localhost:7168",
+                        "http://hexaplanning.fr",
+                        "https://hexaplanning.fr",
+                        "http://api.hexaplanning.fr",
+                        "https://api.hexaplanning.fr",
+                        Env.API_BACK_URL,
+                        Env.API_FRONT_URL,
+                };
+        return localUrls.Contains(origin);
+    }
+
+-->
+
 - **Isolation des données** : Chaque utilisateur accède uniquement à ses propres données
 - **Mots de passe sécurisés** : Hashés avec ASP.NET Identity
 
@@ -826,28 +912,26 @@ public async Task<Quest> CreateQuestAsync(QuestDto questDto, string userId)
 - **Format de données** : JSON via HTTP(S) pour tous les échanges
 - **Verbes HTTP** : Utilisation sémantique (GET, POST, PUT, DELETE)
 - **Codes de réponse** : Status codes HTTP appropriés (200, 201, 400, 401, 404, 500)
-- **Structure des URLs** : Routes RESTful cohérentes (`/api/quests`, `/api/users/{id}`)
+- **Structure des URLs** : Routes RESTful cohérentes (`/quests`, `/users/{id}`)
 
 ### Endpoints principaux
 
-- **Authentification** : `/api/auth/login`, `/api/auth/register`, `/api/auth/reset-password`
-- **Gestion des quêtes** : CRUD complet sur `/api/quests` avec filtrage par utilisateur
-- **Gestion des hexagones** : `/api/hexassignments` pour l'assignation des quêtes
-- **Gestion des utilisateurs** : `/api/users` pour les profils et paramètres
-- **Données de référence** : `/api/priorities`, `/api/statuses` pour les listes déroulantes
+- **Authentification** : `/auth/login`, `/auth/register`, `/auth/reset-password`
+- **Gestion des quêtes** : CRUD complet sur `/quests` avec filtrage par utilisateur
+- **Gestion des hexagones** : `/hexassignments` pour l'assignation des quêtes
+- **Gestion des utilisateurs** : `/users` pour les profils et paramètres
+- **Données de référence** : `/priorities`, `/statuses` pour les listes déroulantes
 
 ### Sécurité et authentification
 
 - **JWT Bearer Token** : Toutes les routes sensibles protégées par authentification
 - **CORS configuré** : Origines autorisées limitées aux domaines de l'application
-- **Rate limiting** : Protection contre les abus et attaques par déni de service
 - **Validation des données** : Contrôles stricts sur tous les inputs API
 
 ### Gestion des erreurs
 
 - **Réponses structurées** : Format JSON consistent pour les erreurs
 - **Messages explicites** : Informations claires pour le débogage côté frontend
-- **Logs centralisés** : Traçabilité complète des erreurs serveur
 
 ## 6. <a name='InfrastructureetDevOps'></a> Infrastructure et DevOps
 
@@ -875,6 +959,7 @@ public async Task<Quest> CreateQuestAsync(QuestDto questDto, string userId)
 - **Service d'emailing transactionnel** : Solution cloud fiable et simple à intégrer pour l'envoi d'e-mails automatisés
 - **Utilisation** : Envoi de mails de réinitialisation de mot de passe
 - **Avantages** : API simple et tarification adaptée aux petits volumes, plus simple et plus économique qu'un serveur mail à héberger
+<!-- TODO : Ajouter du code -->
 
 # VII. Qualité logicielle et tests
 
@@ -900,7 +985,6 @@ Caractéristiques :
 - Utilisation de `WebApplicationFactory` pour lancer l’API en environnement de test
 - Base de données PostgreSQL éphémère (Testcontainers)
 - Données de test injectées automatiquement (utilisateur, quêtes)
-- Vérification de la sécurité (JWT requis, accès refusé si non authentifié)
 
 ## 3. <a name='Testsdechargeetfixtures'></a> Tests de charge et fixtures
 
@@ -999,98 +1083,6 @@ Cette chaîne CI/CD garantit des livraisons rapides, sûres et automatisées, to
 
 Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
-## 6. <a name='viii-6-environnements-et-scripts-de-déploiement'></a> Environnements et scripts de déploiement
-
-### Environnements de test
-
-**Infrastructure de test isolée :**
-
-```yaml
-# docker-compose.test.yml
-version: '3.8'
-services:
-  test-db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=hexaplanning_test
-      - POSTGRES_USER=test_user
-      - POSTGRES_PASSWORD=test_pass
-    ports:
-      - '5433:5432'
-
-  test-api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.test
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Testing
-      - ConnectionStrings__DefaultConnection=Host=test-db;Database=hexaplanning_test;Username=test_user;Password=test_pass
-    depends_on:
-      - test-db
-    ports:
-      - '5001:8080'
-```
-
-**Environnements définis :**
-
-1. **Développement local** : Base de données PostgreSQL locale, Hot reload activé, Debugging tools intégrés
-2. **Test automatisé** : Conteneurs Docker isolés, Base de données éphémère, Services mockés
-3. **Staging** : Réplique de production, Données de test représentatives, Tests de performance
-4. **Production** : Infrastructure sécurisée OVH, Base de données persistante, Monitoring actif
-
-### Scripts de déploiement
-
-**Script de déploiement automatisé :**
-
-```bash
-#!/bin/bash
-# deploy.sh - Script de déploiement Hexaplanning
-
-set -e
-
-echo "🚀 Début du déploiement Hexaplanning"
-
-# Variables
-DOCKER_REGISTRY="antoinespr"
-APP_NAME="hexaplanning"
-VERSION=${1:-latest}
-
-# Fonctions
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
-}
-
-deploy_backend() {
-    log "Déploiement du backend..."
-    docker build -t $DOCKER_REGISTRY/$APP_NAME-api:$VERSION ./backend
-    docker push $DOCKER_REGISTRY/$APP_NAME-api:$VERSION
-
-    # Déploiement sur serveur
-    ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_HOST << EOF
-        docker pull $DOCKER_REGISTRY/$APP_NAME-api:$VERSION
-        docker-compose -f /home/ubuntu/backend/docker-compose.yml up -d --no-deps backend
-EOF
-}
-
-deploy_frontend() {
-    log "Déploiement du frontend..."
-    docker build --target prod-runtime -t $DOCKER_REGISTRY/$APP_NAME-front:$VERSION ./frontend
-    docker push $DOCKER_REGISTRY/$APP_NAME-front:$VERSION
-
-    # Déploiement sur serveur
-    ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_HOST << EOF
-        docker pull $DOCKER_REGISTRY/$APP_NAME-front:$VERSION
-        docker-compose -f /home/ubuntu/frontend/docker-compose.yml up -d --no-deps frontend
-EOF
-}
-
-# Exécution
-deploy_backend
-deploy_frontend
-
-log "✅ Déploiement terminé avec succès"
-```
-
 ### Outils qualité et automatisation
 
 **ESLint et Prettier (Frontend) :**
@@ -1106,24 +1098,6 @@ log "✅ Déploiement terminé avec succès"
 }
 ```
 
-**SonarQube (Analyse statique) :**
-
-```yaml
-# sonar-project.properties
-sonar.projectKey=hexaplanning
-sonar.organization=antoinespr
-sonar.sources=src/
-sonar.exclusions=**/*.spec.ts,**/*.test.ts
-sonar.typescript.lcov.reportPaths=coverage/lcov.info
-```
-
-**Métriques de déploiement surveillées :**
-
-- **Couverture de code** : Minimum 80% requis
-- **Tests passants** : 100% success rate
-- **Temps de build** : < 10 minutes
-- **Déploiement** : Succès/Échec avec logs détaillés
-
 # IX. Sécurité
 
 L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
@@ -1136,11 +1110,15 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 - **JWT (JSON Web Tokens)** : Authentification stateless sécurisée avec signature cryptographique. Toutes les opérations sensibles nécessitent un token JWT, généré lors de la connexion et vérifié à chaque requête côté backend
 - **Guards et Intercepteurs** : Le frontend Angular utilise des guards pour protéger les routes et un intercepteur HTTP pour injecter automatiquement le token dans les requêtes API
 
+<!-- TODO : ajouter exemples pour 1 guard et 1 intercepteur -->
+
 ### Gestion sécurisée des mots de passe
 
 - **Hachage des mots de passe** : Utilisation d'algorithmes sécurisés (PBKDF2) avec salage automatique
 - **Politique de complexité** : Validation des mots de passe selon les standards de sécurité
+<!-- TODO : préciser les prérequis de password -->
 - **Réinitialisation sécurisée** : Tokens temporaires à usage unique pour la récupération de mot de passe via email (Brevo)
+<!-- TODO : insérer le code -->
 - **Protection contre la force brute** : Limitation du nombre de tentatives de connexion
 
 ## 2. <a name='ix-2-validation-et-intégrité-des-données'></a> Validation et intégrité des données
@@ -1148,30 +1126,24 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 ### Validation des entrées
 
 - **Validation systématique** : Toutes les entrées utilisateur sont validées côté backend (.NET) pour éviter les injections, incohérences ou données malformées
-- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations sensibles
+<!-- TODO : donner un exemple (string limité à 100 caractères) -->
+- **Gestion des erreurs** : Messages d'erreur génériques pour éviter la fuite d'informations sensibles, notamment lors de la réinitialisation de mot de passe
 
 ### Isolation des données utilisateur
 
 - **Mécanisme CheckUser** : Système de vérification automatique garantissant que chaque utilisateur ne peut accéder qu'à ses propres ressources
 - **Principe du moindre privilège** : Accès limité aux ressources strictement nécessaires
+<!-- TODO : parler des enpoints spécialisés type PendingUnassigned qui évitent de faire du tri en front-end -->
 
 ## 3. <a name='ix-3-protection-contre-les-attaques'></a> Protection contre les attaques
 
 ### Attaques web courantes
 
-- **CSRF Protection** : Tokens anti-contrefaçon sur toutes les opérations sensibles
-- **XSS Prevention** : Échappement automatique des données utilisateur, Content Security Policy stricte
 - **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées exclusivement
-
-### Attaques par déni de service
-
-- **Rate Limiting** : Protection contre les attaques par déni de service et force brute
-- **Throttling** : Limitation des requêtes par utilisateur et par endpoint
 
 ### Configuration sécurisée
 
 - **CORS restrictif** : Configuration précise des origines autorisées pour les requêtes cross-origin
-- **Headers de sécurité** : HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 
 ## 4. <a name='ix-4-sécurité-de-la-conteneurisation-et-du-déploiement'></a> Sécurité de la conteneurisation et du déploiement
 
@@ -1184,21 +1156,6 @@ L'application implémente une stratégie de sécurité multicouche couvrant l'au
 ### Gestion des secrets
 
 - **Variables d'environnement** : Secrets stockés de manière sécurisée, jamais dans le code source
-- **Séparation des environnements** : Configuration distincte pour développement, test et production
-- **Rotation des clés** : Mise à jour régulière des tokens et certificats
-
-## 5. <a name='ix-5-surveillance-et-audit'></a> Surveillance et audit
-
-### Journalisation sécurisée
-
-- **Logging sécurisé** : Traçabilité des actions sensibles sans exposition de données personnelles
-- **Audit trail** : Journalisation des actions critiques côté backend pour audit et détection d'anomalies
-
-### Maintenance et mises à jour
-
-- **Mise à jour régulière** : Surveillance et application des correctifs de sécurité
-- **Monitoring des vulnérabilités** : Mise à jour des dépendances et images Docker
-- **Tests de sécurité** : Validation automatisée des vulnérabilités connues
 
 La sécurité est intégrée à tous les niveaux de l’architecture d'Hexaplanning pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
@@ -1523,5 +1480,7 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 - Déploiement et monitoring d'applications en production
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
+
+<!-- TODO : ajouter remerciements -->
 
 ---
