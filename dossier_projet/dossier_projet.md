@@ -71,6 +71,8 @@ Réalisé par Antoine Simper
 3.  [Tests de charge et fixtures](#vii-3-tests-de-charge-et-fixtures)
 4.  [Stratégie de validation](#vii-4-strategie-de-validation)
 
+<div style="page-break-before: always;"></div>
+
 **VIII. [CI / CD](#viii-ci-cd)**
 
 1.  [Intégration continue (CI) de l’API](#viii-1-integration-continue)
@@ -140,7 +142,7 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 <em>User Stories en tant qu'utilisateur, réalisées avec Trello.</em>
 </div>
 
-#### Diagramme de cas d'usage
+### Diagramme de cas d'usage
 
 <div align="center">
 <img src="images/flowchart.png" />
@@ -232,58 +234,42 @@ La page d'accueil apparaît dès la connexion de l'utilisateur, et affiche le no
 
 Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre, un statut (en attente, en cours et terminée) et une priorité (primaire, secondaire ou tertiaire, avec une icône et un code couleur associés), ainsi qu’une description et un temps estimé en option, ainsi qu'un pourcentage de progression (associé à une barre de progression) dans le cas des quêtes en cours. L’utilisateur peut créer, éditer ou supprimer une quête, la marquer rapidement comme terminée ou la remettre en attente, et l'associer à un hexagone sur la carte prévue à cet effet.
 
-<div align="center">
-<img src="images/details-quete.png" width="200" />
-</div>
-
-<div align="center">
-<em>Modale de détails d'une quête.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/edition-quete.png" width="200" />
-</div>
-
-<div align="center">
-<em>Edition d'une quête existante.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/modale-suppression.png" width="200" />
-</div>
-
-<div align="center">
-<em>Modale de suppression d'une quête.</em>
+<div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="images/details-quete.png" width="200" />
+    <br />
+    <em>Modale de détails d'une quête.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/edition-quete.png" width="200" />
+    <br />
+    <em>Edition d'une quête existante.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/modale-suppression.png" width="200" />
+    <br />
+    <em>Modale de suppression d'une quête.</em>
+  </div>
 </div>
 
 Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets. Les quêtes à accomplir sont triées par ordre de priorité.
 
-<div align="center">
-<img src="images/liste-quetes-non-accomplies.png" width="200" />
-</div>
-
-<div align="center">
-<em>Liste des quêtes non accomplies.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/liste-quetes-accomplies.png" width="200" />
-</div>
-
-<div align="center">
-<em>Listes des quêtes accomplies.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/toast.png" width="200" />
-</div>
-
-<div align="center">
-<em>Toast de succès : quête accomplie.</em>
+<div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="images/liste-quetes-non-accomplies.png" width="200" />
+    <br />
+    <em>Liste des quêtes non accomplies.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/liste-quetes-accomplies.png" width="200" />
+    <br />
+    <em>Listes des quêtes accomplies.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/toast.png" width="200" />
+    <br />
+    <em>Toast de succès : quête accomplie.</em>
+  </div>
 </div>
 
 Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée. Si la quête est indiquée comme "en cours", la barre de progression s'affiche directement sur l'aperçu de la quête, la remplissant progressivement d'une couleur plus sombre. Les quêtes terminées sont entièrement remplies.
@@ -302,21 +288,17 @@ L’originalité d’Hexaplanning réside dans sa représentation visuelle : u
 
 L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone vide, faisant apparaître une modale contenant la liste de toutes les quêtes non accomplies, et en sélectionnant la quête de son choix. Il pourra ensuite la désassigner d'un simple clic sur l'icône de croix au-dessus du titre de la quête, ce qui déclenchera une modale de confirmation.
 
-<div align="center">
-<img src="images/modale-assignation.png" width="200" />
-</div>
-
-<div align="center">
-<em>Modale d'assignation d'une quête à un hexagone.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/modale-desassignation.png" width="200" />
-</div>
-
-<div align="center">
-<em>Modale de désassignation d'une quête à un hexagone.</em>
+<div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="images/modale-assignation.png" width="200" />
+    <br />
+    <em>Modale d'assignation d'une quête à un hexagone.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/modale-desassignation.png" width="200" />
+    <br />
+    <em>Modale de désassignation d'une quête à un hexagone.</em>
+  </div>
 </div>
 
 Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un hexagone associé à une quête pour afficher les détails de la quête en question, et éventuellement modifier ou supprimer la quête (ce qui la fera disparaître de la carte et des listes).
@@ -373,33 +355,27 @@ Le destinataire recevera un mail contenant un lien de réinitialisation de mot d
 
 L'utilisateur peut également changer son mot de passe depuis l'interface : en accédant au menu des paramètres, il aura la possibilité d'ouvrir une modale lui demandant son mot de passe actuel ainsi que le nouveau. Depuis ce même menu, il pourra se déconnecter de l'application.
 
-<div align="center">
-<img src="images/parametres.png" width="200" />
-</div>
-
-<div align="center">
-<em>Page de paramètres.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/modale-changement-mdp.png" width="200" />
-</div>
-
-<div align="center">
-<em>Modale de changement de mot de passe.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/modale-deconnexion.png" width="200" />
-</div>
-
-<div align="center">
-<em>Modale de déconnexion.</em>
+<div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="images/parametres.png" width="200" />
+    <br />
+    <em>Page de paramètres.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/modale-changement-mdp.png" width="200" />
+    <br />
+    <em>Modale de changement de mot de passe.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/modale-deconnexion.png" width="200" />
+    <br />
+    <em>Modale de déconnexion.</em>
+  </div>
 </div>
 
 La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
+
+<div style="page-break-before: always;"></div>
 
 ## 5. <a name='iii-5-navigation-et-ergonomie'></a>Navigation et ergonomie
 
@@ -521,6 +497,8 @@ git push origin feature/quest-management
 <em>Schéma de la base de données relationnelle d'Hexaplanning, réalisé avec dbdiagram.io.</em>
 </div>
 
+<div style="page-break-before: always;"></div>
+
 ## 2. <a name='v-2-mld-modele-logique-de-donnees'></a>MLD (Modèle Logique de Données)
 
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, CreatedAt, UpdatedAt, IsArchived, ...)
@@ -565,6 +543,8 @@ git push origin feature/quest-management
   - Une couleur de bordure (BorderColor) pour l'affichage sur la carte.
   - Optionnellement, une icône.
   - Des métadonnées : date de création, date de mise à jour, statut d'archivage.
+
+<div style="page-break-before: always;"></div>
 
 ### Status (Statut)
 
@@ -639,6 +619,8 @@ Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurit
 - **Structure modulaire** : Organisation en pages faisant appel à des composants réutilisables, des services, des pipes et des modèles de DTO. Routes avec guards et interceptors.
 - **Approche mobile-first** : Interface responsive optimisée pour les appareils mobiles.
 
+<div style="page-break-before: always;"></div>
+
 ### Responsabilités principales
 
 - Gestion de l'interface utilisateur et de l'expérience utilisateur
@@ -683,6 +665,8 @@ L'API suit une architecture en couches claire pour séparer les responsabilités
 - **Models** : Entités de domaine et DTOs pour le transfert de données
 - **DataContext** : Couche d'accès aux données avec Entity Framework
 - **Utilities** : Classes utilitaires et helpers transversaux
+
+<div style="page-break-before: always;"></div>
 
 ### Modèle générique BaseModel
 
@@ -731,6 +715,8 @@ public class Priority : BaseModelOption
 }
 ```
 
+<div style="page-break-before: always;"></div>
+
 **Avantages de cette approche :**
 
 - **Cohérence** : Toutes les entités partagent les mêmes métadonnées
@@ -771,6 +757,8 @@ Exemple dans une partie du DTO de création de quête avec un titre qui doit êt
     }
 ```
 
+<div style="page-break-before: always;"></div>
+
 - **Protection anti-attaques** : Protection contre l'injection SQL en utilisant l'ORM Entity Framework
 
 Exemple avec la méthode de récupération de toutes les quêtes d'un utilisateur donnée, dans le QuestService :
@@ -803,6 +791,8 @@ services.Configure<IdentityOptions>(options =>
       options.Lockout.AllowedForNewUsers = true;
   });
 ```
+
+<div style="page-break-before: always;"></div>
 
 - **Gestion des droits** : Chaque utilisateur n'accède qu'à ses propres données
 
@@ -850,6 +840,8 @@ public async Task<IActionResult> GetAllQuests()
 
 Chaque contrôleur qui comporte des méthodes nécessitant de vérifier l'utilisateur dont émane la requête est décoré par l'attribut [CheckUser].
 
+<div style="page-break-before: always;"></div>
+
 **Avantages du système CheckUser :**
 
 - **Sécurité renforcée** : Impossible d'accéder aux données d'autres utilisateurs
@@ -876,6 +868,8 @@ L'architecture backend .NET Core respecte les principes OOP :
 - **PascalCase** pour classes et méthodes : `QuestService`, `GetQuestById`
 - **camelCase** pour variables locales : `questDto`, `userId`
 - **Constantes en UPPER_CASE** : `MAX_QUEST_TITLE_LENGTH`
+
+<div style="page-break-before: always;"></div>
 
 **Documentation XML pour .NET :**
 
@@ -917,6 +911,8 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 - **Migrations Entity Framework Core** : Versioning automatique du schéma de base de données
 - **Code-First approach** : Génération du schéma à partir des modèles C#
 - **Seeding** : Données initiales (priorités, statuts) injectées automatiquement
+
+<div style="page-break-before: always;"></div>
 
 ### Sécurité
 
@@ -960,6 +956,8 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 
 - **docker-compose** : Orchestration simplifiée du déploiement multi-conteneurs. Gestion des dépendances entre services, des variables d'environnement et des volumes persistants.
 
+<div style="page-break-before: always;"></div>
+
 ### Intégration et déploiement continu
 
 - **GitHub Actions** : Automatisation des pipelines CI/CD. Pipelines séparés pour le frontend et le backend avec tests automatisés.
@@ -988,6 +986,8 @@ private static readonly Dictionary<string, DateTime> _lastResetRequest = new();
 ```
 
 Au début de la méthode, on vérifie que la dernière requête n'a pas été effectuée il y a peu, puis on configure le client SMTP, on cherche l'utilisateur associé à l'adresse e-mail renseignée (s'il n'est pas trouvé, on renvoie tout de même un message de succès pour ne pas révéler si l'adresse existe en base de données), puis on génère un token de réinitialisation de mot de passe qu'on insère dans un lien avec l'adresse e-mail, de façon à le transmettre dans le template de mail.
+
+<div style="page-break-before: always;"></div>
 
 ```csharp
 public async Task<bool> SendPasswordResetEmail(string emailAddress)
@@ -1110,6 +1110,8 @@ Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne s
 - **Push Docker** : Publication de l’image sur Docker Hub
 - **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur backend via `docker compose`
 
+<div style="page-break-before: always;"></div>
+
 Extrait du workflow :
 
 ```yaml
@@ -1225,6 +1227,8 @@ export const isLoggedInGuard: CanActivateFn = (route, state) => {
 };
 ```
 
+<div style="page-break-before: always;"></div>
+
 Intercepteur pour insérer le token d'authentification dans toutes les requêtes HTTP :
 
 ```csharp
@@ -1273,6 +1277,8 @@ services.Configure<IdentityOptions>(options =>
   });
 ```
 
+<div style="page-break-before: always;"></div>
+
 ## 2. <a name='ix-2-validation-et-integrite-des-donnees'></a> Validation et intégrité des données
 
 ### Validation des entrées
@@ -1305,6 +1311,8 @@ Exemple d'endpoint spécialisé : récupération des quêtes en attente et non a
 ### Attaques web courantes
 
 - **SQL Injection** : Utilisation d'Entity Framework avec requêtes paramétrées exclusivement
+
+<div style="page-break-before: always;"></div>
 
 ### Configuration sécurisée
 
@@ -1358,8 +1366,6 @@ Exemple d'endpoint spécialisé : récupération des quêtes en attente et non a
 
 La sécurité est intégrée à tous les niveaux de l’architecture d'Hexaplanning pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
 
-Cette approche multicouche garantit un haut niveau de sécurité pour les utilisateurs et les données de la plateforme, tout en maintenant une expérience utilisateur fluide et moderne.
-
 <div style="page-break-before: always;"></div>
 
 # <a name='x-accessibilite-et-conformite-rgaa'></a>X. Accessibilité et conformité RGAA
@@ -1383,7 +1389,6 @@ L'application Hexaplanning a été développée en tenant compte des recommandat
 Une gestion globale du focus a été implémentée pour améliorer la navigation au clavier :
 
 ```css
-// Accessibility: Focus management
 *:focus {
   outline: 2px solid #667eea;
   outline-offset: 2px;
@@ -1407,6 +1412,8 @@ Le formulaire de connexion implémente plusieurs bonnes pratiques d'accessibilit
 - **`aria-describedby`** : Association avec les messages d'erreur
 - **`aria-invalid`** : État de validation dynamique
 - **`aria-live="polite"`** : Annonce des erreurs de validation
+
+<div style="page-break-before: always;"></div>
 
 **Exemple d'implémentation :**
 
@@ -1437,6 +1444,8 @@ Le formulaire d'inscription étend les fonctionnalités d'accessibilité :
 - **`<fieldset>` et `<legend>`** : Regroupement sémantique des conditions d'utilisation
 - **Classes `.visually-hidden`** : Labels cachés visuellement mais accessibles aux lecteurs d'écran
 - **Descriptions détaillées** : Exigences de mot de passe clairement indiquées
+
+<div style="page-break-before: always;"></div>
 
 **Implémentation des conditions d'utilisation :**
 
@@ -1480,6 +1489,8 @@ La modale de récupération de mot de passe utilise des attributs ARIA appropri�
 </p-dialog>
 ```
 
+<div style="page-break-before: always;"></div>
+
 ## 3. <a name='x-3-navigation-au-clavier-et-focus-management'></a> Navigation au clavier et focus management
 
 ### Navigation dans la carte hexagonale
@@ -1521,23 +1532,22 @@ Les quêtes sont accessibles au clavier et incluent des labels appropriés :
 </button>
 ```
 
+<div style="page-break-before: always;"></div>
+
 ### Gestion du focus dans les menus
 
 Le menu de navigation a une gestion spécialisée du focus pour améliorer l'expérience utilisateur :
 
 ```css
-// Remove default focus outline for menu items
 .menu-item:focus {
   outline: none;
 }
 
-// Apply precise focus shadow to icons when their container is focused
 .menu-item:focus .icon {
   box-shadow: 0 0 0 2px #667eea !important;
   border-radius: 50%;
 }
 
-// Special focus style for the losange (diamond shape)
 .losange:focus {
   box-shadow: 0 0 0 2px #667eea !important;
 }
@@ -1564,6 +1574,8 @@ Une classe `.visually-hidden` a été implémentée pour masquer visuellement du
   white-space: nowrap;
 }
 ```
+
+<div style="page-break-before: always;"></div>
 
 ### Utilisation dans les formulaires
 
@@ -1684,7 +1696,7 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
-## 2. <a name='xi-4-remerciements'></a> Remerciements
+## 4. <a name='xi-4-remerciements'></a> Remerciements et crédits
 
 Je tiens à remercier mon formateur Pierre-Louis Bastin pour son soutien et sa confiance malgré les difficultés.
 Egalement Mahdi Mcheik, mon camarade de formation et ami, pour ses précieux conseils et son aide pour terminer mon projet.
