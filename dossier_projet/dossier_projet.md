@@ -26,91 +26,85 @@ Réalisé par Antoine Simper
 
 **I. [Introduction](#i-introduction)**
 
-1.  [Présentation du projet](#i-1-présentation-du-projet)
+1.  [Présentation du projet](#i-1-presentation-du-projet)
 2.  [Objectifs et contexte](#i-2-objectifs-et-contexte)
 
-**II. [Spécifications du projet](#ii-spécifications-du-projet)**
+**II. [Spécifications du projet](#ii-specifications-du-projet)**
 
-1.  [Spécifications fonctionnelles](#ii-1-spécifications-fonctionnelles)
-2.  [Spécifications techniques](#ii-2-spécifications-techniques)
+1.  [Spécifications fonctionnelles](#ii-1-specifications-fonctionnelles)
+2.  [Spécifications techniques](#ii-2-specifications-techniques)
 
-**III. [Fonctionnalités principales](#iii-fonctionnalités-principales)**
+**III. [Fonctionnalités principales](#iii-fonctionnalites-principales)**
 
 1.  [Page d'accueil](#iii-1-page-d-accueil)
-2.  [Gestion des quêtes (tâches)](#iii-2-gestion-des-quêtes-tâches)
-3.  [Affichage visuel en hexagones (carte)](#iii-3-affichage-visuel-en-hexagones-map)
-4.  [Système d'authentification et gestion des utilisateurs](#iii-4-système-d-authentification-et-gestion-des-utilisateurs)
+2.  [Gestion des quêtes (tâches)](#iii-2-gestion-des-quetes-taches)
+3.  [Affichage visuel en hexagones (carte)](#iii-3-affichage-visuel-en-hexagones-carte)
+4.  [Système d'authentification et gestion des utilisateurs](#iii-4-systeme-d-authentification-et-gestion-des-utilisateurs)
 5.  [Navigation et ergonomie](#iii-5-navigation-et-ergonomie)
 
-**IV. [Travail en équipe & méthodologie](#iv-travail-en-équipe-méthodologie)**
+**IV. [Travail en équipe & méthodologie](#iv-travail-en-equipe-methodologie)**
 
-1.  [Méthode Agile / Scrum](#iv-1-méthode-agile-scrum)
-2.  [Workflow & branches stratégie](#iv-2-workflow-branches-stratégie)
+1.  [Méthode Agile / Scrum](#iv-1-methode-agile-scrum)
+2.  [Workflow & branches stratégie](#iv-2-workflow-branches-strategie)
 3.  [Outils collaboratifs](#iv-3-outils-collaboratifs)
-4.  [Communication & organisation de l'équipe](#iv-4-communication-organisation-équipe)
 
-**V. [Modélisation des données](#v-modélisation-des-données)**
+**V. [Modélisation des données](#v-modelisation-des-donnees)**
 
-1.  [MCD (Modèle Conceptuel de Données)](#v-1-mcd-modèle-conceptuel-de-données)
-2.  [MLD (Modèle Logique de Données)](#v-2-mld-modèle-logique-de-données)
-3.  [Description des entités et relations](#v-3-description-des-entités-et-relations)
+1.  [MCD (Modèle Conceptuel de Donnees)](#v-1-mcd-modele-conceptuel-de-donnees)
+2.  [MLD (Modèle Logique de Données)](#v-2-mld-modele-logique-de-donnees)
+3.  [Description des entités et relations](#v-3-description-des-entites-et-relations)
 
 **VI. [Architecture technique et technologies](#vi-architecture-technique-et-technologies)**
 
 1.  [Vue d'ensemble](#vi-1-vue-d-ensemble)
-    - [Schéma global](#vi-1-1-schéma-global)
 2.  [Frontend : Angular et PrimeNG](#vi-2-frontend-angular-et-primeng)
 3.  [Backend : .NET Core](#vi-3-backend-net-core)
-4.  [Base de données : PostgreSQL](#vi-4-base-de-données-postgresql)
+4.  [Base de données : PostgreSQL](#vi-4-base-de-donnees-postgresql)
 5.  [Communication API REST](#vi-5-communication-api-rest)
 6.  [Infrastructure et DevOps](#vi-6-infrastructure-et-devops)
 7.  [Services externes](#vi-7-services-externes)
-8.  [Sécurité et bonnes pratiques](#vi-8-sécurité-et-bonnes-pratiques)
 
-**VII. [Qualité logicielle et tests](#vii-qualité-logicielle-et-tests)**
+**VII. [Qualité logicielle et tests](#vii-qualite-logicielle-et-tests)**
 
 1.  [Tests unitaires (backend)](#vii-1-tests-unitaires-backend)
-2.  [Tests d’intégration](#vii-2-tests-d-intégration)
+2.  [Tests d’intégration](#vii-2-tests-d-integration)
 3.  [Tests de charge et fixtures](#vii-3-tests-de-charge-et-fixtures)
-4.  [Stratégie de validation](#vii-4-stratégie-de-validation)
-5.  [Plan de tests complet](#vii-5-plan-de-tests-complet)
+4.  [Stratégie de validation](#vii-4-strategie-de-validation)
 
 **VIII. [CI / CD](#viii-ci-cd)**
 
-1.  [Intégration continue (CI) de l’API](#viii-1-intégration-continue)
-2.  [Déploiement continu (CD) du backend](#viii-2-déploiement-continu)
-3.  [Conteneurisation et orchestration](#viii-3-conteneurisation-et-orchestration)
-4.  [Hébergement et reverse proxy](#viii-4-hébergement-et-reverse-proxy)
-5.  [Déploiement continu (CD) du frontend](#viii-5-déploiement-continu-cd-du-frontend)
-6.  [Environnements et scripts de déploiement](#viii-6-environnements-et-scripts-de-déploiement)
+1.  [Intégration continue (CI) de l’API](#viii-1-integration-continue)
+2.  [Déploiement continu (CD) du backend](#viii-2-deploiement-continu)
+3.  [Déploiement continu (CD) du frontend](#viii-3-deploiement-continu-cd-du-frontend)
+4.  [Conteneurisation et orchestration](#viii-4-conteneurisation-et-orchestration)
+5.  [Hébergement et reverse proxy](#viii-5-hebergement-et-reverse-proxy)
 
-**IX. [Sécurité](#ix-sécurité)**
+**IX. [Sécurité](#ix-securite)**
 
-1.  [Authentification et gestion des accès](#ix-1-authentification-et-gestion-des-accès)
-2.  [Validation et intégrité des données](#ix-2-validation-et-intégrité-des-données)
+1.  [Authentification et gestion des accès](#ix-1-authentification-et-gestion-des-acces)
+2.  [Validation et intégrité des données](#ix-2-validation-et-integrite-des-donnees)
 3.  [Protection contre les attaques](#ix-3-protection-contre-les-attaques)
-4.  [Sécurité de la conteneurisation et du déploiement](#ix-4-sécurité-de-la-conteneurisation-et-du-déploiement)
-5.  [Surveillance et audit](#ix-5-surveillance-et-audit)
+4.  [Sécurité de la conteneurisation et du déploiement](#ix-4-securite-de-la-conteneurisation-et-du-deploiement)
 
-**X. [Accessibilité et conformité RGAA](#x-accessibilité-et-conformité-rgaa)**
+**X. [Accessibilité et conformité RGAA](#x-accessibilite-et-conformite-rgaa)**
 
-1.  [Conformité RGAA et standards d'accessibilité](#x-1-conformité-rgaa-et-standards-d-accessibilité)
-2.  [Accessibilité des formulaires](#x-2-accessibilité-des-formulaires)
+1.  [Conformité RGAA et standards d'accessibilité](#x-1-conformite-rgaa-et-standards-d-accessibilite)
+2.  [Accessibilité des formulaires](#x-2-accessibilite-des-formulaires)
 3.  [Navigation au clavier et focus management](#x-3-navigation-au-clavier-et-focus-management)
-4.  [Technologies d'assistance et lecteurs d'écran](#x-4-technologies-d-assistance-et-lecteurs-d-écran)
+4.  [Technologies d'assistance et lecteurs d'écran](#x-4-technologies-d-assistance-et-lecteurs-d-ecran)
 
 **XI. [Conclusion et perspectives](#xi-conclusion-et-perspectives)**
 
 1.  [Bilan du projet](#xi-1-bilan-du-projet)
-2.  [Perspectives d'évolution](#xi-2-perspectives-d-évolution)
-3.  [Améliorations futures possibles](#xi-3-améliorations-futures)
-4.  [Ce que ce projet m'a apporté](#xi-4-apport-projet)
+2.  [Perspectives d'évolution](#xi-2-perspectives-d-evolution)
+3.  [Ce que ce projet m'a apporté](#xi-3-apport-projet)
+4.  [Remerciements](#xi-4-remerciements)
 
 <div style="page-break-before: always;"></div>
 
-# I. Introduction
+# <a name='i-introduction'></a>I. Introduction
 
-## 1. <a name='Prsentationduprojet'></a>Présentation du projet
+## 1. <a name='i-1-presentation-du-projet'></a>Présentation du projet
 
 Hexaplanning est une application web de gestion de tâches, pensée pour transformer la to-do list classique en une expérience visuelle et ludique. Reprenant la nomenclature des jeux-vidéos, les tâches sont appelées "quêtes". Chacune d'entre elles peut être placée sur une carte d’hexagones, permettant à l’utilisateur de visualiser ses objectifs comme un parcours à accomplir.
 
@@ -118,15 +112,15 @@ Cette approche vise à rendre la planification plus motivante et interactive, en
 
 L'application a été développée en mobile-first, favorisant une utilisation quotidienne permettant à l'utilisateur d'avoir un aperçu de sa progression et de la mettre à jour régulièrement. Elle est bien entendu accessible également sur ordinateur, et l'utilisateur pourra se créer un compte pour accéder à sa progression depuis n'importe quel appareil.
 
-## 2. <a name='Objectifsetcontexte'></a>Objectifs et contexte
+## 2. <a name='i-2-objectifs-et-contexte'></a>Objectifs et contexte
 
 Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. Hexaplanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
 
 <div style="page-break-before: always;"></div>
 
-# II. Spécifications du projet
+# <a name='ii-specifications-du-projet'></a>II. Spécifications du projet
 
-## 1. <a name='ii-1-spécifications-fonctionnelles'></a> Spécifications fonctionnelles
+## 1. <a name='ii-1-specifications-fonctionnelles'></a> Spécifications fonctionnelles
 
 ### Fonctionnalités principales
 
@@ -179,7 +173,7 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - Mise en pratique des technologies modernes (Angular, .NET Core, PostgreSQL)
 - Intégration de bonnes pratiques de développement (tests, CI/CD, sécurité)
 
-## 2. <a name='ii-2-spécifications-techniques'></a> Spécifications techniques
+## 2. <a name='ii-2-specifications-techniques'></a> Spécifications techniques
 
 ### Technologies et frameworks utilisés
 
@@ -220,9 +214,9 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 <div style="page-break-before: always;"></div>
 
-# III. Fonctionnalités principales
+# <a name='iii-fonctionnalites-principales'></a>III. Fonctionnalités principales
 
-## 1. <a name='PagedAccueil'></a>Page d'accueil
+## 1. <a name='iii-1-page-d-accueil'></a>Page d'accueil
 
 <div align="center">
 <img src="images/dashboard.png" width="200" />
@@ -234,7 +228,7 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 La page d'accueil apparaît dès la connexion de l'utilisateur, et affiche le nombre de quêtes qu'il lui reste à accomplir
 
-## 2. <a name='Gestiondesqutestches'></a>Gestion des quêtes (tâches)
+## 2. <a name='iii-2-gestion-des-quetes-taches'></a>Gestion des quêtes (tâches)
 
 Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre, un statut (en attente, en cours et terminée) et une priorité (primaire, secondaire ou tertiaire, avec une icône et un code couleur associés), ainsi qu’une description et un temps estimé en option, ainsi qu'un pourcentage de progression (associé à une barre de progression) dans le cas des quêtes en cours. L’utilisateur peut créer, éditer ou supprimer une quête, la marquer rapidement comme terminée ou la remettre en attente, et l'associer à un hexagone sur la carte prévue à cet effet.
 
@@ -294,7 +288,7 @@ Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de d
 
 Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée. Si la quête est indiquée comme "en cours", la barre de progression s'affiche directement sur l'aperçu de la quête, la remplissant progressivement d'une couleur plus sombre. Les quêtes terminées sont entièrement remplies.
 
-## 3. <a name='Affichagevisuelenhexagonesmap'></a>Affichage visuel en hexagones (carte)
+## 3. <a name='iii-3-affichage-visuel-en-hexagones-carte'></a>Affichage visuel en hexagones (carte)
 
 L’originalité d’Hexaplanning réside dans sa représentation visuelle : une carte d’hexagones sur laquelle l’utilisateur peut placer ses quêtes. Chaque hexagone peut accueillir une quête, et un code couleur sur le liseré permet d’identifier rapidement sa priorité (orangé pour les principales, argenté pour les secondaires, et aucun liseré pour les tertiaires). Les quêtes terminées apparaissent avec un fond plus sombre, et les quêtes en cours disposent d'une barre de progression radiale qui remplit progressivement l'hexagone avec cette couleur, à la manière d'une horloge.
 
@@ -327,7 +321,7 @@ L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone v
 
 Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un hexagone associé à une quête pour afficher les détails de la quête en question, et éventuellement modifier ou supprimer la quête (ce qui la fera disparaître de la carte et des listes).
 
-## 4. <a name='Systmedauthentificationetgestiondesutilisateurs'></a>Système d'authentification et gestion des utilisateurs
+## 4. <a name='iii-4-systeme-d-authentification-et-gestion-des-utilisateurs'></a>Système d'authentification et gestion des utilisateurs
 
 L’accès à l’application nécessite la création d’un compte et une authentification sécurisée. L'utilisateur devra accepter les CGU et la politique de confidentialité, accessibles via des liens sur le formulaire de création de compte. Le mot de passe choisi devra respecter les normes standard : au minimum 8 caractères dont 1 lettre majuscule, 1 lettre minuscule, 1 chiffre et 1 caractère spécial. Après son enregistrement, l'utilisateur sera redirigé vers la page de connexion, et il peut aisément naviguer entre la connexion et la création de compte via un lien en bas de page.
 
@@ -407,7 +401,7 @@ L'utilisateur peut également changer son mot de passe depuis l'interface : en a
 
 La sécurité des données et la protection contre les accès non autorisés sont assurées par des mécanismes robustes côté backend.
 
-## 5. <a name='Navigationetergonomie'></a>Navigation et ergonomie
+## 5. <a name='iii-5-navigation-et-ergonomie'></a>Navigation et ergonomie
 
 L’application propose un menu apparaissant en permanence en bas de page, et permettant de naviguer entre l’accueil, les listes de quêtes, la carte des hexagones et les paramètres. Un bouton dédié au centre du menu permet de créer rapidement une nouvelle quête, qui viendra s'insérer dans la liste qui lui correspond, et sera accessible dans la modale d'assignation à un hexagone.
 
@@ -423,9 +417,9 @@ L'interface est pensée pour être intuitive, responsive et agréable à utilise
 
 <div style="page-break-before: always;"></div>
 
-# IV. Travail en équipe & méthodologie
+# <a name='iv-travail-en-equipe-methodologie'></a>IV. Travail en équipe & méthodologie
 
-## 1. <a name='iv-1-méthode-agile-scrum'></a> Méthode Agile / Scrum
+## 1. <a name='iv-1-methode-agile-scrum'></a> Méthode Agile / Scrum
 
 ### Méthodologie adoptée
 
@@ -464,7 +458,7 @@ Le projet Hexaplanning a été développé tout d'abord en collaboration, puis e
 - Documentation
 - Déploiement et mise en production
 
-## 2. <a name='iv-2-workflow-branches-stratégie'></a> Workflow & branches stratégie
+## 2. <a name='iv-2-workflow-branches-strategie'></a> Workflow & branches stratégie
 
 ### Git Workflow adopté
 
@@ -515,9 +509,9 @@ git push origin feature/quest-management
 
 <div style="page-break-before: always;"></div>
 
-# V. Modélisation des données
+# <a name='v-modelisation-des-donnees'></a>V. Modélisation des données
 
-## 1. <a name='MCDModleConceptueldeDonnes'></a>MCD (Modèle Conceptuel de Données)
+## 1. <a name='v-1-mcd-modele-conceptuel-de-donnees'></a>MCD (Modèle Conceptuel de Données)
 
 <div align="center">
 <img src="images/mcd.png" />
@@ -527,7 +521,7 @@ git push origin feature/quest-management
 <em>Schéma de la base de données relationnelle d'Hexaplanning, réalisé avec dbdiagram.io.</em>
 </div>
 
-## 2. <a name='MLDModleLogiquedeDonnes'></a>MLD (Modèle Logique de Données)
+## 2. <a name='v-2-mld-modele-logique-de-donnees'></a>MLD (Modèle Logique de Données)
 
 - Table **UserApp** (Id PK, FirstName, LastName, Email, PasswordHash, CreatedAt, UpdatedAt, IsArchived, ...)
 - Table **Quest** (Id PK, Title, Description, EstimatedTime, Advancement, UserId FK, PriorityId FK, StatusId FK, HexAssignmentId FK, CreatedAt, UpdatedAt, IsArchived)
@@ -536,7 +530,7 @@ git push origin feature/quest-management
 - Table **HexAssignment** (Id PK, Q, R, S, QuestId FK, CreatedAt, UpdatedAt, IsArchived)
 - Table **Mail** (MailTo, MailSubject, MailBody, MailFrom, Receiver)
 
-## 3. <a name='Descriptiondesentitsetrelations'></a>Description des entités et relations
+## 3. <a name='v-3-description-des-entites-et-relations'></a>Description des entités et relations
 
 ### UserApp (Utilisateur)
 
@@ -608,7 +602,7 @@ git push origin feature/quest-management
 
 <div style="page-break-before: always;"></div>
 
-# VI. Architecture technique et technologies
+# <a name='vi-architecture-technique-et-technologies'></a>VI. Architecture technique et technologies
 
 ## 1. <a name='vi-1-vue-d-ensemble'></a> Vue d'ensemble
 
@@ -632,7 +626,7 @@ Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurit
 <em>Schéma global de l'architecture d'Hexaplanning.</em>
 </div>
 
-## 2. <a name='FrontendAngularetPrimeNG'></a> Frontend : Angular et PrimeNG
+## 2. <a name='vi-2-frontend-angular-et-primeng'></a> Frontend : Angular et PrimeNG
 
 ### Choix technologiques et justifications
 
@@ -670,7 +664,7 @@ Cette approche modulaire facilite la maintenance, l'évolutivité et la sécurit
 - **camelCase** pour les propriétés : `questTitle`, `isCompleted`
 - **PascalCase** pour les classes : `QuestComponent`, `QuestService`
 
-## 3. <a name='BackendNETCore'></a> Backend : .NET Core
+## 3. <a name='vi-3-backend-net-core'></a> Backend : .NET Core
 
 ### Choix technologiques et justifications
 
@@ -907,7 +901,7 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 {}
 ```
 
-## 4. <a name='BasededonnesPostgreSQL'></a> Base de données : PostgreSQL
+## 4. <a name='vi-4-base-de-donnees-postgresql'></a> Base de données : PostgreSQL
 
 ### Choix technologique et justifications
 
@@ -930,7 +924,7 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 - **Isolation des données** : Chaque utilisateur accède uniquement à ses propres données
 - **Mots de passe sécurisés** : Hashés avec ASP.NET Identity
 
-## 5. <a name='CommunicationAPIREST'></a> Communication API REST
+## 5. <a name='vi-5-communication-api-rest'></a> Communication API REST
 
 ### Architecture RESTful
 
@@ -958,7 +952,7 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 - **Réponses structurées** : Format JSON consistent pour les erreurs
 - **Messages explicites** : Informations claires pour le débogage côté frontend
 
-## 6. <a name='InfrastructureetDevOps'></a> Infrastructure et DevOps
+## 6. <a name='vi-6-infrastructure-et-devops'></a> Infrastructure et DevOps
 
 ### Conteneurisation
 
@@ -977,7 +971,7 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 - **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge. Serveur Linux Ubuntu avec Docker et docker-compose installés.
 - **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy. Interface web pour la configuration des routes et des certificats Let's Encrypt automatiques.
 
-## 7. <a name='Servicesexternes'></a> Services externes
+## 7. <a name='vi-7-services-externes'></a> Services externes
 
 ### Brevo (ex-Sendinblue)
 
@@ -1047,11 +1041,11 @@ public async Task<bool> SendPasswordResetEmail(string emailAddress)
 
 <div style="page-break-before: always;"></div>
 
-# VII. Qualité logicielle et tests
+# <a name='vii-qualite-logicielle-et-tests'></a>VII. Qualité logicielle et tests
 
 La qualité logicielle d’Hexaplanning repose sur une stratégie de tests complète, principalement concentrée sur l’API .NET, afin de garantir la robustesse, la fiabilité et la maintenabilité du backend.
 
-## 1. <a name='Testsunitairesbackend'></a> Tests unitaires (backend)
+## 1. <a name='vii-1-tests-unitaires-backend'></a> Tests unitaires (backend)
 
 Les tests unitaires sont réalisés avec xUnit et couvrent les principaux services métiers, notamment le service de gestion des quêtes (`QuestService`). Ces tests vérifient le bon fonctionnement des méthodes de création, lecture, mise à jour et suppression de quêtes, ainsi que la gestion des cas limites (identifiants invalides, absence de données, etc.).
 
@@ -1062,7 +1056,7 @@ Exemples de méthodes testées :
 - Mise à jour et suppression de quêtes (`UpdateQuestAsync`, `DeleteQuestAsync`)
 - Récupération des quêtes selon leur statut (en attente, terminées, non assignées)
 
-## 2. <a name='Testsdintgration'></a> Tests d’intégration
+## 2. <a name='vii-2-tests-d-integration'></a> Tests d’intégration
 
 Des tests d’intégration automatisés valident l’ensemble du pipeline API, de la couche HTTP jusqu’à la base de données PostgreSQL (via Testcontainers). Ils simulent des scénarios réels, comme la récupération de quêtes via des requêtes authentifiées, la gestion des droits d’accès, et la cohérence des données persistées.
 
@@ -1072,11 +1066,11 @@ Caractéristiques :
 - Base de données PostgreSQL éphémère (Testcontainers)
 - Données de test injectées automatiquement (utilisateur, quêtes)
 
-## 3. <a name='Testsdechargeetfixtures'></a> Tests de charge et fixtures
+## 3. <a name='vii-3-tests-de-charge-et-fixtures'></a> Tests de charge et fixtures
 
 Des fixtures de données sont utilisées pour simuler des volumes importants de quêtes et d’utilisateurs, grâce à la librairie Bogus. Cela permet de valider la tenue en charge de l’API et la stabilité des traitements sur de grands ensembles de données. Les tests ont été réalisés avec 100000 utilisateurs et 1000000 de quêtes pour s'assurer de la robustesse de la base de données.
 
-## 4. <a name='Stratgiedevalidation'></a> Stratégie de validation
+## 4. <a name='vii-4-strategie-de-validation'></a> Stratégie de validation
 
 Chaque nouvelle fonctionnalité ou correction de bug s’accompagne de tests dédiés. Les tests sont exécutés automatiquement lors des pipelines CI/CD (GitHub Actions), garantissant l’absence de régressions avant chaque déploiement.
 
@@ -1084,11 +1078,11 @@ Cette démarche assure un haut niveau de confiance dans la qualité logicielle d
 
 <div style="page-break-before: always;"></div>
 
-# VIII. CI / CD
+# <a name='viii-ci-cd'></a>VIII. CI / CD
 
 L’automatisation du déploiement et de l’intégration continue est assurée par des pipelines GitHub Actions distincts pour le frontend Angular et l’API .NET.
 
-## 1. <a name='IntgrationcontinueCIdelAPI'></a> Intégration continue (CI) de l’API
+## 1. <a name='viii-1-integration-continue'></a> Intégration continue (CI) de l’API
 
 Un pipeline CI dédié à l’API .NET s’exécute à chaque push sur la branche `main` :
 
@@ -1108,7 +1102,7 @@ jobs:
       - run: dotnet test --no-build --verbosity detailed  ./TestsIntegration
 ```
 
-## 2. <a name='DploiementcontinuCDdubackend'></a> Déploiement continu (CD) du backend
+## 2. <a name='viii-2-deploiement-continu'></a> Déploiement continu (CD) du backend
 
 Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne se déclenche que si le pipeline CI de l’API s’est terminé avec succès (`workflow_run`). Il effectue les étapes suivantes :
 
@@ -1136,7 +1130,7 @@ jobs:
                docker compose -f /home/ubuntu/backend/docker-compose.yml up -d --force-recreate
 ```
 
-## 3. <a name='DploiementcontinuCDdufrontend'></a> Déploiement continu (CD) du frontend
+## 3. <a name='viii-3-deploiement-continu-cd-du-frontend'></a> Déploiement continu (CD) du frontend
 
 Le frontend Angular dispose d’un pipeline CD qui automatise la construction, la publication et le déploiement sur le serveur de production :
 
@@ -1159,11 +1153,11 @@ jobs:
                docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
 ```
 
-## 4. <a name='Conteneurisationetorchestration'></a> Conteneurisation et orchestration
+## 4. <a name='viii-4-conteneurisation-et-orchestration'></a> Conteneurisation et orchestration
 
 Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile. Le déploiement s’effectue via `docker compose`, facilitant la gestion, la montée en charge et la maintenance.
 
-## 5. <a name='Hbergementetreverseproxy'></a> Hébergement et reverse proxy
+## 5. <a name='viii-5-hebergement-et-reverse-proxy'></a> Hébergement et reverse proxy
 
 L’application est hébergée sur un VPS OVH, avec Nginx Proxy Manager pour la gestion des domaines et des certificats SSL. Cette architecture assure la sécurité, la disponibilité et la scalabilité du service.
 
@@ -1188,11 +1182,11 @@ Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
 <div style="page-break-before: always;"></div>
 
-# IX. Sécurité
+# <a name='ix-securite'></a>IX. Sécurité
 
 L'application implémente une stratégie de sécurité multicouche couvrant l'authentification, la protection des données et la sécurisation de l'infrastructure.
 
-## 1. <a name='ix-1-authentification-et-gestion-des-accès'></a> Authentification et gestion des accès
+## 1. <a name='ix-1-authentification-et-gestion-des-acces'></a> Authentification et gestion des accès
 
 ### Framework d'authentification
 
@@ -1279,7 +1273,7 @@ services.Configure<IdentityOptions>(options =>
   });
 ```
 
-## 2. <a name='ix-2-validation-et-intégrité-des-données'></a> Validation et intégrité des données
+## 2. <a name='ix-2-validation-et-integrite-des-donnees'></a> Validation et intégrité des données
 
 ### Validation des entrées
 
@@ -1350,7 +1344,7 @@ Exemple d'endpoint spécialisé : récupération des quêtes en attente et non a
    }
 ```
 
-## 4. <a name='ix-4-sécurité-de-la-conteneurisation-et-du-déploiement'></a> Sécurité de la conteneurisation et du déploiement
+## 4. <a name='ix-4-securite-de-la-conteneurisation-et-du-deploiement'></a> Sécurité de la conteneurisation et du déploiement
 
 ### Infrastructure sécurisée
 
@@ -1368,11 +1362,11 @@ Cette approche multicouche garantit un haut niveau de sécurité pour les utilis
 
 <div style="page-break-before: always;"></div>
 
-# X. Accessibilité et conformité RGAA
+# <a name='x-accessibilite-et-conformite-rgaa'></a>X. Accessibilité et conformité RGAA
 
 L'accessibilité numérique est un enjeu majeur pour Hexaplanning, permettant à tous les utilisateurs, y compris ceux en situation de handicap, d'accéder pleinement aux fonctionnalités de l'application. Ce chapitre détaille les mesures d'accessibilité implémentées dans l'application.
 
-## 1. <a name='x-1-conformité-rgaa-et-standards-d-accessibilité'></a> Conformité RGAA et standards d'accessibilité
+## 1. <a name='x-1-conformite-rgaa-et-standards-d-accessibilite'></a> Conformité RGAA et standards d'accessibilité
 
 ### Standards respectés
 
@@ -1399,7 +1393,7 @@ Une gestion globale du focus a été implémentée pour améliorer la navigation
 
 Cette règle CSS garantit que tous les éléments focalisables ont un indicateur visuel clair et visible.
 
-## 2. <a name='x-2-accessibilité-des-formulaires'></a> Accessibilité des formulaires
+## 2. <a name='x-2-accessibilite-des-formulaires'></a> Accessibilité des formulaires
 
 ### Formulaire de connexion
 
@@ -1549,7 +1543,7 @@ Le menu de navigation a une gestion spécialisée du focus pour améliorer l'exp
 }
 ```
 
-## 4. <a name='x-4-technologies-d-assistance-et-lecteurs-d-écran'></a> Technologies d'assistance et lecteurs d'écran
+## 4. <a name='x-4-technologies-d-assistance-et-lecteurs-d-ecran'></a> Technologies d'assistance et lecteurs d'écran
 
 ### Classes pour lecteurs d'écran
 
@@ -1609,7 +1603,7 @@ Cette approche d'accessibilité garantit qu'Hexaplanning peut être utilisé eff
 
 <div style="page-break-before: always;"></div>
 
-# XI. Conclusion et perspectives
+# <a name='xi-conclusion-et-perspectives'></a>XI. Conclusion et perspectives
 
 ## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
 
@@ -1617,7 +1611,7 @@ Hexaplanning a permis de concevoir et de mettre en production une application we
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L'architecture modulaire et la conteneurisation facilitent la maintenance et l'évolutivité.
 
-## 2. <a name='xi-2-perspectives-d-évolution'></a> Perspectives d'évolution
+## 2. <a name='xi-2-perspectives-d-evolution'></a> Perspectives d'évolution
 
 Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
@@ -1690,7 +1684,7 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
-## 2. <a name='xi-3-remerciements'></a> Remerciements
+## 2. <a name='xi-4-remerciements'></a> Remerciements
 
 Je tiens à remercier mon formateur Pierre-Louis Bastin pour son soutien et sa confiance malgré les difficultés.
 Egalement Mahdi Mcheik, mon camarade de formation et ami, pour ses précieux conseils et son aide pour terminer mon projet.
