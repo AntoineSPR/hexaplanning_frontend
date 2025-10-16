@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   inject,
   Input,
@@ -9,6 +10,7 @@ import {
   Output,
   QueryList,
   signal,
+  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -25,6 +27,7 @@ import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-quest-details',
@@ -54,12 +57,14 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   @Input() isNew: boolean = false;
   @Output() closeDialog = new EventEmitter<void>();
   @ViewChildren(Textarea) textareas!: QueryList<Textarea>;
+  @ViewChild('titleTextarea') titleTextarea!: ElementRef<HTMLTextAreaElement>;
 
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
+  private readonly _router = inject(Router);
 
   questForm!: FormGroup;
   priorityOptions = this._questService.priorities();
@@ -67,6 +72,10 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   isEdit: boolean = false;
 
   ngOnInit(): void {
+    this._router.events.subscribe(() => {
+      this.onReturn();
+    });
+
     this._createFormGroup();
     this.resetForm();
     this._setFormValues();
@@ -79,6 +88,27 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       }
       this._cdr.detectChanges();
     }, 100);
+
+    // Focus management to override PrimeNG Dialog's automatic focus
+    this.setTitleFocus();
+  }
+
+  private setTitleFocus(): void {
+    if (this.titleTextarea?.nativeElement) {
+      // Remove focus from any currently focused element first
+      if (document.activeElement && document.activeElement !== this.titleTextarea.nativeElement) {
+        (document.activeElement as HTMLElement).blur();
+      }
+
+      // Use requestAnimationFrame for smooth focus transition
+      requestAnimationFrame(() => {
+        this.titleTextarea.nativeElement.focus();
+        // If in edit mode, select the text for better UX
+        if (this.isEdit || this.isNew) {
+          this.titleTextarea.nativeElement.select();
+        }
+      });
+    }
   }
 
   //#region Buttons
@@ -207,6 +237,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   onEdit(): void {
     this.isEdit = true;
+    // Focus on title when entering edit mode
+    this.setTitleFocus();
   }
 
   //#region Date & Time
