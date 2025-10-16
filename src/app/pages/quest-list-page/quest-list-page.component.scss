@@ -46,4 +46,11 @@
       }
     }
   }
+
+  .p-menuitem-link:focus,
+  .p-menuitem-link:focus-visible,
+  .p-menuitem:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
