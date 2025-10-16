@@ -8,7 +8,7 @@
     "serve:development": "npm run serve --env=development",
     "serve:staging": "npm run serve --env=staging",
     "serve:production": "npm run serve --env=production",
-    "build" : "ng build",
+    "build": "ng build",
     "build:staging": "ng build --configuration staging",
     "build:production": "ng build --configuration production",
     "test": "jest --verbose",
@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^18.2.5",
-    "@angular/cli": "^18.2.5",
+    "@angular/cli": "^20.3.5",
     "@angular/compiler-cli": "^18.2.0",
     "@compodoc/compodoc": "^1.1.26",
     "@cypress/schematic": "^2.5.2",

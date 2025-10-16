@@ -2,7 +2,7 @@
   <p-toast></p-toast>
 
   <p-card header="Hexaplanning - Se connecter" class="login-card">
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" role="form" aria-label="Formulaire de connexion">
       <div class="form-field">
         <label for="email" class="form-label">Email *</label>
         <input
@@ -12,9 +12,12 @@
           formControlName="email"
           placeholder="Entrez votre adresse email"
           [class.p-invalid]="hasEmailError"
+          [attr.aria-describedby]="hasEmailError ? 'email-error' : null"
+          [attr.aria-invalid]="hasEmailError"
+          autocomplete="email"
           class="form-input" />
         @if (hasEmailError) {
-        <small class="p-error">
+        <small class="p-error" id="email-error" role="alert" aria-live="polite">
           {{ emailError }}
         </small>
         }
@@ -27,23 +30,34 @@
           [toggleMask]="true"
           placeholder="Entrez votre mot de passe"
           [class.p-invalid]="hasPasswordError"
+          [attr.aria-describedby]="hasPasswordError ? 'password-error' : null"
+          [attr.aria-invalid]="hasPasswordError"
+          autocomplete="current-password"
           class="form-input"
           [feedback]="false"></p-password>
         @if (hasPasswordError) {
-        <small class="p-error">
+        <small class="p-error" id="password-error" role="alert" aria-live="polite">
           {{ passwordError }}
         </small>
         }
       </div>
 
       <div class="form-actions">
-        <p-button type="submit" label="Se connecter" [loading]="isLoading" class="submit-button" [disabled]="isLoading"></p-button>
+        <p-button 
+          type="submit" 
+          label="Se connecter" 
+          [loading]="isLoading" 
+          class="submit-button" 
+          [disabled]="isLoading"
+          [attr.aria-label]="isLoading ? 'Connexion en cours...' : 'Se connecter'"></p-button>
 
         <p-button
           label="Mot de passe oublié ?"
           (click)="openForgotPasswordModal()"
           styleClass="p-button-text p-button-sm"
-          class="forgot-password-button"></p-button>
+          class="forgot-password-button"
+          type="button"
+          aria-label="Ouvrir le formulaire de récupération de mot de passe"></p-button>
       </div>
 
       <div class="form-footer">
@@ -59,15 +73,20 @@
     [modal]="true"
     [dismissableMask]="true"
     [closable]="true"
-    (onHide)="closeForgotPasswordModal()">
+    (onHide)="closeForgotPasswordModal()"
+    role="dialog"
+    aria-labelledby="forgot-password-title"
+    aria-describedby="forgot-password-description">
     <ng-template pTemplate="header">
-      <h3>Mot de passe oublié</h3>
+      <h3 id="forgot-password-title">Mot de passe oublié</h3>
     </ng-template>
 
     <div class="forgot-password-container">
-      <p class="forgot-password-description">Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+      <p class="forgot-password-description" id="forgot-password-description">
+        Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+      </p>
 
-      <form [formGroup]="forgotPasswordForm" (ngSubmit)="onSubmitForgotPassword()" class="forgot-password-form">
+      <form [formGroup]="forgotPasswordForm" (ngSubmit)="onSubmitForgotPassword()" class="forgot-password-form" role="form">
         <div class="form-field">
           <label for="forgotEmail" class="form-label">Adresse email *</label>
           <input
@@ -77,9 +96,12 @@
             formControlName="email"
             placeholder="Entrez votre adresse email"
             [class.p-invalid]="hasForgotPasswordEmailError"
+            [attr.aria-describedby]="hasForgotPasswordEmailError ? 'forgotEmail-error' : null"
+            [attr.aria-invalid]="hasForgotPasswordEmailError"
+            autocomplete="email"
             class="form-input" />
           @if (hasForgotPasswordEmailError) {
-          <small class="p-error">
+          <small class="p-error" id="forgotEmail-error" role="alert" aria-live="polite">
             {{ forgotPasswordEmailError }}
           </small>
           }
@@ -88,8 +110,20 @@
     </div>
 
     <ng-template pTemplate="footer">
-      <p-button label="Annuler" (click)="closeForgotPasswordModal()" styleClass="p-button-text"> </p-button>
-      <p-button label="Envoyer" (click)="onSubmitForgotPassword()" [loading]="isForgotPasswordLoading" [disabled]="isForgotPasswordLoading">
+      <p-button 
+        label="Annuler" 
+        (click)="closeForgotPasswordModal()" 
+        styleClass="p-button-text"
+        type="button"
+        aria-label="Fermer la fenêtre de récupération de mot de passe"> 
+      </p-button>
+      <p-button 
+        label="Envoyer" 
+        (click)="onSubmitForgotPassword()" 
+        [loading]="isForgotPasswordLoading" 
+        [disabled]="isForgotPasswordLoading"
+        type="button"
+        [attr.aria-label]="isForgotPasswordLoading ? 'Envoi en cours...' : 'Envoyer le lien de récupération'">
       </p-button>
     </ng-template>
   </p-dialog>

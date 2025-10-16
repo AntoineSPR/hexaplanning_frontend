@@ -3,14 +3,16 @@
 :root {
   --background-color: #151515;
   --text-color: #ffffff;
-  --theme-color: blueviolet;
+  --theme-color: #8a2be2;
   --light-theme-color: #b87fed;
   --dark-theme-color: #521987;
   --primary-priority-color: #ffb300;
   --secondary-priority-color: #e1bee7;
   --primary-priority-bg-color: #e28a2b;
-  --secondary-priority-bg-color: lightgrey;
+  --secondary-priority-bg-color: #d3d3d3;
   --tertiary-priority-bg-color: #5e5b5b;
+  --progress-bar-color: #5e309674;
+  // --progress-bar-color: #b2abf2;
   font-family: 'Inter', sans-serif;
 }
 
@@ -118,6 +120,13 @@ app-root {
   /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
 }
 
+// Accessibility: Focus management
+*:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #667eea !important;
+}
+
 h1 {
   text-align: center;
   font-size: 1.5rem;
@@ -144,6 +153,7 @@ h1 {
   justify-content: center;
   align-items: center;
   text-align: center;
+  pointer-events: none;
 }
 
 .done-toast .p-toast-message {
@@ -151,10 +161,11 @@ h1 {
   max-width: 300px;
   margin: auto;
   font-weight: bold;
-  background-color: var(--theme-color);
+  background-color: var(--progress-bar-color);
   color: white;
   border-radius: 8px;
   animation: pop-in 300ms ease-out;
+  pointer-events: none;
 
   .p-toast-message-content {
     display: flex;
@@ -278,4 +289,15 @@ input.quest-checkbox[type='checkbox'] {
 
 .p-select.priority-tertiary .p-select-label {
   color: var(--tertiary-priority-bg-color) !important;
+}
+
+/** Register/Login/Reset Password **/
+.form-label {
+  font-weight: 600;
+  color: gray;
+  font-size: 0.9rem;
+}
+
+.requirements-list {
+  font-weight: normal;
 }

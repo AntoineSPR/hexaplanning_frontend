@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { Quest, QuestBase, QuestPriority } from '../models/quest.model';
+import { QuestUpdateDTO, QuestCreateDTO } from '../models/quest.model';
 
 type QuestModalData = {
-  quest: Quest | QuestBase;
+  quest: QuestUpdateDTO | QuestCreateDTO;
   isNew: boolean;
 };
 
@@ -10,13 +10,12 @@ type QuestModalData = {
   providedIn: 'root',
 })
 export class QuestModalService {
-  private readonly _DEFAULT_QUEST: QuestBase = {
+  private readonly _DEFAULT_QUEST: QuestCreateDTO = {
     title: '',
     estimatedTime: 0,
     description: '',
-    priority: QuestPriority.TERTIARY,
-    isDone: false,
-    isAssigned: false,
+    statusId: '17c07323-d5b4-4568-b773-de3487ff30b1',
+    priorityId: '17c07323-d5b4-4568-b773-de3487ff30b1',
   };
 
   private _questModalVisible = signal<boolean>(false);
@@ -28,13 +27,13 @@ export class QuestModalService {
   public questModalVisible = this._questModalVisible.asReadonly();
   public questModalData = this._questModalData.asReadonly();
 
-  openQuestDetails(quest: Quest, isNew = false): void {
+  openQuestDetails(quest: QuestUpdateDTO, isNew = false): void {
     this._questModalData.set({ quest, isNew });
     this._questModalVisible.set(true);
   }
 
   openNewQuest(): void {
-    this.openQuestDetails(this._DEFAULT_QUEST as Quest, true);
+    this.openQuestDetails(this._DEFAULT_QUEST as QuestUpdateDTO, true);
   }
 
   closeQuestModal(): void {

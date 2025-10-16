@@ -49,4 +49,15 @@ export class MenuComponent implements OnInit, OnDestroy {
   showNewQuestDialog(): void {
     this._questModalService.openNewQuest();
   }
+
+  navigateToRoute(route: string): void {
+    this._router.navigate([route]);
+  }
+
+  onKeydownNavigation(event: KeyboardEvent, route: string): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.navigateToRoute(route);
+    }
+  }
 }

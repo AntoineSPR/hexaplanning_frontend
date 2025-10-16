@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Quest } from '../../models/quest.model';
+import { QuestUpdateDTO } from '../../models/quest.model';
 import { CommonModule } from '@angular/common';
 import { MenuComponent } from '../../components/menu/menu.component';
 import { DialogModule } from 'primeng/dialog';
@@ -23,13 +23,13 @@ export class QuestListPageComponent implements OnInit {
   activeItem!: MenuItem;
   private _completedQuestsLoaded = false;
 
-  get quests(): Quest[] {
+  get quests(): QuestUpdateDTO[] {
     return this._questService.quests();
   }
-  get pendingQuests(): Quest[] {
+  get pendingQuests(): QuestUpdateDTO[] {
     return this._questService.pendingQuests();
   }
-  get completedQuests(): Quest[] {
+  get completedQuests(): QuestUpdateDTO[] {
     return this._questService.completedQuests();
   }
 

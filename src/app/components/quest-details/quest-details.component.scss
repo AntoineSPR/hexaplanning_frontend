@@ -1,3 +1,8 @@
+.return:focus {
+  outline-color: var(--theme-color) !important;
+  box-shadow: 0 0 0 2px var(--theme-color) !important;
+}
+
 .quest-form-group {
   display: flex;
   flex-direction: column;
@@ -25,6 +30,22 @@
   align-items: center;
 }
 
+label {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.25rem;
+  color: var(--theme-color);
+}
+
+.invisible {
+  display: none;
+}
+
+.italic {
+  font-style: italic;
+  font-weight: normal;
+}
+
 input {
   font-family: inherit;
 }
@@ -33,6 +54,7 @@ input {
   width: 100%;
   display: flex;
   justify-content: space-around;
+  margin-top: 1rem;
 
   button {
     width: 6rem;
@@ -72,6 +94,55 @@ input {
   .p-slider {
     .p-slider-range {
       background: var(--theme-color) !important;
+    }
+  }
+
+  .custom-select {
+    width: 220px !important;
+  }
+
+  // Priority icon styling in selected item
+  .priority-icon {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    box-shadow: inset 0 0 3px black;
+    border-radius: 2px;
+
+    &.priority-primary {
+      background-color: var(--primary-priority-bg-color);
+    }
+
+    &.priority-secondary {
+      background-color: var(--secondary-priority-bg-color);
+    }
+
+    &.priority-tertiary {
+      background-color: var(--tertiary-priority-bg-color);
+    }
+  }
+
+  // PrimeNG Progress Bar styling
+  p-progressbar {
+    width: 100%;
+
+    .p-progressbar {
+      height: 20px !important;
+      background-color: var(--dark-theme-color) !important;
+      border-radius: 4px !important;
+      overflow: hidden !important;
+    }
+
+    .p-progressbar-value {
+      background-color: var(--theme-color) !important;
+      height: 100% !important;
+      transition: width 0.3s ease !important;
+    }
+
+    .p-progressbar-label {
+      color: white !important;
+      font-weight: bold !important;
+      font-size: 12px !important;
     }
   }
 

@@ -1,6 +1,14 @@
-<h1>Paramètres</h1>
-<p-button label="Modifier le mot de passe" (click)="openPasswordModal()" styleClass="p-button-text" />
-<p-button label="Se déconnecter" (click)="logout()" styleClass="p-button-text" />
+<main>
+  <h1>Paramètres</h1>
+  <div class="settings-buttons">
+    <p-button
+      label="Modifier le mot de passe"
+      (click)="openPasswordModal()"
+      variant="outlined"
+      aria-label="Ouvrir le formulaire de modification de mot de passe" />
+    <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" aria-label="Se déconnecter de l'application" />
+  </div>
+</main>
 
 <!-- Password Change Modal -->
 <p-dialog
@@ -9,15 +17,18 @@
   [modal]="true"
   [dismissableMask]="true"
   [closable]="true"
-  (onHide)="closePasswordModal()">
+  (onHide)="closePasswordModal()"
+  role="dialog"
+  aria-labelledby="password-modal-title"
+  [focusTrap]="true">
   <ng-template pTemplate="header">
-    <h3>Modifier le mot de passe</h3>
+    <h3 id="password-modal-title">Modifier le mot de passe</h3>
   </ng-template>
 
   <p-toast></p-toast>
 
   <div class="password-container">
-    <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPasswordChange()" class="password-form">
+    <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPasswordChange()" class="password-form" role="form">
       <div class="form-field">
         <label for="currentPassword" class="form-label">Mot de passe actuel *</label>
         <p-password
@@ -25,10 +36,13 @@
           [toggleMask]="true"
           placeholder="Entrez votre mot de passe actuel"
           [class.p-invalid]="hasCurrentPasswordError"
+          [attr.aria-describedby]="hasCurrentPasswordError ? 'currentPassword-error' : null"
+          [attr.aria-invalid]="hasCurrentPasswordError"
+          autocomplete="current-password"
           class="form-input"
           [feedback]="false"></p-password>
         @if (hasCurrentPasswordError) {
-        <small class="p-error">
+        <small class="p-error" id="currentPassword-error" role="alert" aria-live="polite">
           {{ currentPasswordError }}
         </small>
         }
@@ -36,11 +50,17 @@
 
       <div class="form-field">
         <label for="newPassword" class="form-label">Nouveau mot de passe *</label>
+        <div class="form-label requirements-list" id="password-requirements">
+          (Minimum : 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial)
+        </div>
         <p-password
           formControlName="newPassword"
           [toggleMask]="true"
           placeholder="Entrez votre nouveau mot de passe"
           [class.p-invalid]="hasNewPasswordError"
+          [attr.aria-describedby]="'password-requirements' + (hasNewPasswordError ? ' newPassword-error' : '')"
+          [attr.aria-invalid]="hasNewPasswordError"
+          autocomplete="new-password"
           class="form-input"
           [feedback]="true"
           promptLabel="Entrez un mot de passe"
@@ -48,7 +68,7 @@
           mediumLabel="Moyen"
           strongLabel="Fort"></p-password>
         @if (hasNewPasswordError) {
-        <small class="p-error">
+        <small class="p-error" id="newPassword-error" role="alert" aria-live="polite">
           {{ newPasswordError }}
         </small>
         }
@@ -62,9 +82,12 @@
           [feedback]="false"
           placeholder="Confirmez votre nouveau mot de passe"
           [class.p-invalid]="hasConfirmPasswordError"
+          [attr.aria-describedby]="hasConfirmPasswordError ? 'confirmPassword-error' : null"
+          [attr.aria-invalid]="hasConfirmPasswordError"
+          autocomplete="new-password"
           class="form-input"></p-password>
         @if (hasConfirmPasswordError) {
-        <small class="p-error">
+        <small class="p-error" id="confirmPassword-error" role="alert" aria-live="polite">
           {{ confirmPasswordError }}
         </small>
         }
@@ -73,9 +96,41 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button label="Annuler" icon="pi pi-times" (click)="closePasswordModal()" styleClass="p-button-text"> </p-button>
-    <p-button label="Modifier" icon="pi pi-check" (click)="onSubmitPasswordChange()" [disabled]="isLoading" [loading]="isLoading"> </p-button>
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      (click)="closePasswordModal()"
+      styleClass="p-button-text"
+      type="button"
+      aria-label="Fermer le formulaire de modification de mot de passe">
+    </p-button>
+    <p-button
+      label="Modifier"
+      icon="pi pi-check"
+      (click)="onSubmitPasswordChange()"
+      [disabled]="isLoading"
+      [loading]="isLoading"
+      type="button"
+      [attr.aria-label]="isLoading ? 'Modification en cours...' : 'Confirmer la modification du mot de passe'">
+    </p-button>
   </ng-template>
 </p-dialog>
 
 <app-menu></app-menu>
+
+<p-confirmdialog #cd>
+  <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
+    <div class="confirmation-dialog" role="dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <h4 id="confirm-title" class="visually-hidden">Confirmation de déconnexion</h4>
+      <p id="confirm-message">{{ message.message }}</p>
+      <div class="flex items-center gap-2">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32" aria-label="Annuler la déconnexion">
+          Annuler
+        </button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32" aria-label="Confirmer la déconnexion">
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</p-confirmdialog>

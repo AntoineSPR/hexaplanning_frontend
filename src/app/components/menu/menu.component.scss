@@ -1,3 +1,40 @@
+// Remove default focus outline for menu items
+.menu-item:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+// Also remove focus styles from any child elements
+.menu-item:focus *,
+.menu-item *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+// Apply precise focus shadow to icons when their container is focused (except losange)
+.menu-item:focus .icon {
+  filter: drop-shadow(0 0 4px var(--theme-color)) drop-shadow(0 0 8px var(--theme-color));
+  transform: scale(1.1);
+  transition: all 0.2s ease-in-out;
+}
+
+// Remove the general focus effect from losange icons
+.losange:focus .icon {
+  filter: none;
+  transform: none;
+}
+
+// Special focus style for the losange (diamond shape)
+.losange:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.losange:focus::before {
+  outline: 2px solid var(--theme-color);
+  outline-offset: 4px;
+}
+
 .menubar {
   position: fixed;
   bottom: 0;
@@ -10,6 +47,7 @@
   grid-row-gap: 0px;
   background: var(--background-color);
   padding: 1.5rem 0;
+  z-index: 1000;
 
   div {
     display: flex;

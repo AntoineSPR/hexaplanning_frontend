@@ -1,7 +1,12 @@
 <div class="quest-list">
   <h1>Vue d'ensemble</h1>
   <div class="quest-tabs">
-    <p-tabMenu [model]="menuItems" [activeItem]="activeItem" (activeItemChange)="navigateOnMenu($event)" />
+    <p-tabMenu 
+      [model]="menuItems" 
+      [activeItem]="activeItem" 
+      (activeItemChange)="navigateOnMenu($event)"
+      role="tablist"
+      aria-label="Navigation entre les types de quêtes" />
   </div>
   @if (this.activeItem === this.menuItems[0]) {
   <div class="active-quests">

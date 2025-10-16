@@ -1,10 +1,10 @@
 <form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
   <div class="flex gap-2 justify-content-start align-content-start">
     <!-- BOUTON RETOUR -->
-    <button type="button" class="pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
+    <button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
     <!-- TITRE -->
     <div class="title">
-      <label for="title" class="visually-hidden">Titre</label>
+      <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
       <textarea
         id="title"
         formControlName="title"
@@ -15,52 +15,93 @@
           'quest-readonly': !isEdit,
           'p-invalid': questForm.get('title')?.invalid && questForm.get('title')?.touched
         }"
-        maxlength="100"
-        placeholder="Titre de la quête"></textarea>
-      @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
+        maxlength="100"></textarea>
+      @if (isEdit || isNew) {
+      <small>{{ questForm.get('title')?.value?.length || 0 }}/100</small>
+      } @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
       <small class="p-error block mt-1"> Le titre est obligatoire </small>
       }
     </div>
   </div>
 
-  <!-- CHECKBOX -->
-  <div class="done_checkbox">
-    <input
-      id="toggleStatus"
-      type="checkbox"
-      class="quest-checkbox"
-      [checked]="quest.isDone"
-      (change)="toggleStatus()"
-      (click)="$event.stopPropagation()"
-      aria-label="Marquer cette tâche comme terminée" />
-    <label for="toggleStatus" style="font-style: italic">{{ quest.isDone ? 'Terminé' : 'À terminer' }} </label>
+  <!-- STATUT -->
+  <div class="flex flex-column align-content-center mt-2">
+    <label for="status" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Statut :</label>
+    @if (isEdit) {
+    <p-select
+      id="status"
+      formControlName="statusId"
+      [options]="statusOptions ?? []"
+      [disabled]="!isEdit"
+      optionLabel="name"
+      optionValue="id"
+      [styleClass]="'custom-select'">
+      <ng-template let-option pTemplate="item">
+        <span>
+          {{ option.name }}
+        </span>
+      </ng-template></p-select
+    >} @else { <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
+    }
   </div>
+
+  @if (isInProgress) {
+  <div class="quest-field">
+    <label for="advancement" class="font-bold">Progression : </label>
+    <p>{{ questForm.get('advancement')?.value }}%</p>
+  </div>
+  @if (isEdit) {
+  <div class="w-full">
+    <p-slider id="advancement" formControlName="advancement" (onChange)="onAdvancementChange($event)" [min]="0" [max]="100" [step]="5" />
+  </div>
+  } @else {
+  <div class="w-full">
+    <p-progressBar [value]="questForm.get('advancement')?.value" />
+  </div>
+  } }
 
   <div class="flex flex-column align-content-center">
     <!-- PRIORITE -->
-    <div>
-      <label for="priority" class="visually-hidden">Priorité</label>
-      <p-select
-        id="priority"
-        formControlName="priority"
-        [options]="priorityOptions"
-        [readonly]="!isEdit"
-        [ngClass]="selectClasses"
-        optionLabel="label"
-        optionValue="value">
-        <ng-template let-option pTemplate="item">
-          <span [class]="'priority-' + getPriorityKey(option.value)">
-            {{ option.label }}
+    <label for="priority" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Priorité :</label>
+    @if (isEdit) {
+    <p-select
+      id="priority"
+      formControlName="priorityId"
+      [options]="priorityOptions ?? []"
+      [readonly]="!isEdit"
+      optionLabel="name"
+      optionValue="id"
+      [styleClass]="'custom-select'">
+      <ng-template let-option pTemplate="selectedItem">
+        <div class="flex align-items-center gap-2">
+          <img class="priority-icon" [src]="'/icons/' + option.icon + '.png'" [alt]="option.name" [class]="'priority-' + option.icon" />
+          <span [class]="'priority-' + option.icon">
+            {{ option.name }}
           </span>
-        </ng-template></p-select
-      >
+        </div>
+      </ng-template>
+      <ng-template let-option pTemplate="item">
+        <span [class]="'priority-' + option.icon">
+          {{ option.name }}
+        </span>
+      </ng-template></p-select
+    >
+    } @else {
+    <div class="flex align-items-center gap-2">
+      <img
+        class="priority-icon"
+        [src]="'/icons/' + getPriorityIcon(quest.priorityId) + '.png'"
+        [alt]="getPriorityName(quest.priorityId)"
+        [class]="'priority-' + getPriorityIcon(quest.priorityId)" />
+      <span class="italic">{{ getPriorityName(quest.priorityId) }}</span>
     </div>
+    }
   </div>
 
   <!-- TEMPS ESTIME -->
   @if (isEdit || hasEstimatedTime) {
   <div class="quest-field py-2">
-    <label for="estimatedTime" class="font-bold">Temps estimé : </label>
+    <label for="estimatedTime">Temps estimé <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
     @if (isEdit) {
     <p-calendar
       id="estimatedTime"
@@ -85,7 +126,7 @@
   <!-- DETAILS -->
   @if (isEdit || hasDescription) {
   <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
-    <label for="description" class="text-center font-bold">Details :</label>
+    <label for="description">Détails <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
     <textarea
       id="description"
       formControlName="description"

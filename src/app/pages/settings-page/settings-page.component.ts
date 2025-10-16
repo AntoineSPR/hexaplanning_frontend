@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { MenuComponent } from 'src/app/components/menu/menu.component';
 import { UserService } from 'src/app/services/user.service';
 import { ButtonModule } from 'primeng/button';
@@ -12,14 +12,25 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { ChangePasswordDTO } from 'src/app/models/changePasswordDTO.model';
-
-const MIN_PASSWORD_LENGTH = 6;
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from 'src/app/validators/password.validators';
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MenuComponent, ButtonModule, DialogModule, CardModule, InputTextModule, PasswordModule, ToastModule],
-  providers: [MessageService],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MenuComponent,
+    ButtonModule,
+    DialogModule,
+    CardModule,
+    InputTextModule,
+    PasswordModule,
+    ToastModule,
+    ConfirmDialogModule,
+  ],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './settings-page.component.html',
   styleUrls: ['./settings-page.component.scss'],
 })
@@ -28,6 +39,7 @@ export class SettingsPageComponent {
   private readonly _router = inject(Router);
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _messageService = inject(MessageService);
+  private readonly _confirmationService = inject(ConfirmationService);
 
   user = this._userService.user;
 
@@ -38,32 +50,12 @@ export class SettingsPageComponent {
   constructor() {
     this.passwordForm = this._formBuilder.group(
       {
-        currentPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
-        newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
+        currentPassword: ['', [Validators.required, apiPasswordValidator()]],
+        newPassword: ['', [Validators.required, apiPasswordValidator()]],
         confirmPassword: ['', [Validators.required]],
       },
-      { validators: this.passwordMatchValidator }
+      { validators: passwordMatchValidator('newPassword', 'confirmPassword') }
     );
-  }
-
-  passwordMatchValidator(form: FormGroup): any {
-    const newPassword = form.get('newPassword');
-    const confirmPassword = form.get('confirmPassword');
-
-    if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-
-    if (confirmPassword?.hasError('passwordMismatch')) {
-      delete confirmPassword.errors?.['passwordMismatch'];
-      const errorsCount = Object.keys(confirmPassword.errors || {}).length;
-      if (errorsCount === 0) {
-        confirmPassword.setErrors(null);
-      }
-    }
-
-    return null;
   }
 
   openPasswordModal(): void {
@@ -99,8 +91,8 @@ export class SettingsPageComponent {
         error: (error: any) => {
           this._messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: 'Erreur lors de la modification du mot de passe. Vérifiez votre mot de passe actuel.',
+            summary: 'Erreur lors de la modification du mot de passe.',
+            detail: 'Vérifiez votre mot de passe actuel.',
           });
           this.isLoading = false;
           console.error('Password change error:', error);
@@ -122,11 +114,7 @@ export class SettingsPageComponent {
   get currentPasswordError(): string | null {
     const field = this.passwordForm.get('currentPassword');
     if (field?.touched && field?.errors) {
-      if (field.errors['required']) return 'Ce champ est requis';
-      if (field.errors['minlength']) {
-        const requiredLength = field.errors['minlength'].requiredLength;
-        return `Ce champ doit contenir au moins ${requiredLength} caractères`;
-      }
+      return getPasswordErrorMessage(field.errors);
     }
     return null;
   }
@@ -134,11 +122,7 @@ export class SettingsPageComponent {
   get newPasswordError(): string | null {
     const field = this.passwordForm.get('newPassword');
     if (field?.touched && field?.errors) {
-      if (field.errors['required']) return 'Ce champ est requis';
-      if (field.errors['minlength']) {
-        const requiredLength = field.errors['minlength'].requiredLength;
-        return `Ce champ doit contenir au moins ${requiredLength} caractères`;
-      }
+      return getPasswordErrorMessage(field.errors);
     }
     return null;
   }
@@ -168,7 +152,14 @@ export class SettingsPageComponent {
   }
 
   logout(): void {
-    this._userService.logoutUser();
-    this._router.navigate(['/login']);
+    this._confirmationService.confirm({
+      message: 'Êtes-vous sûr.e de vouloir vous déconnecter ?',
+      closable: true,
+      closeOnEscape: true,
+      accept: () => {
+        this._userService.logoutUser();
+        this._router.navigate(['/login']);
+      },
+    });
   }
 }

@@ -2,7 +2,7 @@
   <p-toast></p-toast>
 
   <p-card header="Hexaplanning - Créer un compte" class="register-card">
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form" role="form" aria-label="Formulaire de création de compte">
       <div class="form-row">
         <div class="form-field">
           <label for="firstName" class="form-label">Prénom *</label>
@@ -12,9 +12,11 @@
             formControlName="firstName"
             placeholder="Entrez votre prénom"
             [class.p-invalid]="hasFirstNameError"
+            [attr.aria-describedby]="hasFirstNameError ? 'firstName-error' : null"
+            [attr.aria-invalid]="hasFirstNameError"
             class="form-input" />
           @if (hasFirstNameError) {
-          <small class="p-error">
+          <small class="p-error" id="firstName-error" role="alert" aria-live="polite">
             {{ firstNameError }}
           </small>
           }
@@ -28,9 +30,11 @@
             formControlName="lastName"
             placeholder="Entrez votre nom"
             [class.p-invalid]="hasLastNameError"
+            [attr.aria-describedby]="hasLastNameError ? 'lastName-error' : null"
+            [attr.aria-invalid]="hasLastNameError"
             class="form-input" />
           @if (hasLastNameError) {
-          <small class="p-error">
+          <small class="p-error" id="lastName-error" role="alert" aria-live="polite">
             {{ lastNameError }}
           </small>
           }
@@ -46,9 +50,12 @@
           formControlName="email"
           placeholder="Entrez votre adresse email"
           [class.p-invalid]="hasEmailError"
+          [attr.aria-describedby]="hasEmailError ? 'email-error' : null"
+          [attr.aria-invalid]="hasEmailError"
+          autocomplete="email"
           class="form-input" />
         @if (hasEmailError) {
-        <small class="p-error">
+        <small class="p-error" id="email-error" role="alert" aria-live="polite">
           {{ emailError }}
         </small>
         }
@@ -56,19 +63,26 @@
 
       <div class="form-field">
         <label for="password" class="form-label">Mot de passe *</label>
+        <div class="form-label requirements-list" id="password-requirements">
+          (Minimum : 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial)
+        </div>
         <p-password
           formControlName="password"
           [toggleMask]="true"
           placeholder="Entrez votre mot de passe"
           [class.p-invalid]="hasPasswordError"
+          [attr.aria-describedby]="'password-requirements' + (hasPasswordError ? ' password-error' : '')"
+          [attr.aria-invalid]="hasPasswordError"
+          autocomplete="new-password"
           class="form-input"
           [feedback]="true"
           promptLabel="Entrez un mot de passe"
           weakLabel="Faible"
           mediumLabel="Moyen"
-          strongLabel="Fort"></p-password>
+          strongLabel="Fort">
+        </p-password>
         @if (hasPasswordError) {
-        <small class="p-error">
+        <small class="p-error" id="password-error" role="alert" aria-live="polite">
           {{ passwordError }}
         </small>
         }
@@ -82,13 +96,68 @@
           [feedback]="false"
           placeholder="Confirmez votre mot de passe"
           [class.p-invalid]="hasConfirmPasswordError"
+          [attr.aria-describedby]="hasConfirmPasswordError ? 'confirmPassword-error' : null"
+          [attr.aria-invalid]="hasConfirmPasswordError"
+          autocomplete="new-password"
           class="form-input"></p-password>
         @if (hasConfirmPasswordError) {
-        <small class="p-error">
+        <small class="p-error" id="confirmPassword-error" role="alert" aria-live="polite">
           {{ confirmPasswordError }}
         </small>
         }
       </div>
+
+      <fieldset class="checkbox-fieldset">
+        <legend class="visually-hidden">Acceptation des conditions</legend>
+
+        <div class="form-field">
+          <div class="checkbox-container">
+            <p-checkbox
+              formControlName="acceptCgu"
+              [binary]="true"
+              inputId="acceptCgu"
+              [class.p-invalid]="hasAcceptCguError"
+              [attr.aria-describedby]="hasAcceptCguError ? 'acceptCgu-error' : null"
+              [attr.aria-invalid]="hasAcceptCguError">
+            </p-checkbox>
+            <label for="acceptCgu" class="checkbox-label">
+              J'accepte les
+              <a routerLink="/cgu" target="_blank" class="terms-link" aria-label="Conditions Générales d'Utilisation (ouvre dans un nouvel onglet)"
+                >Conditions Générales d'Utilisation</a
+              >.
+            </label>
+          </div>
+          @if (hasAcceptCguError) {
+          <small class="p-error" id="acceptCgu-error" role="alert" aria-live="polite">
+            {{ acceptCguError }}
+          </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <div class="checkbox-container">
+            <p-checkbox
+              formControlName="acceptRgpd"
+              [binary]="true"
+              inputId="acceptRgpd"
+              [class.p-invalid]="hasAcceptRgpdError"
+              [attr.aria-describedby]="hasAcceptRgpdError ? 'acceptRgpd-error' : null"
+              [attr.aria-invalid]="hasAcceptRgpdError">
+            </p-checkbox>
+            <label for="acceptRgpd" class="checkbox-label">
+              J'accepte le traitement de mes données personnelles conformément à la
+              <a routerLink="/rgpd" target="_blank" class="terms-link" aria-label="Politique de Confidentialité (ouvre dans un nouvel onglet)"
+                >Politique de Confidentialité</a
+              >.
+            </label>
+          </div>
+          @if (hasAcceptRgpdError) {
+          <small class="p-error" id="acceptRgpd-error" role="alert" aria-live="polite">
+            {{ acceptRgpdError }}
+          </small>
+          }
+        </div>
+      </fieldset>
 
       <div class="form-actions">
         <p-button
@@ -97,7 +166,8 @@
           [loading]="isLoading"
           loadingIcon="pi pi-spin pi-spinner"
           class="submit-button"
-          [disabled]="isLoading"></p-button>
+          [disabled]="isLoading"
+          [attr.aria-label]="isLoading ? 'Création du compte en cours...' : 'Créer le compte'"></p-button>
       </div>
 
       <div class="form-footer">
