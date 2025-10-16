@@ -25,6 +25,7 @@ import { QuestService } from '../../services/quest.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-quest-details',
@@ -60,6 +61,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _questService = inject(QuestService);
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
+  private readonly _router = inject(Router);
 
   questForm!: FormGroup;
   priorityOptions = this._questService.priorities();
@@ -67,6 +69,10 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   isEdit: boolean = false;
 
   ngOnInit(): void {
+    this._router.events.subscribe(() => {
+      this.onReturn();
+    });
+
     this._createFormGroup();
     this.resetForm();
     this._setFormValues();
