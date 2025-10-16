@@ -233,6 +233,14 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         });
       },
     });
+
+    // Focus management for the confirmation dialog
+    setTimeout(() => {
+      const acceptButton = document.querySelector('.accept-confirmation-button') as HTMLElement;
+      if (acceptButton) {
+        acceptButton.focus();
+      }
+    }, 100);
   }
 
   onEdit(): void {

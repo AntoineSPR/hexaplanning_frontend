@@ -269,6 +269,14 @@ export class MapComponent implements OnInit {
             });
         },
       });
+
+      // Focus management for the confirmation dialog
+      setTimeout(() => {
+        const acceptButton = document.querySelector('.accept-confirmation-button') as HTMLElement;
+        if (acceptButton) {
+          acceptButton.focus();
+        }
+      }, 100);
     }
   }
 
