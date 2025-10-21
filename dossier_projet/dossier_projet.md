@@ -282,6 +282,8 @@ Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quêt
   </div>
 </div>
 
+Service de modale de quête :
+
 ```js
 type QuestModalData = {
   quest: QuestUpdateDTO | QuestCreateDTO;
@@ -325,6 +327,163 @@ export class QuestModalService {
 }
 ```
 
+Nouvelle quête et édition de quête :
+
+```js
+export class QuestDetailsComponent implements OnInit, AfterViewInit {
+  @Input({ required: true }) quest!: QuestUpdateDTO;
+  @Input() isNew: boolean = false;
+
+  private readonly _formBuilder = inject(FormBuilder);
+  private readonly _questService = inject(QuestService);
+
+  questForm!: FormGroup;
+  isEdit: boolean = false;
+
+  ngOnInit(): void {
+    this._createFormGroup();
+    this.resetForm();
+    this._setFormValues();
+  }
+
+  private _createFormGroup(): void {
+    this.questForm = this._formBuilder.group({
+      title: new FormControl('', [Validators.required, Validators.maxLength(100)]),
+      description: new FormControl(''),
+      estimatedTime: new FormControl(''),
+      priorityId: new FormControl('', Validators.required),
+      statusId: new FormControl('', Validators.required),
+      advancement: new FormControl(0),
+    });
+  }
+
+  private _setFormValues(): void {
+    this.questForm.setValue({
+      title: this.quest?.title ?? '',
+      // [...]
+    });
+  }
+
+  onSubmit(): void {
+    this.questForm.markAllAsTouched();
+
+    if (this.questForm.invalid) return;
+
+    const formValues = {
+      ...this.questForm.value,
+      estimatedTime: this.dateToMinutes(this.questForm.value.estimatedTime),
+    };
+
+    if (this.isNew) {
+      const newQuest: QuestCreateDTO = formValues;
+
+      this._questService.createQuest(newQuest).subscribe({
+        next: () => {
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Quête créée',
+            detail: newQuest.title,
+            life: 2000,
+          });
+        },
+        error: error => {
+          this._messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Erreur lors de la création de la quête',
+            life: 2000,
+          });
+        },
+      });
+    } else {
+      const updatedQuest: QuestUpdateDTO = {
+        ...this.quest,
+        ...formValues,
+      };
+
+      this._questService.updateQuest(updatedQuest).subscribe(
+        // [...]
+      );
+    }
+
+    this.isEdit = false;
+    this.isNew = false;
+    this.closeDialog.emit();
+  }
+}
+```
+
+```html
+<form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
+  <div>
+    <!-- BOUTON RETOUR -->
+    <button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
+    <!-- TITRE -->
+    <div class="title">
+      <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
+      <textarea
+        #titleTextarea
+        id="title"
+        formControlName="title"
+        pTextarea
+        [autoResize]="true"
+        [readonly]="!isEdit"
+        [ngClass]="{
+          'quest-readonly': !isEdit,
+          'p-invalid': questForm.get('title')?.invalid && questForm.get('title')?.touched
+        }"
+        maxlength="100"></textarea>
+      @if (isEdit || isNew) {
+      <small>{{ questForm.get('title')?.value?.length || 0 }}/100</small>
+      } @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
+      <small class="p-error block mt-1"> Le titre est obligatoire </small>
+      }
+    </div>
+  </div>
+
+  <!-- STATUT -->
+  <div>
+    <label for="status" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Statut :</label>
+    @if (isEdit) {
+    <p-select
+      id="status"
+      formControlName="statusId"
+      [options]="statusOptions ?? []"
+      [disabled]="!isEdit"
+      optionLabel="name"
+      optionValue="id"
+      [styleClass]="'custom-select'">
+      <ng-template let-option pTemplate="item">
+        <span> {{ option.name }} </span>
+      </ng-template></p-select
+    >
+    } @else {
+    <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
+    }
+  </div>
+</form>
+```
+
+```css
+.quest-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  width: 18rem;
+  margin: auto;
+  padding: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.quest-readonly {
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+```
+
 Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets. Les quêtes à accomplir sont triées par ordre de priorité.
 
 <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
@@ -344,6 +503,67 @@ Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de d
     <em>Toast de succès : quête accomplie.</em>
   </div>
 </div>
+
+Listes de quêtes :
+
+```html
+<div class="quest-list">
+  <h1>Vue d'ensemble</h1>
+  <div class="quest-tabs">
+    <p-tabMenu
+      [model]="menuItems"
+      [activeItem]="activeItem"
+      (activeItemChange)="navigateOnMenu($event)"
+      role="tablist"
+      aria-label="Navigation entre les types de quêtes" />
+  </div>
+  @if (this.activeItem === this.menuItems[0]) {
+  <div class="active-quests">
+    @for (pendingQuest of pendingQuests; track pendingQuest.id) {
+    <app-quest-card [quest]="pendingQuest"> </app-quest-card>
+    }
+  </div>
+  } @else if (this.activeItem === this.menuItems[1]) {
+  <div class="completed-quests">
+    @for (completedQuest of completedQuests; track completedQuest.id) {
+    <app-quest-card [quest]="completedQuest"> </app-quest-card>
+    }
+  </div>
+  }
+</div>
+```
+
+```js
+export class QuestListPageComponent implements OnInit {
+  _questService = inject(QuestService);
+
+  menuItems!: MenuItem[];
+  activeItem!: MenuItem;
+  private _completedQuestsLoaded = false;
+
+  get pendingQuests(): QuestUpdateDTO[] {
+    return this._questService.pendingQuests();
+  }
+  get completedQuests(): QuestUpdateDTO[] {
+    return this._questService.completedQuests();
+  }
+
+  ngOnInit(): void {
+    this._questService.loadPendingQuests();
+
+    this.menuItems = [{ label: 'Quêtes à accomplir' }, { label: 'Quêtes accomplies' }];
+    this.activeItem = this.menuItems[0];
+  }
+
+  navigateOnMenu(event: MenuItem): void {
+    this.activeItem = event;
+    if (this.activeItem === this.menuItems[1] && !this._completedQuestsLoaded) {
+      this._questService.loadCompletedQuests();
+      this._completedQuestsLoaded = true;
+    }
+  }
+}
+```
 
 Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée. Si la quête est indiquée comme "en cours", la barre de progression s'affiche directement sur l'aperçu de la quête, la remplissant progressivement d'une couleur plus sombre. Les quêtes terminées sont entièrement remplies.
 
@@ -374,6 +594,69 @@ L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone v
   </div>
 </div>
 
+```html
+<p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
+  <ng-template #header>
+    @if (selectedHex) {
+    <h3>Assigner une quête à accomplir</h3>
+    }
+  </ng-template>
+
+  <div class="quest-selection">
+    <div class="quest-list">
+      @if (unassignedPendingQuests.length === 0) {
+      <p>Aucune nouvelle quête à accomplir !</p>
+      } @else { @for (quest of unassignedPendingQuests; track quest.id) {
+      <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
+        <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
+        <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
+        <img
+          class="priority-icon"
+          [src]="getPriorityImagePath(quest)"
+          [alt]="getPriorityAltText(quest)"
+          [class]="'priority-' + getPriorityIcon(quest)" />
+      </div>
+      } }
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
+    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
+  </ng-template>
+</p-dialog>
+```
+
+```js
+  assignQuestToHex(): void {
+    if (this.selectedHex && this.selectedQuest) {
+      const hexToUpdate = this.selectedHex;
+      const questToAssign = this.selectedQuest;
+      const hexAssignment = {
+        q: hexToUpdate.q,
+        r: hexToUpdate.r,
+        s: hexToUpdate.s,
+        questId: questToAssign.id,
+      };
+
+      this._hexService
+        .saveAssignment(hexAssignment)
+        .pipe(switchMap(() => this._questService.updateQuest({ ...questToAssign })))
+        .subscribe({
+          next: () => {
+            hexToUpdate.quest = questToAssign;
+            this.dialogVisible = false;
+            this.selectedHex = null;
+            this.selectedQuest = null;
+            this._questService.loadUnassignedPendingQuests();
+          },
+          error: err => {
+            console.error('Failed to assign quest:', err);
+          },
+        });
+    }
+  }
+```
+
 Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un hexagone associé à une quête pour afficher les détails de la quête en question, et éventuellement modifier ou supprimer la quête (ce qui la fera disparaître de la carte et des listes).
 
 ## 4. <a name='iii-4-systeme-d-authentification-et-gestion-des-utilisateurs'></a>Système d'authentification et gestion des utilisateurs
@@ -396,6 +679,136 @@ L’accès à l’application nécessite la création d’un compte et une authe
 <div align="center">
 <em>Page de connexion.</em>
 </div>
+
+Validateurs lors de l'inscription :
+
+```js
+  constructor() {
+    this.registerForm = this._formBuilder.group(
+      {
+        firstName: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH)]],
+        lastName: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH)]],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, apiPasswordValidator()]],
+        confirmPassword: ['', [Validators.required]],
+        acceptCgu: [false, [Validators.requiredTrue]],
+        acceptRgpd: [false, [Validators.requiredTrue]],
+      },
+      { validators: passwordMatchValidator('password', 'confirmPassword') }
+    );
+  }
+```
+
+Extrait du validateur de mot de passe personnalisé :
+
+```js
+export const PASSWORD_REQUIREMENTS = {
+  MIN_LENGTH: 8,
+  MIN_UNIQUE_CHARS: 1,
+  REQUIRE_DIGIT: true,
+  REQUIRE_LOWERCASE: true,
+  REQUIRE_UPPERCASE: true,
+  REQUIRE_NON_ALPHANUMERIC: true,
+} as const;
+
+export function apiPasswordValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+
+    if (!value) return null;
+
+    const errors: ValidationErrors = {};
+
+    if (value.length < PASSWORD_REQUIREMENTS.MIN_LENGTH) {
+      errors['minLength'] = {
+        requiredLength: PASSWORD_REQUIREMENTS.MIN_LENGTH,
+        actualLength: value.length,
+      };
+    }
+
+    if (PASSWORD_REQUIREMENTS.REQUIRE_DIGIT && !/\d/.test(value)) {
+      errors['requireDigit'] = true;
+    }
+
+    // [...]
+
+    return Object.keys(errors).length > 0 ? errors : null;
+  };
+
+  export function passwordMatchValidator(passwordFieldName: string = 'password', confirmPasswordFieldName: string = 'confirmPassword'): ValidatorFn {
+  return (form: AbstractControl): ValidationErrors | null => {
+    const password = form.get(passwordFieldName);
+    const confirmPassword = form.get(confirmPasswordFieldName);
+
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ ...confirmPassword.errors, passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+
+    if (confirmPassword?.hasError('passwordMismatch')) {
+      const errors = { ...confirmPassword.errors };
+      delete errors['passwordMismatch'];
+      const errorsCount = Object.keys(errors).length;
+      confirmPassword.setErrors(errorsCount === 0 ? null : errors);
+    }
+
+    return null;
+  };
+}
+```
+
+Connexion de l'utilisateur :
+
+```js
+  onSubmit(): void {
+    if (this.loginForm.valid) {
+      this.isLoading = true;
+
+      const loginData = {
+        email: this.loginForm.value.email,
+        password: this.loginForm.value.password,
+      };
+
+      this._userService.loginUser(loginData).subscribe({
+        next: () => {
+          this._messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Connexion réussie!',
+          });
+          this.isLoading = false;
+          this._router.navigate(['/']);
+        },
+        error: (error: any) => {
+          this._messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Email ou mot de passe incorrect. Veuillez réessayer.',
+          });
+          this.isLoading = false;
+          console.error('Login error:', error);
+        },
+      });
+    } else {
+      this._markFormGroupTouched();
+    }
+  }
+```
+
+Méthode correspondante dans le service utilisateurs :
+
+```js
+loginUser(user: UserLoginDTO): Observable<LoginResponseDTO> {
+    return this._http.post<LoginResponseDTO>(this._apiUrl + '/login', user).pipe(
+      tap(response => {
+        this.user.set(response.user);
+        this.token.set(response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('token', response.token);
+      })
+    );
+  }
+```
 
 Un système de gestion des mots de passe oubliés est en place, avec envoi d'email pour la réinitialisation. Lorsque l'utilisateur clique sur "mot de passe oublié", une modale s'ouvre. Si l'utilisateur avait déjà rentré son adresse e-mail dans le champ de connexion, il sera automatiquement reporté dans le champ de la modale. Au clic sur le bouton d'envoi, un toast informe l'utilisateur qu'un mail a été délivré à l'adresse indiquée, si elle existe. En effet, il s'agit de ne pas confirmer ou infirmer la présence de cette adresse e-mail dans la base de données. De plus, il ne peut y avoir qu'une seule requête vers la même adresse toutes les 5 minutes, afin d'éviter le spam d'une adresse e-mail et la saturation du service de mail.
 
@@ -425,6 +838,68 @@ Le destinataire recevera un mail contenant un lien de réinitialisation de mot d
 <div align="center">
 <em>Page de réinitialisation de mot de passe.</em>
 </div>
+
+Composant de réinitialisation de mot de passe :
+
+```js
+export class ResetPasswordComponent implements OnInit {
+  private readonly _formBuilder = inject(FormBuilder);
+  private readonly _userService = inject(UserService);
+  private readonly _router = inject(Router);
+  private readonly _route = inject(ActivatedRoute);
+  private readonly _messageService = inject(MessageService);
+
+  resetPasswordForm: FormGroup;
+  isLoading = false;
+  token: string | null = null;
+  email: string | null = null;
+
+  constructor() {
+    this.resetPasswordForm = this._formBuilder.group(
+      {
+        newPassword: ['', [Validators.required, apiPasswordValidator()]],
+        confirmPassword: ['', [Validators.required]],
+      },
+      {
+        validators: passwordMatchValidator('newPassword', 'confirmPassword'),
+      }
+    );
+  }
+
+  ngOnInit(): void {
+    this.token = this._route.snapshot.queryParamMap.get('token');
+    this.email = this._route.snapshot.queryParamMap.get('email');
+
+    if (!this.token) {
+      this._messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Token de réinitialisation manquant ou invalide.',
+      });
+      this._router.navigate(['/login']);
+    }
+  }
+
+  onSubmit(): void {
+    if (this.resetPasswordForm.valid && this.token && this.email) {
+      this.isLoading = true;
+
+      const resetPasswordData: ResetPasswordDTO = {
+        token: this.token,
+        email: this.email,
+        newPassword: this.resetPasswordForm.value.newPassword,
+        confirmPassword: this.resetPasswordForm.value.confirmPassword,
+      };
+
+      this._userService.resetPassword(resetPasswordData).subscribe({
+        // [...]
+      });
+    } else {
+      this._markFormGroupTouched();
+    }
+  }
+}
+```
 
 L'utilisateur peut également changer son mot de passe depuis l'interface : en accédant au menu des paramètres, il aura la possibilité d'ouvrir une modale lui demandant son mot de passe actuel ainsi que le nouveau. Depuis ce même menu, il pourra se déconnecter de l'application.
 

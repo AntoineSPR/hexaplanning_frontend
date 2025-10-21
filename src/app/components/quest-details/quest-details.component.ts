@@ -205,7 +205,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   onDelete(): void {
     this._confirmationService.confirm({
-      message: 'Confimer la suppression ?',
+      message: 'Confirmer la suppression ?',
       closable: true,
       closeOnEscape: true,
       accept: () => {
