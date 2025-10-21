@@ -230,6 +230,24 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 La page d'accueil apparaît dès la connexion de l'utilisateur, et affiche le nombre de quêtes qu'il lui reste à accomplir
 
+```html
+<h1>Bienvenue {{ user()?.firstName | titlecase }} {{ user()?.lastName | titlecase }} !</h1>
+<p>Vous avez <span class="quest-count">{{ pending_quests_number() }}</span> quête{{ pending_quests_number() > 1 ? 's' : '' }} à accomplir.</p>
+```
+
+```js
+export class DashboardPageComponent {
+  private readonly _userService = inject(UserService);
+  private readonly _questService = inject(QuestService);
+  user = this._userService.user;
+  pending_quests_number = computed(() => this._questService.pendingQuests().length);
+
+  constructor() {
+    this._questService.getAllPendingQuests().subscribe();
+  }
+}
+```
+
 ## 2. <a name='iii-2-gestion-des-quetes-taches'></a>Gestion des quêtes (tâches)
 
 Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quête possède un titre, un statut (en attente, en cours et terminée) et une priorité (primaire, secondaire ou tertiaire, avec une icône et un code couleur associés), ainsi qu’une description et un temps estimé en option, ainsi qu'un pourcentage de progression (associé à une barre de progression) dans le cas des quêtes en cours. L’utilisateur peut créer, éditer ou supprimer une quête, la marquer rapidement comme terminée ou la remettre en attente, et l'associer à un hexagone sur la carte prévue à cet effet.
@@ -251,6 +269,49 @@ Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quêt
     <em>Modale de suppression d'une quête.</em>
   </div>
 </div>
+
+```js
+type QuestModalData = {
+  quest: QuestUpdateDTO | QuestCreateDTO;
+  isNew: boolean;
+};
+
+@Injectable({
+  providedIn: 'root',
+})
+export class QuestModalService {
+  private readonly _DEFAULT_QUEST: QuestCreateDTO = {
+    title: '',
+    estimatedTime: 0,
+    description: '',
+    statusId: '17c07323-d5b4-4568-b773-de3487ff30b1',
+    priorityId: '17c07323-d5b4-4568-b773-de3487ff30b1',
+  };
+
+  private _questModalVisible = signal<boolean>(false);
+  private _questModalData = signal<QuestModalData>({
+    quest: this._DEFAULT_QUEST,
+    isNew: false,
+  });
+
+  public questModalVisible = this._questModalVisible.asReadonly();
+  public questModalData = this._questModalData.asReadonly();
+
+  openQuestDetails(quest: QuestUpdateDTO, isNew = false): void {
+    this._questModalData.set({ quest, isNew });
+    this._questModalVisible.set(true);
+  }
+
+  openNewQuest(): void {
+    this.openQuestDetails(this._DEFAULT_QUEST as QuestUpdateDTO, true);
+  }
+
+  closeQuestModal(): void {
+    this._questModalVisible.set(false);
+    this._questModalData.set({ quest: this._DEFAULT_QUEST, isNew: false });
+  }
+}
+```
 
 Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de deux listes : l'une pour les quêtes à accomplir, l'autre pour les quêtes accomplies. La navigation se fait via un menu composé de deux onglets. Les quêtes à accomplir sont triées par ordre de priorité.
 
@@ -388,6 +449,55 @@ L’application propose un menu apparaissant en permanence en bas de page, et pe
 <div align="center">
 <em>Modale de création de quête.</em>
 </div>
+
+```html
+<div [routerLink]="['/']">
+  <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'home' }">home</i>
+</div>
+```
+
+```js
+export class MenuComponent implements OnInit, OnDestroy {
+  _questModalService = inject(QuestModalService);
+  _router = inject(Router);
+  _routerSubscription!: Subscription;
+
+  ngOnInit(): void {
+    this.setActiveBasedOnUrl(this._router.url);
+    this._routerSubscription = this._router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+      this.setActiveBasedOnUrl(event.url);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this._routerSubscription) {
+      this._routerSubscription.unsubscribe();
+    }
+  }
+
+  setActiveBasedOnUrl(url: string): void {
+    if (url === '/') {
+      this.activeIcon = 'home';
+    } else if (url.includes('/quest-list')) {
+      this.activeIcon = 'quest-list';
+    } [else if (url.includes('/map')) {
+      this.activeIcon = 'map';
+    } else if (url.includes('/settings')) {
+      this.activeIcon = 'settings';
+    } else {
+      this.activeIcon = '';
+    }]
+  }
+
+  navigateToRoute(route: string): void {
+    this._router.navigate([route]);
+  }
+
+  showNewQuestDialog(): void {
+    this._questModalService.openNewQuest();
+  }
+}
+```
 
 L'interface est pensée pour être intuitive, responsive et agréable à utiliser, afin de maximiser l'engagement et la productivité de l'utilisateur.
 
