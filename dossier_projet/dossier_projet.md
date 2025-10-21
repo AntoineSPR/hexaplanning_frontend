@@ -214,6 +214,18 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - **npm** : Gestionnaire de packages JavaScript
 - **Navigateurs** : Chrome et Firefox pour les tests cross-browser
 
+<div align="center">
+<img src="images/FlowchartFront.png" />
+</div>
+
+<div align="center">
+<img src="images/FlowchartBack.png" />
+</div>
+
+<div align="center">
+<em>Organigramme Front / Back.</em>
+</div>
+
 <div style="page-break-before: always;"></div>
 
 # <a name='iii-fonctionnalites-principales'></a>III. Fonctionnalités principales

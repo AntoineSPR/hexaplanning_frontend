@@ -1,0 +1,85 @@
+flowchart LR
+ subgraph Components["Composants"]
+        Login["Login/Register"]
+        Dashboard["Dashboard"]
+        QuestList["Liste des Quêtes"]
+        Map["Carte Hexagonale"]
+        Settings["Paramètres"]
+        ResetPassword["Reset Password"]
+  end
+ subgraph Services["Services Angular"]
+        UserService["UserService"]
+        QuestService["QuestService"]
+        HexService["HexService"]
+        Interceptor["TokenInterceptor"]
+  end
+ subgraph Frontend["🌐 Frontend - Angular"]
+    direction TB
+        LocalStorage["LocalStorage<br>(Token JWT + User)"]
+        Components
+        Services
+  end
+ subgraph Middleware["Middleware"]
+        Auth["Authentication<br>JWT Bearer"]
+        CheckUserAttr["CheckUserAttribute"]
+  end
+ subgraph Controllers["Contrôleurs"]
+        UserCtrl["UserController"]
+        QuestCtrl["QuestController"]
+        HexCtrl["HexAssignmentController"]
+        StatusCtrl["StatusController"]
+        PrioCtrl["PriorityController"]
+  end
+ subgraph Services_Backend["Services"]
+        AuthSvc["AuthService"]
+        UserSvc["UserService"]
+        QuestSvc["QuestService"]
+        HexSvc["HexAssignmentService"]
+        StatusSvc["StatusService"]
+        PrioSvc["PriorityService"]
+        MailSvc["SendMailService"]
+  end
+ subgraph Data["Couche de Données"]
+        DataContext["DataContext<br>Entity Framework Core"]
+        DB[("PostgreSQL<br>Database")]
+  end
+ subgraph Backend["⚙️ Backend - ASP.NET Core"]
+    direction TB
+        Middleware
+        Controllers
+        Services_Backend
+        Data
+  end
+    Login -- POST /user/register<br>POST /user/login --> UserService
+    Login -- "POST /user/forgot-password" --> UserService
+    ResetPassword -- "POST /user/reset-password" --> UserService
+    UserService -- HTTP + JWT Token --> Interceptor
+    Interceptor -- Routes /user/* --> Auth
+    Auth -- Authorize/AllowAnonymous --> UserCtrl
+    UserCtrl --> AuthSvc & MailSvc
+    AuthSvc --> UserSvc
+    UserSvc --> DataContext
+    UserCtrl -- JWT Token + UserData --> UserService
+    UserService -- Stocke --> LocalStorage
+    Dashboard -- Charge les quêtes en attente --> QuestService
+    QuestList -- CRUD Quêtes --> QuestService
+    QuestService -- HTTP + JWT Token --> Interceptor
+    Interceptor -- Routes /quest/* --> Auth
+    Auth --> CheckUserAttr & CheckUserAttr & CheckUserAttr & UserCtrl
+    CheckUserAttr --> QuestCtrl & HexCtrl & StatusCtrl & PrioCtrl
+    QuestCtrl --> QuestSvc
+    QuestSvc --> DataContext
+    Map -- CRUD Hexagones --> HexService
+    HexService -- HTTP + JWT Token --> Interceptor
+    Interceptor -- Routes /hexAssignment/* --> Auth
+    HexCtrl --> HexSvc
+    HexSvc --> DataContext
+    Interceptor -- Route /status --> Auth
+    Interceptor -- Route /priority --> Auth
+    StatusCtrl --> StatusSvc
+    PrioCtrl --> PrioSvc
+    StatusSvc --> DataContext
+    PrioSvc --> DataContext
+    Settings -- "PUT /user/change-password" --> UserService
+    DataContext -- EF Core Queries --> DB
+    LocalStorage -. Lecture Token JWT .-> Interceptor
