@@ -1653,6 +1653,56 @@ Exemples de méthodes testées :
 - Mise à jour et suppression de quêtes (`UpdateQuestAsync`, `DeleteQuestAsync`)
 - Récupération des quêtes selon leur statut (en attente, terminées, non assignées)
 
+Extrait du service de tests unitaire, qui injecte une base de données InMemory dans un DataContext qui sera utilisé par un QuestService dédié. Ici, on vérifie qu'on peut récupérer une quête par son identifiant, et qu'on a aucun retour si l'identifiant est incorrect :
+
+```csharp
+public class QuestServiceTests
+{
+  private readonly DataContext _context;
+  private readonly QuestService _questService;
+
+  public QuestServiceTests()
+  {
+      var options = new DbContextOptionsBuilder<DataContext>()
+          .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+          .Options;
+
+      _context = new DataContext(options);
+      _questService = new QuestService(_context);
+  }
+
+  [Fact]
+  public async Task GetQuestByIdAsync_WithValidId_ReturnsQuest()
+  {
+      var userId = Guid.NewGuid();
+      var quest = new Quest
+      {
+          Id = Guid.NewGuid(),
+          UserId = userId,
+          Title = "Test Quest",
+          Description = "This is a test quest",
+      };
+      await _context.Quests.AddAsync(quest);
+      await _context.SaveChangesAsync();
+
+      var result = await _questService.GetQuestByIdAsync(quest.Id, userId);
+
+      Assert.NotNull(result);
+      Assert.Single(_context.Quests);
+      Assert.Equal(quest.Id, result.Id);
+      Assert.Equal(userId, result.UserId);
+  }
+
+  [Fact]
+  public async Task GetQuestByIdAsync_WithInvalidId_ReturnsNull()
+  {
+      var userId = Guid.NewGuid();
+      var result = await _questService.GetQuestByIdAsync(Guid.NewGuid(), userId);
+      Assert.Null(result);
+  }
+}
+```
+
 ## 2. <a name='vii-2-tests-d-integration'></a> Tests d’intégration
 
 Des tests d’intégration automatisés valident l’ensemble du pipeline API, de la couche HTTP jusqu’à la base de données PostgreSQL (via Testcontainers). Ils simulent des scénarios réels, comme la récupération de quêtes via des requêtes authentifiées, la gestion des droits d’accès, et la cohérence des données persistées.
@@ -1663,9 +1713,108 @@ Caractéristiques :
 - Base de données PostgreSQL éphémère (Testcontainers)
 - Données de test injectées automatiquement (utilisateur, quêtes)
 
+Dans ma WebApplicationFactory, je commence par créer et lancer un conteneur de test, puis configure les variables d'environnement nécessaires :
+
+```csharp
+public async Task InitializeAsync()
+{
+    await _postgresContainer.StartAsync();
+
+    Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+    Environment.SetEnvironmentVariable("API_BACK_URL", "https://localhost:7168");
+    Environment.SetEnvironmentVariable("API_FRONT_URL", "https://localhost:4200");
+    Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+    Environment.SetEnvironmentVariable("JWT_KEY", "i7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPsi7RdBacZPs");
+    Environment.SetEnvironmentVariable("TOKEN_VALIDITY_DAYS", "7");
+}
+```
+
+Je surcharge ensuite la configuration par défaut du projet, afin de remplacer la base de données réelle par une base de tests, et configure les services pour qu'ils pointent vers cette nouvelle base de données.
+
+```csharp
+protected override void ConfigureWebHost(IWebHostBuilder builder)
+{
+    builder.ConfigureServices(services =>
+    {
+        // Ajouter le service provider pour injecter les services necessaires
+        var tempServiceProvider = services.BuildServiceProvider();
+        var configuration = tempServiceProvider.GetService<IConfiguration>();
+
+        // Chercher le service DbContextOptions<DataContext> et le supprimer
+        var descriptor = services.SingleOrDefault(d =>
+            d.ServiceType == typeof(DbContextOptions<DataContext>));
+
+        if (descriptor != null)
+        {
+            services.Remove(descriptor);
+        }
+
+        // Le remplacer par un autre qui pointe sur la base de test PostgreSQL
+        services.AddDbContext<DataContext>(options =>
+        {
+            options.UseNpgsql(_postgresContainer.GetConnectionString());
+            options.EnableSensitiveDataLogging();
+        });
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Créer la base de données et appliquer les migrations de base
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<UserApp>>();
+
+        try
+        {
+            // Creer la base de données
+            context.Database.EnsureCreated();
+
+            // Ajouter les données de test
+            SeedDataAsync(userManager, context).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Database initialization failed: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw;
+        }
+    });
+}
+```
+
 ## 3. <a name='vii-3-tests-de-charge-et-fixtures'></a> Tests de charge et fixtures
 
 Des fixtures de données sont utilisées pour simuler des volumes importants de quêtes et d’utilisateurs, grâce à la librairie Bogus. Cela permet de valider la tenue en charge de l’API et la stabilité des traitements sur de grands ensembles de données. Les tests ont été réalisés avec 100000 utilisateurs et 1000000 de quêtes pour s'assurer de la robustesse de la base de données.
+
+Pour mettre en place ces tests, un controlleur a été créé, et les endpoints ont été utilisés via Swagger :
+
+```csharp
+    [Route("api/[controller]")]
+    [ApiController]
+    public class FixturesController : ControllerBase
+    {
+        private readonly FixturesService fixturesService;
+
+        public FixturesController(FixturesService fixturesService)
+        {
+            this.fixturesService = fixturesService;
+        }
+
+        [HttpPost("create-users/{number}")]
+        public IActionResult CreateUsers(int number)
+        {
+            fixturesService.CreateUsers(number);
+            return Ok($"Created {number} users.");
+        }
+
+        [HttpPost("create-quests/{number}")]
+        public async Task<IActionResult> CreateQuests(int number)
+        {
+            await fixturesService.CreateQuests(number);
+            return Ok($"Created {number} quests for each user.");
+        }
+    }
+```
 
 ## 4. <a name='vii-4-strategie-de-validation'></a> Stratégie de validation
 
