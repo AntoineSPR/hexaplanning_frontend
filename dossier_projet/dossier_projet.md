@@ -1836,16 +1836,49 @@ Un pipeline CI dédié à l’API .NET s’exécute à chaque push sur la branch
 - **Tests d’intégration** : Lancement des tests d’intégration sur une base PostgreSQL éphémère (`dotnet test ./TestsIntegration`)
 - **Vérification de la qualité** : Toute régression ou échec bloque la suite du pipeline
 
-Extrait du workflow :
+Workflow CI en back-end :
 
 ```yaml
+name: CI pipeline for the API
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-   test-unitaire:
-      ...
-      - run: dotnet test --no-build --verbosity normal ./TestsUnitaires
-   test-integration:
-      ...
-      - run: dotnet test --no-build --verbosity detailed  ./TestsIntegration
+  test-unitaire:
+    name: Tests Unitaires
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore dependencies
+        run: dotnet restore ./Procrastinator/
+      - name: Build
+        run: dotnet build ./Procrastinator/ --no-restore
+      - name: Lancer les tests unitaires
+        run: dotnet test --no-build --verbosity normal ./TestsUnitaires
+
+  test-integration:
+    name: Tests d'Intégration
+    runs-on: ubuntu-latest
+    needs: test-unitaire
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore dependencies
+        run: dotnet restore ./Procrastinator/
+      - name: Build
+        run: dotnet build ./Procrastinator/ --no-restore
+      - name: Lancer les tests d'intégration
+        run: dotnet test --no-build --verbosity detailed  ./TestsIntegration
 ```
 
 ## 2. <a name='viii-2-deploiement-continu'></a> Déploiement continu (CD) du backend
@@ -1858,24 +1891,46 @@ Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne s
 
 <div style="page-break-before: always;"></div>
 
-Extrait du workflow :
+Workflow CD en back-end:
 
 ```yaml
+name: Deploy Develop API
+
 on:
-   workflow_run:
-      workflows: ["CI pipeline for the API"]
-      types:
-         - completed
+  workflow_run:
+    workflows: ['CI pipeline for the API']
+    types:
+      - completed
+
 jobs:
-   build-and-deploy:
-      ...
-      - run: docker build -t antoinespr/hexaplanning-api:dev1 .
-      - run: docker push antoinespr/hexaplanning-api:dev1
-      - uses: appleboy/ssh-action@v1.0.0
-         with:
-            script: |
-               docker pull antoinespr/hexaplanning-api:dev1
-               docker compose -f /home/ubuntu/backend/docker-compose.yml up -d --force-recreate
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t antoinespr/hexaplanning-api:dev1 .
+
+      - name: Push image to Docker Hub
+        run: docker push antoinespr/hexaplanning-api:dev1
+
+      - name: Deploy on VPS via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            docker pull antoinespr/hexaplanning-api:dev1
+            docker compose -f /home/ubuntu/backend/docker-compose.yml up -d --force-recreate
 ```
 
 ## 3. <a name='viii-3-deploiement-continu-cd-du-frontend'></a> Déploiement continu (CD) du frontend
@@ -1886,19 +1941,44 @@ Le frontend Angular dispose d’un pipeline CD qui automatise la construction, l
 - **Push Docker** : Publication de l’image sur Docker Hub
 - **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur via `docker compose`
 
-Extrait du workflow :
+Workflow CD en front-end :
 
 ```yaml
+name: CD Pipeline for Angular Project
+
+on:
+  push:
+    branches:
+      - main
 jobs:
-   deploy:
-      ...
-      - run: docker build --target prod-runtime -t antoinespr/hexaplanning-front:dev1 .
-      - run: docker push antoinespr/hexaplanning-front:dev1
-      - uses: appleboy/ssh-action@v1.0.0
-         with:
-            script: |
-               docker pull antoinespr/hexaplanning-front:dev1
-               docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the branch
+        uses: actions/checkout@v4
+
+      - name: Login to docker hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build the docker image
+        run: docker build --target prod-runtime -t antoinespr/hexaplanning-front:dev1 .
+
+      - name: Push the docker image to the docker hub
+        run: docker push antoinespr/hexaplanning-front:dev1
+
+      - name: Deploy on VPS via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            docker pull antoinespr/hexaplanning-front:dev1
+            docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
 ```
 
 ## 4. <a name='viii-4-conteneurisation-et-orchestration'></a> Conteneurisation et orchestration
@@ -1910,6 +1990,16 @@ Chaque composant (frontend, backend, base de données) dispose de son propre Doc
 L’application est hébergée sur un VPS OVH, avec Nginx Proxy Manager pour la gestion des domaines et des certificats SSL. Cette architecture assure la sécurité, la disponibilité et la scalabilité du service.
 
 Cette chaîne CI/CD garantit des livraisons rapides, sûres et automatisées, tout en limitant les interventions manuelles et les risques d’erreur.
+
+Infrastructure du VPS :
+/root/
+├── nginx-proxy-manager/
+│ └── docker-compose.yml
+├── frontend/
+│ ├── docker-compose.yml
+└── backend/
+│ ├── docker-compose.yml
+│ └── .env
 
 Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
 
