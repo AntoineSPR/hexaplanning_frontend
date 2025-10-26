@@ -88,24 +88,31 @@ Réalisé par Antoine Simper
 3.  [Protection contre les attaques](#ix-3-protection-contre-les-attaques)
 4.  [Sécurité de la conteneurisation et du déploiement](#ix-4-securite-de-la-conteneurisation-et-du-deploiement)
 
-**X. [Accessibilité et conformité RGAA](#x-accessibilite-et-conformite-rgaa)**
+**X. [Conformité légale et réglementaire](#x-conformite-legale-et-reglementaire)**
 
-1.  [Conformité RGAA et standards d'accessibilité](#x-1-conformite-rgaa-et-standards-d-accessibilite)
-2.  [Accessibilité des formulaires](#x-2-accessibilite-des-formulaires)
-3.  [Navigation au clavier et focus management](#x-3-navigation-au-clavier-et-focus-management)
-4.  [Technologies d'assistance et lecteurs d'écran](#x-4-technologies-d-assistance-et-lecteurs-d-ecran)
+1.  [CGU (Conditions Générales d'Utilisation)](#x-1-cgu-conditions-generales-d-utilisation)
+2.  [RGPD (Protection des données)](#x-2-rgpd-protection-des-donnees)
+3.  [RGE (Écoconception)](#x-3-rge-ecoconception)
+4.  [Conformité et évolutions](#x-4-conformite-et-evolutions)
 
-**XI. [Veille technologique et résolution de problèmes](#xi-veille-tech-et-resolution)**
+**XI. [Accessibilité et conformité RGAA](#xi-accessibilite-et-conformite-rgaa)**
 
-1.  [Veille technologique continue](#xi-1-veille-technologique)
-2.  [Problèmes rencontrés et solutions](#xi-2-problemes-et-solutions)
+1.  [Conformité RGAA et standards d'accessibilité](#xi-1-conformite-rgaa-et-standards-d-accessibilite)
+2.  [Accessibilité des formulaires](#xi-2-accessibilite-des-formulaires)
+3.  [Navigation au clavier et focus management](#xi-3-navigation-au-clavier-et-focus-management)
+4.  [Technologies d'assistance et lecteurs d'écran](#xi-4-technologies-d-assistance-et-lecteurs-d-ecran)
 
-**XII. [Conclusion et perspectives](#xii-conclusion-et-perspectives)**
+**XII. [Veille technologique et résolution de problèmes](#xii-veille-tech-et-resolution)**
 
-1.  [Bilan du projet](#xii-1-bilan-du-projet)
-2.  [Perspectives d'évolution](#xii-2-perspectives-d-evolution)
-3.  [Ce que ce projet m'a apporté](#xii-3-apport-projet)
-4.  [Remerciements](#xii-4-remerciements)
+1.  [Veille technologique continue](#xii-1-veille-technologique)
+2.  [Problèmes rencontrés et solutions](#xii-2-problemes-et-solutions)
+
+**XIII. [Conclusion et perspectives](#xiii-conclusion-et-perspectives)**
+
+1.  [Bilan du projet](#xiii-1-bilan-du-projet)
+2.  [Perspectives d'évolution](#xiii-2-perspectives-d-evolution)
+3.  [Ce que ce projet m'a apporté](#xiii-3-apport-projet)
+4.  [Remerciements](#xiii-4-remerciements)
 
 <div style="page-break-before: always;"></div>
 
@@ -2218,13 +2225,106 @@ Exemple d'endpoint spécialisé : récupération des quêtes en attente et non a
 
 La sécurité est intégrée à tous les niveaux de l'architecture d'Hexaplanning pour garantir la confidentialité, l'intégrité et la disponibilité des données utilisateurs.
 
+# <a name='x-conformite-legale-et-reglementaire'></a>X. Conformité légale et réglementaire
+
+## 1. <a name='x-1-cgu-conditions-generales-d-utilisation'></a> CGU (Conditions Générales d'Utilisation)
+
+Les Conditions Générales d'Utilisation d'Hexaplanning définissent les règles d'usage de l'application et les responsabilités de l'utilisateur. Elles sont accessibles via un lien direct sur la page de création de compte et doivent être acceptées explicitement avant l'inscription.
+
+**Contenu des CGU :**
+
+- Définition des services proposés et de leur périmètre
+- Modalités de création et de gestion du compte utilisateur
+- Règles d'utilisation de l'application (usages autorisés et interdits)
+- Propriété intellectuelle et droits d'auteur
+- Limitation de responsabilité de l'éditeur
+- Modalités de modification des CGU
+- Clause de résiliation et suppression de compte
+
+**Implémentation technique :**
+
+```typescript
+registerForm = this._formBuilder.group({
+  // ... autres champs
+  acceptCgu: [false, [Validators.requiredTrue]],
+  acceptRgpd: [false, [Validators.requiredTrue]],
+});
+```
+
+Les CGU sont stockées dans une page dédiée (`/cgu`) et accessibles à tout moment depuis le menu de l'application.
+
+## 2. <a name='x-2-rgpd-protection-des-donnees'></a> RGPD (Règlement Général sur la Protection des Données)
+
+Hexaplanning respecte le RGPD et garantit la protection des données personnelles des utilisateurs européens.
+
+**Données collectées et traitées :**
+
+- **Données d'identification** : prénom, nom, adresse e-mail
+- **Données de connexion** : mot de passe (hashé), date de création du compte
+- **Données d'utilisation** : quêtes créées, priorités, statuts, assignations d'hexagones
+
+**Finalités du traitement :**
+
+- Gestion du compte utilisateur et authentification
+- Fourniture des services de gestion de tâches
+- Envoi d'emails transactionnels (réinitialisation de mot de passe)
+
+**Droits des utilisateurs :**
+
+L'utilisateur dispose des droits suivants conformément au RGPD :
+
+- **Droit d'accès** : consulter les données personnelles stockées
+- **Droit de rectification** : modifier les informations personnelles via les paramètres du compte
+- **Droit à l'effacement** : possibilité de supprimer définitivement son compte (à implémenter)
+- **Droit à la portabilité** : exporter ses données au format JSON (à implémenter)
+- **Droit d'opposition** : refuser le traitement de certaines données
+
+**Mesures de sécurité RGPD :**
+
+- Hachage des mots de passe
+- Chiffrement des communications (HTTPS/TLS)
+- Isolation stricte des données par utilisateur (attribut CheckUser)
+- Authentification sécurisée par JWT avec expiration
+- Hébergement des données sur serveurs européens (OVH France)
+
+**Politique de confidentialité :**
+
+La politique de confidentialité détaille les pratiques de collecte, d'utilisation et de protection des données. Elle est accessible via un lien sur la page de création de compte et depuis le menu (`/rgpd`).
+
+## 3. <a name='x-3-rge-ecoconception'></a> RGE (Référentiel Général d'Écoconception)
+
+Hexaplanning intègre des principes d'écoconception pour réduire son empreinte environnementale :
+
+**Optimisations techniques :**
+
+- **Frontend** :
+
+  - Lazy loading des modules Angular pour limiter le chargement initial
+  - Cache navigateur pour éviter les requêtes redondantes
+
+- **Backend** :
+
+  - Requêtes SQL optimisées avec Entity Framework
+  - Endpoints spécialisés pour éviter le sur-fetching de données (`/pending`, `/completed`, `/unassigned_pending`)
+  - Utilisation d'index sur la base de données PostgreSQL
+  - Conteneurisation Docker pour optimiser l'utilisation des ressources serveur
+
+## 4. <a name='x-4-conformite-et-evolutions'></a> Conformité et évolutions
+
+Les évolutions pour rester en conformité avec les RGPD et appliquer les bonnes pratiques RGE incluent :
+
+- Ajout d'une fonction de suppression de compte (RGPD - droit à l'effacement)
+- Export des données utilisateur au format JSON (RGPD - portabilité)
+- Tableau de bord de gestion des consentements
+- Audit d'écoconception avec outils spécialisés (GreenIT Analysis, EcoIndex)
+
 <div style="page-break-before: always;"></div>
 
-# <a name='x-accessibilite-et-conformite-rgaa'></a>X. Accessibilité et conformité RGAA
+# <a name='xi-accessibilite-et-conformite-rgaa'></a>XI. Accessibilité et conformité RGAA
 
 L'accessibilité numérique est un enjeu majeur pour Hexaplanning, permettant à tous les utilisateurs, y compris ceux en situation de handicap, d'accéder pleinement aux fonctionnalités de l'application. Ce chapitre détaille les mesures d'accessibilité implémentées dans l'application.
 
-## 1. <a name='x-1-conformite-rgaa-et-standards-d-accessibilite'></a> Conformité RGAA et standards d'accessibilité
+## 1. <a name='xi-1-conformite-rgaa-et-standards-d-accessibilite'></a> Conformité RGAA et standards d'accessibilité
 
 ### Standards respectés
 
@@ -2250,7 +2350,7 @@ Une gestion globale du focus a été implémentée pour améliorer la navigation
 
 Cette règle CSS garantit que tous les éléments focalisables ont un indicateur visuel clair et visible.
 
-## 2. <a name='x-2-accessibilite-des-formulaires'></a> Accessibilité des formulaires
+## 2. <a name='xi-2-accessibilite-des-formulaires'></a> Accessibilité des formulaires
 
 ### Formulaire de connexion
 
@@ -2343,7 +2443,7 @@ La modale de récupération de mot de passe utilise des attributs ARIA appropri�
 
 <div style="page-break-before: always;"></div>
 
-## 3. <a name='x-3-navigation-au-clavier-et-focus-management'></a> Navigation au clavier et focus management
+## 3. <a name='xi-3-navigation-au-clavier-et-focus-management'></a> Navigation au clavier et focus management
 
 ### Navigation dans la carte hexagonale
 
@@ -2405,7 +2505,7 @@ Le menu de navigation a une gestion spécialisée du focus pour améliorer l'exp
 }
 ```
 
-## 4. <a name='x-4-technologies-d-assistance-et-lecteurs-d-ecran'></a> Technologies d'assistance et lecteurs d'écran
+## 4. <a name='xi-4-technologies-d-assistance-et-lecteurs-d-ecran'></a> Technologies d'assistance et lecteurs d'écran
 
 ### Classes pour lecteurs d'écran
 
@@ -2467,27 +2567,27 @@ Cette approche d'accessibilité garantit qu'Hexaplanning peut être utilisé eff
 
 <div style="page-break-before: always;"></div>
 
-# <a name='xi-veille-tech-et-resolution'></a>XI. Veille technologique et résolution de problèmes
+# <a name='xii-veille-tech-et-resolution'></a>XII. Veille technologique et résolution de problèmes
 
-## 1. <a name='xi-1-veille-technologique'></a> Veille technologique continue
+## 1. <a name='xii-1-veille-technologique'></a> Veille technologique continue
 
 J'ai suivi l'apparition et l'application de nouvelles technologies, notamment les signaux sur Angular, que j'utilise partout dans mon front-end. Je me suis tenu au courant des dernières avancées techniques en .NET et Angular grâce à des vidéos sur Youtube, notamment de "Nick Chapsas" et "Code with Ahsan". Pour mieux comprendre les technologies que j'ai eu à utiliser dans le cadre professionnel notamment, j'ai également lu des articles techniques (par exemple sur le fonctionnement des applications mobiles sur Android et sur iOS), eu recours à de la documentation officielle, et cherché les solutions à des problèmes spécifiques sur StackOverflow.
 
-## 2. <a name='xi-2-problemes-et-solutions'></a> Problèmes rencontrés et solutions
+## 2. <a name='xii-2-problemes-et-solutions'></a> Problèmes rencontrés et solutions
 
 Comment garantir qu’un utilisateur ne puisse pas accéder aux données d’un autre ? Pour cela, en plus du middleware d’authentification JWT, j'ai créé un attribut personnalisé `CheckUser` plaçant le `UserId` dans le HttpContext, et l'ai placé dans chaque contrôleur (Voir chapitre VI - 3).
 
 Comment informer l'utilisateur de l'envoi d'un mail de réinitialisation de mot de passe, sans révéler si l'adresse e-mail existe dans la base de données ? Pour cela, je renvoie un message générique de succès, mais limite les requêtes à une toute les 5 minutes par adresse e-mail, afin d'éviter le spam d'un utilisateur.
 
-# <a name='xii-conclusion-et-perspectives'></a>XII. Conclusion et perspectives
+# <a name='xiii-conclusion-et-perspectives'></a>XIII. Conclusion et perspectives
 
-## 1. <a name='xii-1-bilan-du-projet'></a> Bilan du projet
+## 1. <a name='xiii-1-bilan-du-projet'></a> Bilan du projet
 
 Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l'expérience utilisateur et la gamification de la gestion de tâches, avec un découpage clair entre frontend Angular et backend .NET, la modélisation des entités (quêtes, utilisateurs, hexagones), ainsi que l'automatisation des tests et du déploiement.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L'architecture modulaire et la conteneurisation facilitent la maintenance et l'évolutivité.
 
-## 2. <a name='xii-2-perspectives-d-evolution'></a> Perspectives d'évolution
+## 2. <a name='xiii-2-perspectives-d-evolution'></a> Perspectives d'évolution
 
 Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
@@ -2538,7 +2638,7 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
 
 L'architecture actuelle, modulaire et évolutive, permet d'intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
 
-## 3. <a name='xii-3-apport-projet'></a> Ce que ce projet m'a apporté
+## 3. <a name='xiii-3-apport-projet'></a> Ce que ce projet m'a apporté
 
 Ce projet d'application web complète a été une expérience formatrice, me permettant d'acquérir et de consolider des compétences techniques et méthodologiques essentielles au développement moderne.
 
@@ -2560,7 +2660,7 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
-## 4. <a name='xii-4-remerciements'></a> Remerciements et crédits
+## 4. <a name='xiii-4-remerciements'></a> Remerciements et crédits
 
 Je tiens à remercier mon formateur Pierre-Louis Bastin pour son soutien et sa confiance malgré les difficultés.
 Egalement Mahdi Mcheik, mon camarade de formation et ami, pour ses précieux conseils et son aide pour terminer mon projet.
