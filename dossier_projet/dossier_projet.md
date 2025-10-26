@@ -1,3 +1,46 @@
+<style>
+.toc-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.toc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.toc-item-content {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.toc-item-content {
+  flex: 0 1 auto;
+}
+
+.toc-dots {
+  flex: 1 1 auto;
+  border-bottom: 2px dotted #ccc;
+  margin: 0 8px;
+  min-width: 20px;
+}
+
+.toc-page {
+  flex-shrink: 0;
+  font-weight: bold;
+}
+
+.toc-level-1 {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-top: 16px;
+}
+</style>
+
 <h1 style="text-align: center; font-size: 3em; color: #8a2be2; font-weight: bold; display: block; margin: 100px auto 20px auto; width: 100%;">
 HEXAPLANNING
 </h1>
@@ -24,17 +67,29 @@ Réalisé par Antoine Simper
 
 # Table des matières
 
-**I. [Introduction](#i-introduction)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>I. <a href="#i-introduction">Introduction</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 5</span>
+</div>
 
 1.  [Présentation du projet](#i-1-presentation-du-projet)
 2.  [Objectifs et contexte](#i-2-objectifs-et-contexte)
 
-**II. [Spécifications du projet](#ii-specifications-du-projet)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>II. <a href="#ii-specifications-du-projet">Spécifications du projet</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 6</span>
+</div>
 
 1.  [Spécifications fonctionnelles](#ii-1-specifications-fonctionnelles)
 2.  [Spécifications techniques](#ii-2-specifications-techniques)
 
-**III. [Fonctionnalités principales](#iii-fonctionnalites-principales)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>III. <a href="#iii-fonctionnalites-principales">Fonctionnalités principales</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 10</span>
+</div>
 
 1.  [Page d'accueil](#iii-1-page-d-accueil)
 2.  [Gestion des quêtes (tâches)](#iii-2-gestion-des-quetes-taches)
@@ -42,19 +97,31 @@ Réalisé par Antoine Simper
 4.  [Système d'authentification et gestion des utilisateurs](#iii-4-systeme-d-authentification-et-gestion-des-utilisateurs)
 5.  [Navigation et ergonomie](#iii-5-navigation-et-ergonomie)
 
-**IV. [Travail en équipe & méthodologie](#iv-travail-en-equipe-methodologie)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>IV. <a href="#iv-travail-en-equipe-methodologie">Travail en équipe & méthodologie</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 31</span>
+</div>
 
 1.  [Méthode Agile / Scrum](#iv-1-methode-agile-scrum)
 2.  [Workflow & branches stratégie](#iv-2-workflow-branches-strategie)
 3.  [Outils collaboratifs](#iv-3-outils-collaboratifs)
 
-**V. [Modélisation des données](#v-modelisation-des-donnees)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>V. <a href="#v-modelisation-des-donnees">Modélisation des données</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 33</span>
+</div>
 
 1.  [MCD (Modèle Conceptuel de Donnees)](#v-1-mcd-modele-conceptuel-de-donnees)
 2.  [MLD (Modèle Logique de Données)](#v-2-mld-modele-logique-de-donnees)
 3.  [Description des entités et relations](#v-3-description-des-entites-et-relations)
 
-**VI. [Architecture technique et technologies](#vi-architecture-technique-et-technologies)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>VI. <a href="#vi-architecture-technique-et-technologies">Architecture technique et technologies</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 36</span>
+</div>
 
 1.  [Vue d'ensemble](#vi-1-vue-d-ensemble)
 2.  [Frontend : Angular et PrimeNG](#vi-2-frontend-angular-et-primeng)
@@ -64,7 +131,11 @@ Réalisé par Antoine Simper
 6.  [Infrastructure et DevOps](#vi-6-infrastructure-et-devops)
 7.  [Services externes](#vi-7-services-externes)
 
-**VII. [Qualité logicielle et tests](#vii-qualite-logicielle-et-tests)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>VII. <a href="#vii-qualite-logicielle-et-tests">Qualité logicielle et tests</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 47</span>
+</div>
 
 1.  [Tests unitaires (backend)](#vii-1-tests-unitaires-backend)
 2.  [Tests d’intégration](#vii-2-tests-d-integration)
@@ -73,7 +144,11 @@ Réalisé par Antoine Simper
 
 <div style="page-break-before: always;"></div>
 
-**VIII. [CI / CD](#viii-ci-cd)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>VIII. <a href="#viii-ci-cd">CI / CD</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 51</span>
+</div>
 
 1.  [Intégration continue (CI) de l’API](#viii-1-integration-continue)
 2.  [Déploiement continu (CD) du backend](#viii-2-deploiement-continu)
@@ -81,33 +156,53 @@ Réalisé par Antoine Simper
 4.  [Conteneurisation et orchestration](#viii-4-conteneurisation-et-orchestration)
 5.  [Hébergement et reverse proxy](#viii-5-hebergement-et-reverse-proxy)
 
-**IX. [Sécurité](#ix-securite)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>IX. <a href="#ix-securite">Sécurité</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 55</span>
+</div>
 
 1.  [Authentification et gestion des accès](#ix-1-authentification-et-gestion-des-acces)
 2.  [Validation et intégrité des données](#ix-2-validation-et-integrite-des-donnees)
 3.  [Protection contre les attaques](#ix-3-protection-contre-les-attaques)
 4.  [Sécurité de la conteneurisation et du déploiement](#ix-4-securite-de-la-conteneurisation-et-du-deploiement)
 
-**X. [Conformité légale et réglementaire](#x-conformite-legale-et-reglementaire)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>X. <a href="#x-conformite-legale-et-reglementaire">Conformité légale et réglementaire</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 59</span>
+</div>
 
 1.  [CGU (Conditions Générales d'Utilisation)](#x-1-cgu-conditions-generales-d-utilisation)
 2.  [RGPD (Protection des données)](#x-2-rgpd-protection-des-donnees)
 3.  [RGE (Écoconception)](#x-3-rge-ecoconception)
 4.  [Conformité et évolutions](#x-4-conformite-et-evolutions)
 
-**XI. [Accessibilité et conformité RGAA](#xi-accessibilite-et-conformite-rgaa)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>XI. <a href="#xi-accessibilite-et-conformite-rgaa">Accessibilité et conformité RGAA</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 61</span>
+</div>
 
 1.  [Conformité RGAA et standards d'accessibilité](#xi-1-conformite-rgaa-et-standards-d-accessibilite)
 2.  [Accessibilité des formulaires](#xi-2-accessibilite-des-formulaires)
 3.  [Navigation au clavier et focus management](#xi-3-navigation-au-clavier-et-focus-management)
 4.  [Technologies d'assistance et lecteurs d'écran](#xi-4-technologies-d-assistance-et-lecteurs-d-ecran)
 
-**XII. [Veille technologique et résolution de problèmes](#xii-veille-tech-et-resolution)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>XII. <a href="#xii-veille-tech-et-resolution">Veille technologique et résolution de problèmes</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 67</span>
+</div>
 
 1.  [Veille technologique continue](#xii-1-veille-technologique)
 2.  [Problèmes rencontrés et solutions](#xii-2-problemes-et-solutions)
 
-**XIII. [Conclusion et perspectives](#xiii-conclusion-et-perspectives)**
+<div class="toc-item toc-level-1">
+  <span class="toc-item-content"><strong>XIII. <a href="#xiii-conclusion-et-perspectives">Conclusion et perspectives</a></strong></span>
+  <span class="toc-dots"></span>
+  <span class="toc-page">p. 68</span>
+</div>
 
 1.  [Bilan du projet](#xiii-1-bilan-du-projet)
 2.  [Perspectives d'évolution](#xiii-2-perspectives-d-evolution)
