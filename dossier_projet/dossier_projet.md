@@ -2589,13 +2589,17 @@ Les fonctionnalités principales sont opérationnelles : création et gestion de
 
 ## 2. <a name='xiii-2-perspectives-d-evolution'></a> Perspectives d'évolution
 
-Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
+Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fonctionnels et techniques, en lien avec les besoins utilisateurs et la structure du code :
 
 - **Sécurité et gestion des comptes**
 
   - Ajout d'un système de refresh token (stocké localement ou en cookies) pour renforcer la sécurité et la gestion de session.
   - Envoi d'un email de bienvenue et de confirmation à la création du compte.
   - Création d'un dashboard administrateur pour gérer les utilisateurs.
+
+- **Tests**
+
+  - Implémentation de tests end-to-end pour valider le parcours utilisateur de bout en bout grâce à Cypress ou Playwright.
 
 - **Liste de quêtes**
 
@@ -2630,7 +2634,7 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
   - Personnalisation des unités déployables sur la carte (une fois faite l'implémentation d'un ou plusieurs personnages évoluant sur la carte).
   - Sélection possible de la langue, en stockant tous les textes affichés dans des constantes répertoriées dans différents fichiers (en, fr, etc.) et récupérées via un service de traduction.
 
-- **Déploiement futur**
+- **Déploiement mobile futur**
 
   - Création d'une application mobile en utilisant Ionic, et déploiement sur les stores Android et iOS.
   - Système de notifications.
