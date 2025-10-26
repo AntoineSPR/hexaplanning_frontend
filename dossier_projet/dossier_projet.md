@@ -95,12 +95,17 @@ Réalisé par Antoine Simper
 3.  [Navigation au clavier et focus management](#x-3-navigation-au-clavier-et-focus-management)
 4.  [Technologies d'assistance et lecteurs d'écran](#x-4-technologies-d-assistance-et-lecteurs-d-ecran)
 
-**XI. [Conclusion et perspectives](#xi-conclusion-et-perspectives)**
+**XI. [Veille technologique et résolution de problèmes](#xi-veille-tech-et-resolution)**
 
-1.  [Bilan du projet](#xi-1-bilan-du-projet)
-2.  [Perspectives d'évolution](#xi-2-perspectives-d-evolution)
-3.  [Ce que ce projet m'a apporté](#xi-3-apport-projet)
-4.  [Remerciements](#xi-4-remerciements)
+1.  [Veille technologique continue](#xi-1-veille-technologique)
+2.  [Problèmes rencontrés et solutions](#xi-2-problemes-et-solutions)
+
+**XII. [Conclusion et perspectives](#xii-conclusion-et-perspectives)**
+
+1.  [Bilan du projet](#xii-1-bilan-du-projet)
+2.  [Perspectives d'évolution](#xii-2-perspectives-d-evolution)
+3.  [Ce que ce projet m'a apporté](#xii-3-apport-projet)
+4.  [Remerciements](#xii-4-remerciements)
 
 <div style="page-break-before: always;"></div>
 
@@ -2451,15 +2456,27 @@ Cette approche d'accessibilité garantit qu'Hexaplanning peut être utilisé eff
 
 <div style="page-break-before: always;"></div>
 
-# <a name='xi-conclusion-et-perspectives'></a>XI. Conclusion et perspectives
+# <a name='xi-veille-tech-et-resolution'></a>XI. Veille technologique et résolution de problèmes
 
-## 1. <a name='xi-1-bilan-du-projet'></a> Bilan du projet
+## 1. <a name='xi-1-veille-technologique'></a> Veille technologique continue
+
+J'ai suivi l'apparition et l'application de nouvelles technologies, notamment les signaux sur Angular, que j'utilise partout dans mon front-end. Je me suis tenu au courant des dernières avancées techniques en .NET et Angular grâce à des vidéos sur Youtube, notamment de "Nick Chapsas" et "Code with Ahsan". Pour mieux comprendre les technologies que j'ai eu à utiliser dans le cadre professionnel notamment, j'ai également lu des articles techniques (par exemple sur le fonctionnement des applications mobiles sur Android et sur iOS), eu recours à de la documentation officielle, et cherché les solutions à des problèmes spécifiques sur StackOverflow.
+
+## 2. <a name='xi-2-problemes-et-solutions'></a> Problèmes rencontrés et solutions
+
+Comment garantir qu’un utilisateur ne puisse pas accéder aux données d’un autre ? Pour cela, en plus du middleware d’authentification JWT, j'ai créé un attribut personnalisé `CheckUser` plaçant le `UserId` dans le HttpContext, et l'ai placé dans chaque contrôleur (Voir chapitre VI - 3).
+
+Comment informer l'utilisateur de l'envoi d'un mail de réinitialisation de mot de passe, sans révéler si l'adresse e-mail existe dans la base de données ? Pour cela, je renvoie un message générique de succès, mais limite les requêtes à une toute les 5 minutes par adresse e-mail, afin d'éviter le spam d'un utilisateur.
+
+# <a name='xii-conclusion-et-perspectives'></a>XII. Conclusion et perspectives
+
+## 1. <a name='xii-1-bilan-du-projet'></a> Bilan du projet
 
 Hexaplanning a permis de concevoir et de mettre en production une application web moderne, robuste et sécurisée, centrée sur l'expérience utilisateur et la gamification de la gestion de tâches, avec un découpage clair entre frontend Angular et backend .NET, la modélisation des entités (quêtes, utilisateurs, hexagones), ainsi que l'automatisation des tests et du déploiement.
 
 Les fonctionnalités principales sont opérationnelles : création et gestion de quêtes, affichage visuel sur carte hexagonale, authentification sécurisée, gestion des mots de passe, et notifications par email. L'architecture modulaire et la conteneurisation facilitent la maintenance et l'évolutivité.
 
-## 2. <a name='xi-2-perspectives-d-evolution'></a> Perspectives d'évolution
+## 2. <a name='xii-2-perspectives-d-evolution'></a> Perspectives d'évolution
 
 Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fonctionnels et techniques, en lien direct avec les besoins utilisateurs et la structure du code :
 
@@ -2510,7 +2527,7 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
 
 L'architecture actuelle, modulaire et évolutive, permet d'intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
 
-## 3. <a name='xi-3-apport-projet'></a> Ce que ce projet m'a apporté
+## 3. <a name='xii-3-apport-projet'></a> Ce que ce projet m'a apporté
 
 Ce projet d'application web complète a été une expérience formatrice, me permettant d'acquérir et de consolider des compétences techniques et méthodologiques essentielles au développement moderne.
 
@@ -2532,7 +2549,7 @@ Ce projet d'application web complète a été une expérience formatrice, me per
 
 Ce projet représente une synthèse complète des compétences attendues d'un développeur full-stack, de la conception à la mise en production, en passant par l'optimisation et la maintenance.
 
-## 4. <a name='xi-4-remerciements'></a> Remerciements et crédits
+## 4. <a name='xii-4-remerciements'></a> Remerciements et crédits
 
 Je tiens à remercier mon formateur Pierre-Louis Bastin pour son soutien et sa confiance malgré les difficultés.
 Egalement Mahdi Mcheik, mon camarade de formation et ami, pour ses précieux conseils et son aide pour terminer mon projet.
