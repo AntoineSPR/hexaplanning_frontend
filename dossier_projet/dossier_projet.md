@@ -233,6 +233,8 @@ Pour .NET, une fois les services enregistrés dans le conteneur d'injection (par
 - **npm** : Gestionnaire de packages JavaScript
 - **Navigateurs** : Chrome et Firefox pour les tests cross-browser
 
+<div style="page-break-before: always;"></div>
+
 <div align="center">
 <img src="images/FlowchartFront.png" width="550" />
 </div>
@@ -305,6 +307,8 @@ Les tâches, appelées "quêtes", sont au cœur de l’application. Chaque quêt
   </div>
 </div>
 
+<div style="page-break-before: always;"></div>
+
 Service de modale de quête :
 
 ```js
@@ -349,6 +353,8 @@ export class QuestModalService {
   }
 }
 ```
+
+<div style="page-break-before: always;"></div>
 
 Extrait du service de gestion des quêtes, contenant des signaux qui sont définis par des appels à l'API, puis utilisés dans les composants qui en ont besoin :
 
@@ -398,6 +404,8 @@ export class QuestService {
   // [...]
 }
 ```
+
+<div style="page-break-before: always;"></div>
 
 Nouvelle quête et édition de quête - TS :
 
@@ -485,14 +493,14 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 }
 ```
 
+<div style="page-break-before: always;"></div>
+
 Nouvelle quête et édition de quête - HTML :
 
 ```html
 <form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
   <div>
-    <!-- BOUTON RETOUR -->
     <button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
-    <!-- TITRE -->
     <div class="title">
       <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
       <textarea
@@ -515,7 +523,6 @@ Nouvelle quête et édition de quête - HTML :
     </div>
   </div>
 
-  <!-- STATUT -->
   <div>
     <label for="status" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Statut :</label>
     @if (isEdit) {
@@ -580,34 +587,7 @@ Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de d
   </div>
 </div>
 
-Listes de quêtes - HTML :
-
-```html
-<div class="quest-list">
-  <h1>Vue d'ensemble</h1>
-  <div class="quest-tabs">
-    <p-tabMenu
-      [model]="menuItems"
-      [activeItem]="activeItem"
-      (activeItemChange)="navigateOnMenu($event)"
-      role="tablist"
-      aria-label="Navigation entre les types de quêtes" />
-  </div>
-  @if (this.activeItem === this.menuItems[0]) {
-  <div class="active-quests">
-    @for (pendingQuest of pendingQuests; track pendingQuest.id) {
-    <app-quest-card [quest]="pendingQuest"> </app-quest-card>
-    }
-  </div>
-  } @else if (this.activeItem === this.menuItems[1]) {
-  <div class="completed-quests">
-    @for (completedQuest of completedQuests; track completedQuest.id) {
-    <app-quest-card [quest]="completedQuest"> </app-quest-card>
-    }
-  </div>
-  }
-</div>
-```
+<div style="page-break-before: always;"></div>
 
 Listes de quêtes - TS :
 
@@ -643,6 +623,37 @@ export class QuestListPageComponent implements OnInit {
 }
 ```
 
+<div style="page-break-before: always;"></div>
+
+Listes de quêtes - HTML :
+
+```html
+<div class="quest-list">
+  <h1>Vue d'ensemble</h1>
+  <div class="quest-tabs">
+    <p-tabMenu
+      [model]="menuItems"
+      [activeItem]="activeItem"
+      (activeItemChange)="navigateOnMenu($event)"
+      role="tablist"
+      aria-label="Navigation entre les types de quêtes" />
+  </div>
+  @if (this.activeItem === this.menuItems[0]) {
+  <div class="active-quests">
+    @for (pendingQuest of pendingQuests; track pendingQuest.id) {
+    <app-quest-card [quest]="pendingQuest"> </app-quest-card>
+    }
+  </div>
+  } @else if (this.activeItem === this.menuItems[1]) {
+  <div class="completed-quests">
+    @for (completedQuest of completedQuests; track completedQuest.id) {
+    <app-quest-card [quest]="completedQuest"> </app-quest-card>
+    }
+  </div>
+  }
+</div>
+```
+
 Sur ces listes, l'utilisateur peut voir d'un coup d'oeil le titre de chaque quête ainsi qu'une icône représentant sa priorité, doublée d'un code couleur (orangé pour les principales, argenté pour les secondaires, gris foncé pour les tertiaires). Il dispose également d'un bouton à cocher pour aisément marquer une quête comme accomplie - ce qui déclenche un toast de succès - ou au contraire réhabiliter une quête terminée. Si la quête est indiquée comme "en cours", la barre de progression s'affiche directement sur l'aperçu de la quête, la remplissant progressivement d'une couleur plus sombre. Les quêtes terminées sont entièrement remplies.
 
 ## 3. <a name='iii-3-affichage-visuel-en-hexagones-carte'></a>Affichage visuel en hexagones (carte)
@@ -671,6 +682,8 @@ L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone v
     <em>Modale de désassignation d'une quête à un hexagone.</em>
   </div>
 </div>
+
+<div style="page-break-before: always;"></div>
 
 HTML :
 
@@ -705,6 +718,8 @@ HTML :
   </ng-template>
 </p-dialog>
 ```
+
+<div style="page-break-before: always;"></div>
 
 TS :
 
@@ -745,21 +760,17 @@ Tout comme sur les listes des quêtes, il suffit de cliquer ou d'appuyer sur un 
 
 L’accès à l’application nécessite la création d’un compte et une authentification sécurisée. L'utilisateur devra accepter les CGU et la politique de confidentialité, accessibles via des liens sur le formulaire de création de compte. Le mot de passe choisi devra respecter les normes standard : au minimum 8 caractères dont 1 lettre majuscule, 1 lettre minuscule, 1 chiffre et 1 caractère spécial. Après son enregistrement, l'utilisateur sera redirigé vers la page de connexion, et il peut aisément naviguer entre la connexion et la création de compte via un lien en bas de page.
 
-<div align="center">
-<img src="images/register.png" width="200" />
-</div>
-
-<div align="center">
-<em>Page de création de compte.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/login.png" width="200" />
-</div>
-
-<div align="center">
-<em>Page de connexion.</em>
+<div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="images/register.png" width="200" />
+    <br />
+    <em>Page de création de compte.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/login.png" width="200" />
+    <br />
+    <em>Page de connexion.</em>
+  </div>
 </div>
 
 Validateurs lors de l'inscription :
@@ -781,6 +792,8 @@ Validateurs lors de l'inscription :
   }
 ```
 
+<div style="page-break-before: always;"></div>
+
 Extrait du validateur de mot de passe personnalisé :
 
 ```js
@@ -796,9 +809,7 @@ export const PASSWORD_REQUIREMENTS = {
 export function apiPasswordValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
-
     if (!value) return null;
-
     const errors: ValidationErrors = {};
 
     if (value.length < PASSWORD_REQUIREMENTS.MIN_LENGTH) {
@@ -810,10 +821,7 @@ export function apiPasswordValidator(): ValidatorFn {
 
     if (PASSWORD_REQUIREMENTS.REQUIRE_DIGIT && !/\d/.test(value)) {
       errors['requireDigit'] = true;
-    }
-
-    // [...]
-
+    } // [...]
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
@@ -833,7 +841,6 @@ export function apiPasswordValidator(): ValidatorFn {
       const errorsCount = Object.keys(errors).length;
       confirmPassword.setErrors(errorsCount === 0 ? null : errors);
     }
-
     return null;
   };
 }
@@ -904,22 +911,20 @@ Un système de gestion des mots de passe oubliés est en place, avec envoi d'ema
 
 Le destinataire recevera un mail contenant un lien de réinitialisation de mot de passe. Ce lien le redirigera vers la page prévue à cet effet, avec dans l'url un token valable une heure, et l'adresse e-mail du compte à modifier. Sans ces deux éléments valides, la requête ne pourra être acceptée. L'utilisateur n'a plus qu'à rentrer son nouveau mot de passe et à le confirmer, avant d'être redirigé vers la page de connexion.
 
-<div align="center">
-<img src="images/mail-reset-password.png" width="200" />
+<div style="display: flex; justify-content: space-around; align-items: center; gap: 10px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="images/mail-reset-password.png" width="200" />
+    <br />
+    <em>Mail de réinitialisation de mot de passe.</em>
+  </div>
+  <div style="text-align: center;">
+    <img src="images/page-reset-password.png" width="200" />
+    <br />
+    <em>Page de réinitialisation de mot de passe.</em>
+  </div>
 </div>
 
-<div align="center">
-<em>Mail de réinitialisation de mot de passe.</em>
-</div>
-<br />
-
-<div align="center">
-<img src="images/page-reset-password.png" width="200" />
-</div>
-
-<div align="center">
-<em>Page de réinitialisation de mot de passe.</em>
-</div>
+<div style="page-break-before: always;"></div>
 
 Composant de réinitialisation de mot de passe :
 
@@ -1027,6 +1032,8 @@ HTML :
 </div>
 ```
 
+<div style="page-break-before: always;"></div>
+
 TS :
 
 ```js
@@ -1097,10 +1104,10 @@ Le projet Hexaplanning a été développé tout d'abord en collaboration, puis e
 - Mise en place des User Stories
 - Configuration de l'environnement de développement
 - Architecture de base (frontend Angular + backend .NET)
+
+**Sprint 2 : Fonctionnalités principales**
+
 - Authentification et gestion des utilisateurs
-
-**Sprint 2 : Fonctionnalités core**
-
 - CRUD des quêtes
 - Système de priorités et statuts
 - Interface de liste des quêtes
@@ -1124,28 +1131,27 @@ Le projet Hexaplanning a été développé tout d'abord en collaboration, puis e
 **Stratégie de branching :**
 
 - **main** : Branche de production, code stable
-- **develop** : Branche de développement, intégration des features
-- **feature/** : Branches pour chaque nouvelle fonctionnalité
-- **hotfix/** : Corrections urgentes sur la production
+- **development** : Branche de développement, intégration des features, mergée ensuite dans main
+- Branches pour chaque nouvelle fonctionnalité et chaque correctif, mergées ensuite dans development
 
 ### Processus de développement
 
 ```bash
 # Création d'une nouvelle feature
-git checkout develop
-git pull origin develop
-git checkout -b feature/quest-management
+git checkout development
+git pull origin development
+git checkout -b quest-management
 
 # Développement et commits
 git add .
-git commit -m "feat: add quest creation functionality"
+git commit -m "Add quest creation functionality"
 
 # Push et Pull Request
-git push origin feature/quest-management
-# Création PR sur GitHub : feature/quest-management -> develop
+git push origin quest-management
+# Création PR sur GitHub : quest-management -> development
 ```
 
-### Code Review
+### Code Review (appliqué si travail en équipe)
 
 - **Pull Requests obligatoires** : Aucun code ne merge sans review
 - **Critères de validation** : Tests passants, documentation, respect des conventions
@@ -1353,7 +1359,7 @@ L'API suit une architecture en couches claire pour séparer les responsabilités
 
 ### Modèle générique BaseModel
 
-L'architecture utilise un **modèle générique d'héritage** pour standardiser les entités et éviter la duplication de code :
+L'architecture utilise un **modèle générique** pour standardiser les entités et éviter la duplication de code :
 
 **BaseModel - Classe commune :**
 
@@ -1651,7 +1657,7 @@ public async Task<IActionResult> CreateQuest([FromBody] QuestCreateDTO questDto)
 - **Workflow CI** : Tests unitaires et d'intégration automatiques avant chaque déploiement
 - **Workflow CD** : Build, push vers Docker Hub et déploiement automatique sur le VPS
 
-### Hébergement et infrastructure
+### Hébergement
 
 - **OVH VPS** : Hébergement flexible et sécurisé, adapté à la montée en charge. Serveur Linux Ubuntu avec Docker et docker-compose installés.
 - **Nginx Proxy Manager** : Gestion centralisée des domaines, des certificats SSL et du reverse proxy. Interface web pour la configuration des routes et des certificats Let's Encrypt automatiques.
@@ -1920,12 +1926,6 @@ L’automatisation du déploiement et de l’intégration continue est assurée 
 
 ## 1. <a name='viii-1-integration-continue'></a> Intégration continue (CI) de l’API
 
-Un pipeline CI dédié à l’API .NET s’exécute à chaque push sur la branche `main` :
-
-- **Tests unitaires** : Compilation et exécution des tests unitaires (`dotnet test ./TestsUnitaires`)
-- **Tests d’intégration** : Lancement des tests d’intégration sur une base PostgreSQL éphémère (`dotnet test ./TestsIntegration`)
-- **Vérification de la qualité** : Toute régression ou échec bloque la suite du pipeline
-
 Workflow CI en back-end :
 
 ```yaml
@@ -1971,15 +1971,13 @@ jobs:
         run: dotnet test --no-build --verbosity detailed  ./TestsIntegration
 ```
 
+Un pipeline CI dédié à l’API .NET s’exécute à chaque push sur la branche `main` :
+
+- **Tests unitaires** : Compilation et exécution des tests unitaires (`dotnet test ./TestsUnitaires`)
+- **Tests d’intégration** : Lancement des tests d’intégration sur une base PostgreSQL éphémère (`dotnet test ./TestsIntegration`)
+- **Vérification de la qualité** : Toute régression ou échec bloque la suite du pipeline
+
 ## 2. <a name='viii-2-deploiement-continu'></a> Déploiement continu (CD) du backend
-
-Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne se déclenche que si le pipeline CI de l’API s’est terminé avec succès (`workflow_run`). Il effectue les étapes suivantes :
-
-- **Build Docker** : Construction de l’image Docker de l’API
-- **Push Docker** : Publication de l’image sur Docker Hub
-- **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur backend via `docker compose`
-
-<div style="page-break-before: always;"></div>
 
 Workflow CD en back-end:
 
@@ -2023,13 +2021,13 @@ jobs:
             docker compose -f /home/ubuntu/backend/docker-compose.yml up -d --force-recreate
 ```
 
-## 3. <a name='viii-3-deploiement-continu-cd-du-frontend'></a> Déploiement continu (CD) du frontend
+Le backend .NET dispose également d’un pipeline CD automatisé. Celui-ci ne se déclenche que si le pipeline CI de l’API s’est terminé avec succès (`workflow_run`). Il effectue les étapes suivantes :
 
-Le frontend Angular dispose d’un pipeline CD qui automatise la construction, la publication et le déploiement sur le serveur de production :
-
-- **Build Docker** : Construction de l’image Docker de l’application Angular
+- **Build Docker** : Construction de l’image Docker de l’API
 - **Push Docker** : Publication de l’image sur Docker Hub
-- **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur via `docker compose`
+- **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur backend via `docker compose`
+
+## 3. <a name='viii-3-deploiement-continu-cd-du-frontend'></a> Déploiement continu (CD) du frontend
 
 Workflow CD en front-end :
 
@@ -2071,6 +2069,12 @@ jobs:
             docker compose -f /home/ubuntu/frontend/docker-compose.yml up -d --force-recreate
 ```
 
+Le frontend Angular dispose d’un pipeline CD qui automatise la construction, la publication et le déploiement sur le serveur de production :
+
+- **Build Docker** : Construction de l’image Docker de l’application Angular
+- **Push Docker** : Publication de l’image sur Docker Hub
+- **Déploiement VPS** : Connexion SSH au serveur OVH, pull de la nouvelle image et redémarrage du conteneur via `docker compose`
+
 ## 4. <a name='viii-4-conteneurisation-et-orchestration'></a> Conteneurisation et orchestration
 
 Chaque composant (frontend, backend, base de données) dispose de son propre Dockerfile. Le déploiement s’effectue via `docker compose`, facilitant la gestion, la montée en charge et la maintenance.
@@ -2082,31 +2086,19 @@ L’application est hébergée sur un VPS OVH, avec Nginx Proxy Manager pour la 
 Cette chaîne CI/CD garantit des livraisons rapides, sûres et automatisées, tout en limitant les interventions manuelles et les risques d’erreur.
 
 Infrastructure du VPS :
+
+```plaintext
 /root/
 ├── nginx-proxy-manager/
-│ └── docker-compose.yml
+│   └── docker-compose.yml
 ├── frontend/
-│ ├── docker-compose.yml
+│   └── docker-compose.yml
 └── backend/
-│ ├── docker-compose.yml
-│ └── .env
+    ├── docker-compose.yml
+    └── .env
+```
 
 Le résultat final est disponible sous le nom de domaine hexaplanning.fr.
-
-### Outils qualité et automatisation
-
-**ESLint et Prettier (Frontend) :**
-
-```json
-{
-  "scripts": {
-    "lint": "ng lint",
-    "lint:fix": "ng lint --fix",
-    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\""
-  }
-}
-```
 
 <div style="page-break-before: always;"></div>
 
@@ -2335,6 +2327,8 @@ Hexaplanning respecte le RGPD et garantit la protection des données personnelle
 - Gestion du compte utilisateur et authentification
 - Fourniture des services de gestion de tâches
 - Envoi d'emails transactionnels (réinitialisation de mot de passe)
+
+<div style="page-break-before: always;"></div>
 
 **Droits des utilisateurs :**
 
@@ -2646,6 +2640,8 @@ Comment garantir qu’un utilisateur ne puisse pas accéder aux données d’un 
 
 Comment informer l'utilisateur de l'envoi d'un mail de réinitialisation de mot de passe, sans révéler si l'adresse e-mail existe dans la base de données ? Pour cela, je renvoie un message générique de succès, mais limite les requêtes à une toute les 5 minutes par adresse e-mail, afin d'éviter le spam d'un utilisateur.
 
+<div style="page-break-before: always;"></div>
+
 # <a name='xiii-conclusion-et-perspectives'></a>XIII. Conclusion et perspectives
 
 ## 1. <a name='xiii-1-bilan-du-projet'></a> Bilan du projet
@@ -2676,6 +2672,8 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
   - Ajout d'un sélecteur de priorité directement depuis la liste.
   - Implémentation du glissement tactile sur mobile pour naviguer d'un menu à l'autre (quêtes à accomplir / quêtes accomplies).
   - Implémentation d'un bouton pour ouvrir une quête au hasard dans une catégorie ou un niveau de priorité déterminé, afin de permettre à l'utilisateur d'agir sur une des tâches s'il ne sait pas par où commencer.
+
+<div style="page-break-before: always;"></div>
 
 - **Détails des quêtes**
 
@@ -2708,6 +2706,8 @@ Les évolutions futures d'Hexaplanning s'articulent autour de plusieurs axes fon
   - Persistance des données utilisateurs en les stockant sur l'AsyncStorage de l'appareil afin d'éviter d'avoir à se reconnecter à chaque ouverture de l'app.
 
 L'architecture actuelle, modulaire et évolutive, permet d'intégrer ces améliorations de façon progressive, tout en maintenant la stabilité et la sécurité de la plateforme.
+
+<div style="page-break-before: always;"></div>
 
 ## 3. <a name='xiii-3-apport-projet'></a> Ce que ce projet m'a apporté
 
