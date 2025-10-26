@@ -261,10 +261,14 @@ Pour .NET, une fois les services enregistrés dans le conteneur d'injection (par
 
 La page d'accueil apparaît dès la connexion de l'utilisateur, et affiche le nombre de quêtes qu'il lui reste à accomplir
 
+HTML :
+
 ```html
 <h1>Bienvenue {{ user()?.firstName | titlecase }} {{ user()?.lastName | titlecase }} !</h1>
 <p>Vous avez <span class="quest-count">{{ pending_quests_number() }}</span> quête{{ pending_quests_number() > 1 ? 's' : '' }} à accomplir.</p>
 ```
+
+TS :
 
 ```js
 export class DashboardPageComponent {
@@ -346,7 +350,56 @@ export class QuestModalService {
 }
 ```
 
-Nouvelle quête et édition de quête :
+Extrait du service de gestion des quêtes, contenant des signaux qui sont définis par des appels à l'API, puis utilisés dans les composants qui en ont besoin :
+
+```js
+@Injectable({ providedIn: 'root' })
+export class QuestService {
+  private readonly _http = inject(HttpClient);
+  private readonly _apiUrl = `${environment.apiUrl}/quest`;
+
+  private _quests = signal<QuestUpdateDTO[]>([]);
+  public quests = this._quests.asReadonly();
+  private _pendingQuests = signal<QuestUpdateDTO[]>([]);
+  public pendingQuests = this._pendingQuests.asReadonly();
+  // [...]
+
+  loadQuests(): void {
+    this.getAllQuests().subscribe();
+  }
+
+  loadPendingQuests(): void {
+    this.getAllPendingQuests().subscribe();
+  }
+
+  getAllQuests(): Observable<QuestUpdateDTO[]> {
+    return this._http.get<QuestUpdateDTO[]>(this._apiUrl).pipe(tap(quests => this._quests.set(quests)));
+  }
+
+  getAllPendingQuests(): Observable<QuestUpdateDTO[]> {
+    return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/pending`).pipe(
+      tap(quests => {
+        const sortedQuests = this.sortQuestsByPriority(quests);
+        this._pendingQuests.set(sortedQuests);
+      })
+    );
+  }
+
+  // [...]
+  createQuest(quest: QuestCreateDTO): Observable<QuestUpdateDTO> {
+    return this._http.post<QuestUpdateDTO>(this._apiUrl, quest).pipe(
+      tap(newQuest => {
+        this._quests.update(quests => [...quests, newQuest]);
+        this._pendingQuests.update(quests => this.sortQuestsByPriority([...quests, newQuest]));
+        // [...]
+      })
+    );
+  }
+  // [...]
+}
+```
+
+Nouvelle quête et édition de quête - TS :
 
 ```js
 export class QuestDetailsComponent implements OnInit, AfterViewInit {
@@ -432,6 +485,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 }
 ```
 
+Nouvelle quête et édition de quête - HTML :
+
 ```html
 <form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
   <div>
@@ -483,6 +538,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 </form>
 ```
 
+Nouvelle quête et édition de quête - CSS :
+
 ```css
 .quest-form-group {
   display: flex;
@@ -523,7 +580,7 @@ Un affichage standard des quêtes est proposé aux utilisateurs, sous forme de d
   </div>
 </div>
 
-Listes de quêtes :
+Listes de quêtes - HTML :
 
 ```html
 <div class="quest-list">
@@ -551,6 +608,8 @@ Listes de quêtes :
   }
 </div>
 ```
+
+Listes de quêtes - TS :
 
 ```js
 export class QuestListPageComponent implements OnInit {
@@ -613,6 +672,8 @@ L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone v
   </div>
 </div>
 
+HTML :
+
 ```html
 <p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
   <ng-template #header>
@@ -644,6 +705,8 @@ L'utilisateur peut assigner une quête en cliquant ou appuyant sur un hexagone v
   </ng-template>
 </p-dialog>
 ```
+
+TS :
 
 ```js
   assignQuestToHex(): void {
@@ -956,11 +1019,15 @@ L’application propose un menu apparaissant en permanence en bas de page, et pe
 <em>Modale de création de quête.</em>
 </div>
 
+HTML :
+
 ```html
 <div [routerLink]="['/']">
   <i class="material-icons icon" [ngClass]="{ active: activeIcon === 'home' }">home</i>
 </div>
 ```
+
+TS :
 
 ```js
 export class MenuComponent implements OnInit, OnDestroy {
