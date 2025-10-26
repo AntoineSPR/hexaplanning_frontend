@@ -123,6 +123,9 @@ L'application a été développée en mobile-first, favorisant une utilisation q
 
 Le projet est né du constat que la gestion des tâches peut rapidement devenir monotone et décourageante, surtout lorsqu’elle se limite à une simple liste. Hexaplanning propose une alternative visuelle et dynamique, où chaque utilisateur peut organiser ses quêtes selon ses priorités et ses envies, tout en bénéficiant d’un suivi clair de sa progression. L’application s’adresse à toute personne souhaitant mieux organiser son temps, que ce soit dans un cadre personnel, scolaire ou professionnel, et met l’accent sur l’ergonomie, la sécurité et la personnalisation de l’expérience.
 
+D'un point de vue personnel, j'ai commencé à développer cette application seul en avril 2025.
+Avant cela, une première version (sans la carte d'hexagones) avait été discutée en groupe pendant plusieurs mois, j'avais créé les wireframe et maquettes, et nous avions réalisés quelques composants de base en front-end. J'ai repris le projet à mon compte et l'ai modifié pour en faire ce qu'il est aujourd'hui, développant la quasi-totalité en 6 mois.
+
 <div style="page-break-before: always;"></div>
 
 # <a name='ii-specifications-du-projet'></a>II. Spécifications du projet
@@ -137,7 +140,7 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - **Visualisation hexagonale** : Assignation des quêtes sur une carte d'hexagones.
 - **Suivi de progression** : Barre de progression et pourcentage d'avancement.
 
-### Cas d'usage (User Stories)
+### User Stories
 
 <div align="center">
 <img src="images/user-stories.png" />
@@ -159,10 +162,10 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 
 **Analyse des cas d'usage :**
 
-1. **Authentification (🔐)** : Gestion complète de l'accès utilisateur avec sécurisation des mots de passe
-2. **Gestion des Quêtes (📝)** : CRUD complet sur les tâches avec gestion des statuts et priorités
-3. **Carte d'Expédition (🗺️)** : Visualisation sur une carte composée d'hexagones,avec assignation interactive
-4. **Dashboard & Notifications (📊)** : Vue d'ensemble et notifications éphémères après chaque action
+1. **Authentification** : Gestion complète de l'accès utilisateur avec sécurisation des mots de passe
+2. **Gestion des Quêtes** : CRUD complet sur les tâches avec gestion des statuts et priorités
+3. **Carte d'Expédition** : Visualisation sur une carte composée d'hexagones,avec assignation interactive
+4. **Dashboard & Notifications** : Vue d'ensemble et notifications éphémères après chaque action
 
 ### Maquette (Figma)
 
@@ -203,6 +206,10 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - **ASP.NET Core** : Performance élevée, sécurité intégrée, cross-platform
 - **PostgreSQL** : SGBD relationnel open-source, robuste et performant
 
+Angular et .NET permettent l'injection de dépendances (DI) et implémentent le principe d'inversion de contrôle (IoC), ce qui permet d'injecter aisément des services sans avoir à gérer manuellement leur instanciation.
+Pour Angular, les services précédés du décorateur @Injectable() peuvent être injectés dans les composants avec 'inject' ou via le constructeur.
+Pour .NET, une fois les services enregistrés dans le conteneur d'injection (par exemple via AddScoped()), ils peuvent être injectés dans toute classe. De plus, .NET permet l'application de tous les principes de la Programmation Orienté Objet (abstraction, héritage, polymorphisme et encapsulation) et de création d'une API REST.
+
 ### Outils de développement
 
 - **Visual Studio Code** : IDE pour le front-end avec extensions spécialisées
@@ -220,7 +227,7 @@ Le projet est né du constat que la gestion des tâches peut rapidement devenir 
 - **Navigateurs** : Chrome et Firefox pour les tests cross-browser
 
 <div align="center">
-<img src="images/FlowchartFront.png" />
+<img src="images/FlowchartFront.png" width="550" />
 </div>
 
 <div align="center">
@@ -1274,30 +1281,34 @@ L'API suit une architecture en couches claire pour séparer les responsabilités
 
 L'architecture utilise un **modèle générique d'héritage** pour standardiser les entités et éviter la duplication de code :
 
-**BaseModel - Classe abstraite commune :**
+**BaseModel - Classe commune :**
 
 ```csharp
-public abstract class BaseModel
-{
-    public int Id { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-    public bool IsArchived { get; set; }
-}
+    public class BaseModel : IArchivable, ICreatable, IUpdatable
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsArchived { get; set; }
+    }
 ```
+
+Les trois interfaces implémentées ici (Archivable, Creatable, Updatable) imposent des propriétés communes.
+Toutes les classes créées dans l'API hériteront de BaseModel. Les classes héritant de Identity implémenteront les mêmes interfaces que BaseModel afin d'assurer la cohérence globale.
 
 **BaseModelOption - Pour les options de priorité et de statut des quêtes :**
 
 ```csharp
-public abstract class BaseModelOption : BaseModel
-{
-    public string Name { get; set; }
-    public string Color { get; set; }
-    public string Icon { get; set; }
-}
+    public class BaseModelOption : BaseModel
+    {
+        public string Name { get; set; }
+        public string Color { get; set; }
+        public string? Icon { get; set; }
+    }
 ```
 
-**Utilisation dans les entités métier (exemples avec une partie de la classe Quest, et avec la classe Priority) :**
+**Utilisation dans les entités métier (exemples avec une partie de la classe Quest qui hérite de BaseModel, et avec la classe Priority qui hérite de BaseModelOption) :**
 
 ```csharp
 public class Quest : BaseModel
@@ -2205,7 +2216,7 @@ Exemple d'endpoint spécialisé : récupération des quêtes en attente et non a
 
 - **Variables d'environnement** : Secrets stockés de manière sécurisée, jamais dans le code source
 
-La sécurité est intégrée à tous les niveaux de l’architecture d'Hexaplanning pour garantir la confidentialité, l’intégrité et la disponibilité des données utilisateurs.
+La sécurité est intégrée à tous les niveaux de l'architecture d'Hexaplanning pour garantir la confidentialité, l'intégrité et la disponibilité des données utilisateurs.
 
 <div style="page-break-before: always;"></div>
 
@@ -2556,5 +2567,5 @@ Egalement Mahdi Mcheik, mon camarade de formation et ami, pour ses précieux con
 De même, Jade Jolivet, ma camarade de formation, pour ses notes de cours.
 Enfin, Thomas Pied, mon collègue d'entreprise, qui a pris de son temps pour m'aider à appréhender des concepts complexes afin que je puisse régler des bugs sur une application mobile.
 
-Crédits des icônes utilisées dans l'application : étoiles par GOWI, kornkun2 et meaicon sur flaticon.com
+Crédits des icônes utilisées dans l'application : étoiles par GOWI, kornkun2 et meaicon sur flaticon.com.
 Autres icônes par PrimeNG.
