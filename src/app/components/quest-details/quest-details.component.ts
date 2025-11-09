@@ -90,7 +90,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     }, 100);
 
     // Focus management to override PrimeNG Dialog's automatic focus
-    this.setTitleFocus();
+    if (this.isEdit || this.isNew) {
+      this.setTitleFocus();
+    }
   }
 
   private setTitleFocus(): void {
