@@ -122,7 +122,7 @@ app-root {
 }
 
 // Accessibility: Focus management
-*:focus {
+*:focus-visible {
   outline: 2px solid var(--focus-color);
   outline-offset: 2px;
   box-shadow: 0 0 0 2px var(--focus-color) !important;

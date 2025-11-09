@@ -71,7 +71,7 @@ polygon {
   transition: all 0.2s ease-in-out;
 }
 
-.hex-polygon:focus {
+.hex-polygon:focus-visible {
   outline: none !important;
   stroke: var(--focus-color) !important;
   stroke-width: 4 !important;
