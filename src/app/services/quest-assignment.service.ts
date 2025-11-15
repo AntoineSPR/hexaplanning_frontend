@@ -85,7 +85,7 @@ export class QuestAssignmentService {
     );
   }
 
-  deleteQuestFromHex(hex: Hex): Observable<void> {
+  deleteQuestFromHex(hex: Hex, hexes: Hex[], size: number): Observable<void> {
     if (!hex.quest) {
       return new Observable<void>(subscriber => {
         subscriber.next();
@@ -98,6 +98,16 @@ export class QuestAssignmentService {
       tap(() => {
         hex.quest = undefined;
         this._questService.loadUnassignedPendingQuests();
+
+        // Clean up orphaned dynamic hexes
+        const removed = this._mapGrid.removeOrphanedDynamicHexes(hexes);
+        console.log(`Removed ${removed} orphaned dynamic hexes`);
+
+        // Recalculate and notify map bounds
+        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
+        if (this.onBoundsChange) {
+          this.onBoundsChange(bounds);
+        }
       }),
       map(() => void 0)
     );

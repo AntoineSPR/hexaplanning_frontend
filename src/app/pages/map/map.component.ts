@@ -97,6 +97,7 @@ export class MapComponent implements OnInit {
   ngOnInit(): void {
     this._questService.loadUnassignedPendingQuests();
     this.generateHexes();
+    this.centerCameraOnCenterHex();
 
     // Register callback for bounds changes
     this._questAssignment.setOnBoundsChange(bounds => {
@@ -200,7 +201,7 @@ export class MapComponent implements OnInit {
         closable: true,
         closeOnEscape: true,
         accept: () => {
-          this._questAssignment.deleteQuestFromHex(hex).subscribe({
+          this._questAssignment.deleteQuestFromHex(hex, this.hexes, this.size).subscribe({
             error: err => {
               console.error('Failed to delete quest from hex:', err);
             },
@@ -356,8 +357,23 @@ export class MapComponent implements OnInit {
   }
 
   resetCamera(): void {
-    this.panX = 0;
-    this.panY = 0;
+    this.centerCameraOnCenterHex();
+  }
+
+  centerCameraOnCenterHex(): void {
+    // Find the center hex (0, 0, 0)
+    const centerHex = this.hexes.find(h => h.q === 0 && h.r === 0 && h.s === 0);
+    if (centerHex) {
+      // Center the camera on this hex
+      // We want the hex to be in the center of the viewport
+      // The viewport dimensions are mapWidth x mapHeight
+      this.panX = this.mapWidth / 2 - centerHex.cx;
+      this.panY = this.mapHeight / 2 - centerHex.cy;
+    } else {
+      // Fallback to default
+      this.panX = 0;
+      this.panY = 0;
+    }
     this.zoom = 1;
   }
 

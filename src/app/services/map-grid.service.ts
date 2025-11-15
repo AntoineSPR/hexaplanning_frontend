@@ -29,14 +29,17 @@ export class MapGridService {
     this.originY = mapHeight / 2;
     const hexes: Hex[] = [];
 
-    for (let level = 0; level <= maxExpansion; level++) {
-      for (let q = 0; q <= level; q++) {
-        for (let r = Math.max(-level, -q); r <= Math.min(level, level - q); r++) {
+    // Generate 7 hexes: 1 center (level 0) + 6 neighbors (level 1)
+    const initialMaxLevel = 1;
+
+    for (let level = 0; level <= initialMaxLevel; level++) {
+      for (let q = -level; q <= level; q++) {
+        for (let r = Math.max(-level, -level - q); r <= Math.min(level, level - q); r++) {
           const s = -q - r;
           const maxAbs = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
           if (maxAbs === level) {
             const { cx, cy } = this.hexToPixel(q, r, size);
-            hexes.push({ q, r, s, cx, cy, level });
+            hexes.push({ q, r, s, cx, cy, level, isInitial: true }); // Mark as initial
           }
         }
       }
@@ -100,7 +103,7 @@ export class MapGridService {
   addHex(hexes: Hex[], q: number, r: number, s: number, size: number): Hex {
     const { cx, cy } = this.hexToPixel(q, r, size);
     const level = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-    const newHex: Hex = { q, r, s, cx, cy, level };
+    const newHex: Hex = { q, r, s, cx, cy, level, isInitial: false }; // Mark as dynamic
     hexes.push(newHex);
     return newHex;
   }
@@ -135,5 +138,51 @@ export class MapGridService {
     const height = Math.max(490, Math.ceil(maxY - Math.min(0, minY)));
 
     return { width, height };
+  }
+
+  /**
+   * Remove orphaned dynamic hexes that:
+   * - Are empty (no quest)
+   * - Were dynamically added (isInitial = false)
+   * - Are not neighbors of any assigned hex
+   * Note: Initial 7 hexes are always preserved
+   */
+  removeOrphanedDynamicHexes(hexes: Hex[]): number {
+    // Find all hexes with quests
+    const assignedHexes = hexes.filter(h => h.quest);
+
+    // Build set of all neighbors of assigned hexes
+    const protectedCoords = new Set<string>();
+    for (const hex of assignedHexes) {
+      // The assigned hex itself
+      protectedCoords.add(`${hex.q},${hex.r},${hex.s}`);
+      // All neighbors
+      for (const dir of this.directions) {
+        const nq = hex.q + dir.q;
+        const nr = hex.r + dir.r;
+        const ns = hex.s + dir.s;
+        protectedCoords.add(`${nq},${nr},${ns}`);
+      }
+    }
+
+    // Count before cleanup
+    const initialLength = hexes.length;
+
+    // Remove dynamic hexes that are not protected
+    const toKeep = hexes.filter(h => {
+      // Keep if initial
+      if (h.isInitial) return true;
+      // Keep if has quest
+      if (h.quest) return true;
+      // Keep if neighbor of assigned hex
+      const coord = `${h.q},${h.r},${h.s}`;
+      return protectedCoords.has(coord);
+    });
+
+    // Update array in place
+    hexes.length = 0;
+    hexes.push(...toKeep);
+
+    return initialLength - hexes.length; // Number removed
   }
 }
