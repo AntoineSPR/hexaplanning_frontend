@@ -1,4 +1,6 @@
 import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -13,6 +15,7 @@ import { MenuComponent } from '../../components/menu/menu.component';
 import { MapGridService } from 'src/app/services/map-grid.service';
 import { QuestAssignmentService } from 'src/app/services/quest-assignment.service';
 import { CameraStateService } from 'src/app/services/camera-state.service';
+import { PersistenceService, PersistedHex } from 'src/app/services/persistence.service';
 import { Hex } from 'src/app/models/hex.model';
 
 const MAP_WIDTH = 290;
@@ -35,6 +38,7 @@ export class MapComponent implements OnInit, OnDestroy {
   _mapGrid = inject(MapGridService);
   _questAssignment = inject(QuestAssignmentService);
   _cameraState = inject(CameraStateService);
+  _persistence = inject(PersistenceService);
   private readonly _confirmationService = inject(ConfirmationService);
 
   hexes: Hex[] = [];
@@ -62,6 +66,16 @@ export class MapComponent implements OnInit, OnDestroy {
   private isTouching = false;
   private touchStartX = 0;
   private touchStartY = 0;
+
+  // Handlers to persist camera on refresh / tab hide (mobile-safe)
+  private readonly _persistCamera = () => {
+    this._cameraState.saveState(this.panX, this.panY, this.zoom);
+  };
+  private readonly _onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      this._persistCamera();
+    }
+  };
 
   get unassignedPendingQuests(): QuestUpdateDTO[] {
     return this._questService.unassignedPendingQuests();
@@ -107,22 +121,62 @@ export class MapComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this._questService.loadUnassignedPendingQuests();
 
-    // Try to load cached hexes first
-    const cachedHexes = this._mapGrid.getCachedHexes();
-    const cachedDimensions = this._mapGrid.getCachedMapDimensions();
+    // Try to load persisted map first
+    const persisted = this._persistence.loadMap();
+    const usedPersisted = !!(persisted && persisted.hexes?.length);
+    if (usedPersisted) {
+      this.hexes = [];
+      // Rebuild hexes from persisted axial coords
+      for (const ph of persisted.hexes) {
+        const { cx, cy } = this._mapGrid.hexToPixel(ph.q, ph.r, this.size);
+        this.hexes.push({ q: ph.q, r: ph.r, s: ph.s, cx, cy, level: ph.level, isInitial: ph.isInitial });
+      }
+      // Set dimensions from persisted payload
+      this.mapWidth = persisted.width;
+      this.mapHeight = persisted.height;
 
-    if (cachedHexes && cachedHexes.length > 0) {
-      // Use cached hexes and dimensions
-      this.hexes = cachedHexes;
-      if (cachedDimensions) {
-        this.mapWidth = cachedDimensions.width;
-        this.mapHeight = cachedDimensions.height;
+      // Hydrate quests for persisted questIds and ensure neighbors
+      const tasks = (persisted.hexes as PersistedHex[])
+        .filter(h => !!h.questId)
+        .map(h => {
+          const hex = this.hexes.find(x => x.q === h.q && x.r === h.r && x.s === h.s)!;
+          return this._questService.getQuestById(h.questId!).pipe(
+            tap(q => {
+              hex.quest = q;
+              this._mapGrid.ensureNeighborsOf(this.hexes, hex, this.size);
+            })
+          );
+        });
+
+      if (tasks.length) {
+        forkJoin(tasks).subscribe({
+          next: () => {
+            const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
+            this.mapWidth = bounds.width;
+            this.mapHeight = bounds.height;
+            this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
+          },
+        });
       }
     } else {
-      // Generate fresh hexes
-      this.generateHexes();
-      // Cache the initial state
-      this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+      // Fallback: Try in-memory cache
+      const cachedHexes = this._mapGrid.getCachedHexes();
+      const cachedDimensions = this._mapGrid.getCachedMapDimensions();
+
+      if (cachedHexes && cachedHexes.length > 0) {
+        // Use cached hexes and dimensions
+        this.hexes = cachedHexes;
+        if (cachedDimensions) {
+          this.mapWidth = cachedDimensions.width;
+          this.mapHeight = cachedDimensions.height;
+        }
+      } else {
+        // Generate fresh hexes
+        this.generateHexes();
+        // Cache the initial state
+        this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+        this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
+      }
     }
 
     // Restore camera state if it exists, otherwise center on center hex
@@ -139,13 +193,21 @@ export class MapComponent implements OnInit, OnDestroy {
     this._questAssignment.setOnBoundsChange(bounds => {
       this.mapWidth = bounds.width;
       this.mapHeight = bounds.height;
-      // Update cache with new dimensions
+      // Update cache and persistence with new dimensions
       this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+      this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
     });
 
+    // Persist camera on refresh/navigation and when tab/app is backgrounded
+    window.addEventListener('beforeunload', this._persistCamera);
+    window.addEventListener('pagehide', this._persistCamera); // iOS Safari friendly
+    document.addEventListener('visibilitychange', this._onVisibilityChange);
+
     // Only load assignments if we generated fresh hexes (not from cache)
-    if (!cachedHexes || cachedHexes.length === 0) {
-      this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe();
+    if (!usedPersisted) {
+      this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
+        next: () => this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight),
+      });
     }
   }
 
@@ -153,6 +215,12 @@ export class MapComponent implements OnInit, OnDestroy {
     // Save camera state and hexes when leaving the component
     this._cameraState.saveState(this.panX, this.panY, this.zoom);
     this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+    this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
+
+    // Cleanup listeners
+    window.removeEventListener('beforeunload', this._persistCamera);
+    window.removeEventListener('pagehide', this._persistCamera);
+    document.removeEventListener('visibilitychange', this._onVisibilityChange);
   }
 
   //#region Generate Map
@@ -228,8 +296,9 @@ export class MapComponent implements OnInit, OnDestroy {
           this.dialogVisible = false;
           this.selectedHex = null;
           this.selectedQuest = null;
-          // Update cache after assignment
+          // Update cache and persistence after assignment
           this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+          this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
         },
         error: err => {
           console.error('Failed to assign quest:', err);
@@ -251,8 +320,9 @@ export class MapComponent implements OnInit, OnDestroy {
         accept: () => {
           this._questAssignment.deleteQuestFromHex(hex, this.hexes, this.size).subscribe({
             next: () => {
-              // Update cache after deletion
+              // Update cache and persistence after deletion
               this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+              this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
             },
             error: err => {
               console.error('Failed to delete quest from hex:', err);
