@@ -98,7 +98,24 @@ export class MapComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._questService.loadUnassignedPendingQuests();
-    this.generateHexes();
+
+    // Try to load cached hexes first
+    const cachedHexes = this._mapGrid.getCachedHexes();
+    const cachedDimensions = this._mapGrid.getCachedMapDimensions();
+
+    if (cachedHexes && cachedHexes.length > 0) {
+      // Use cached hexes and dimensions
+      this.hexes = cachedHexes;
+      if (cachedDimensions) {
+        this.mapWidth = cachedDimensions.width;
+        this.mapHeight = cachedDimensions.height;
+      }
+    } else {
+      // Generate fresh hexes
+      this.generateHexes();
+      // Cache the initial state
+      this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+    }
 
     // Restore camera state if it exists, otherwise center on center hex
     const savedState = this._cameraState.getState();
@@ -114,15 +131,20 @@ export class MapComponent implements OnInit, OnDestroy {
     this._questAssignment.setOnBoundsChange(bounds => {
       this.mapWidth = bounds.width;
       this.mapHeight = bounds.height;
+      // Update cache with new dimensions
+      this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
     });
 
-    // Load assignments and expand around existing quests
-    this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe();
+    // Only load assignments if we generated fresh hexes (not from cache)
+    if (!cachedHexes || cachedHexes.length === 0) {
+      this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe();
+    }
   }
 
   ngOnDestroy(): void {
-    // Save camera state when leaving the component
+    // Save camera state and hexes when leaving the component
     this._cameraState.saveState(this.panX, this.panY, this.zoom);
+    this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
   }
 
   //#region Generate Map
@@ -198,6 +220,8 @@ export class MapComponent implements OnInit, OnDestroy {
           this.dialogVisible = false;
           this.selectedHex = null;
           this.selectedQuest = null;
+          // Update cache after assignment
+          this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
         },
         error: err => {
           console.error('Failed to assign quest:', err);
@@ -218,6 +242,10 @@ export class MapComponent implements OnInit, OnDestroy {
         closeOnEscape: true,
         accept: () => {
           this._questAssignment.deleteQuestFromHex(hex, this.hexes, this.size).subscribe({
+            next: () => {
+              // Update cache after deletion
+              this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
+            },
             error: err => {
               console.error('Failed to delete quest from hex:', err);
             },
