@@ -9,18 +9,10 @@ import { QuestUpdateDTO } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
-import { switchMap } from 'rxjs';
 import { MenuComponent } from '../../components/menu/menu.component';
-
-type Hex = {
-  q: number;
-  r: number;
-  s: number;
-  cx: number;
-  cy: number;
-  level: number;
-  quest?: QuestUpdateDTO;
-};
+import { MapGridService } from 'src/app/services/map-grid.service';
+import { QuestAssignmentService } from 'src/app/services/quest-assignment.service';
+import { Hex } from 'src/app/models/hex.model';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
@@ -39,6 +31,8 @@ export class MapComponent implements OnInit {
   _questService = inject(QuestService);
   _hexService = inject(HexService);
   _questModalService = inject(QuestModalService);
+  _mapGrid = inject(MapGridService);
+  _questAssignment = inject(QuestAssignmentService);
   private readonly _confirmationService = inject(ConfirmationService);
 
   hexes: Hex[] = [];
@@ -83,97 +77,30 @@ export class MapComponent implements OnInit {
   ngOnInit(): void {
     this._questService.loadUnassignedPendingQuests();
     this.generateHexes();
-    this.loadQuestAssignment();
+    this._questAssignment.loadAssignmentsIntoHexes(this.hexes).subscribe();
   }
 
   //#region Generate Map
   generateHexes(): void {
-    const hexes: Hex[] = [];
-
-    for (let level = 0; level <= this.maxExpansion; level++) {
-      for (let q = 0; q <= level; q++) {
-        for (let r = Math.max(-level, -q); r <= Math.min(level, level - q); r++) {
-          const s = -q - r;
-          const maxAbs = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-          if (maxAbs === level) {
-            const { cx, cy } = this.hexToPixel(q, r);
-            hexes.push({ q, r, s, cx, cy, level });
-          }
-        }
-      }
-    }
-
-    this.hexes = hexes;
+    this.hexes = this._mapGrid.generateHexes(this.maxExpansion, this.size, this.mapHeight);
   }
 
   hexToPixel(q: number, r: number): { cx: number; cy: number } {
-    const size = this.size;
-    const x = size * Math.sqrt(3) * (q + r / 2);
-    const y = ((size * 3) / 2) * r;
-    return {
-      cx: x + 45, // left padding
-      cy: y + this.mapHeight / 2, // vertical centering
-    };
+    return this._mapGrid.hexToPixel(q, r, this.size, this.mapHeight);
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {
-    const adjustedSize = this.size + offset;
-    const points = [];
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 180) * (60 * i - 30);
-      const x = cx + adjustedSize * Math.cos(angle);
-      const y = cy + adjustedSize * Math.sin(angle);
-      points.push(`${x},${y}`);
-    }
-    return points.join(' ');
+    return this._mapGrid.getHexPoints(cx, cy, this.size, offset);
   }
 
   getProgressPath(cx: number, cy: number, advancement: number): string {
-    if (advancement <= 0) return '';
-    if (advancement >= 100) return this.getHexPoints(cx, cy);
-
-    const size = this.size;
-    const percentage = Math.min(advancement, 100) / 100;
-
-    // Create a circular arc that fills the hexagon radially
-    const startAngle = -Math.PI / 2; // Start from top
-    const endAngle = startAngle + 2 * Math.PI * percentage;
-
-    // Calculate the arc points
-    const startX = cx + size * Math.cos(startAngle);
-    const startY = cy + size * Math.sin(startAngle);
-    const endX = cx + size * Math.cos(endAngle);
-    const endY = cy + size * Math.sin(endAngle);
-
-    // Create an SVG path for the arc
-    const largeArcFlag = percentage > 0.5 ? 1 : 0;
-
-    if (percentage === 1) {
-      // Full circle
-      return `M ${cx},${cy} m -${size},0 a ${size},${size} 0 1,1 ${size * 2},0 a ${size},${size} 0 1,1 -${size * 2},0`;
-    } else {
-      // Partial arc
-      return `M ${cx} ${cy} L ${startX} ${startY} A ${size} ${size} 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
-    }
+    return this._mapGrid.getProgressPath(cx, cy, this.size, advancement);
   }
   // #endregion
 
   //#region Quests
-  loadQuestAssignment(): void {
-    this._hexService.getAllAssignments().subscribe(assignments => {
-      for (const a of assignments) {
-        const hex = this.hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
-        if (hex) {
-          this._questService.getQuestById(a.questId).subscribe(quest => {
-            hex.quest = quest;
-          });
-        }
-      }
-    });
-  }
-
   handleHexClick(hex: Hex): void {
-    this._hexService.getAssignmentByCoordinates(hex.q, hex.r, hex.s).subscribe({
+    this._questAssignment.getAssignmentForHex(hex.q, hex.r, hex.s).subscribe({
       next: assignment => {
         if (assignment) {
           this.openQuestDetails(assignment.questId);
@@ -217,22 +144,11 @@ export class MapComponent implements OnInit {
 
   assignQuestToHex(): void {
     if (this.selectedHex && this.selectedQuest) {
-      const hexToUpdate = this.selectedHex;
-      const questToAssign = this.selectedQuest;
-      const hexAssignment = {
-        q: hexToUpdate.q,
-        r: hexToUpdate.r,
-        s: hexToUpdate.s,
-        questId: questToAssign.id,
-      };
-
-      this._hexService.saveAssignment(hexAssignment).subscribe({
+      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest).subscribe({
         next: () => {
-          hexToUpdate.quest = questToAssign;
           this.dialogVisible = false;
           this.selectedHex = null;
           this.selectedQuest = null;
-          this._questService.loadUnassignedPendingQuests();
         },
         error: err => {
           console.error('Failed to assign quest:', err);
@@ -252,18 +168,11 @@ export class MapComponent implements OnInit {
         closable: true,
         closeOnEscape: true,
         accept: () => {
-          this._hexService
-            .deleteAssignment(hex.q, hex.r, hex.s)
-            .pipe(switchMap(() => this._questService.updateQuest({ ...questToUpdate })))
-            .subscribe({
-              next: () => {
-                hex.quest = undefined;
-                this._questService.loadUnassignedPendingQuests();
-              },
-              error: err => {
-                console.error('Failed to delete quest from hex:', err);
-              },
-            });
+          this._questAssignment.deleteQuestFromHex(hex).subscribe({
+            error: err => {
+              console.error('Failed to delete quest from hex:', err);
+            },
+          });
         },
       });
 
