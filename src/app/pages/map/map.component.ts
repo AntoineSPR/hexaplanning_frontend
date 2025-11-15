@@ -54,6 +54,13 @@ export class MapComponent implements OnInit {
   private dragThreshold = 5; // pixels before we consider it a drag
   private suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
 
+  // Touch support
+  private touchStartDistance = 0;
+  private touchStartZoom = 1;
+  private isTouching = false;
+  private touchStartX = 0;
+  private touchStartY = 0;
+
   get unassignedPendingQuests(): QuestUpdateDTO[] {
     return this._questService.unassignedPendingQuests();
   }
@@ -345,5 +352,88 @@ export class MapComponent implements OnInit {
     this.panY = 0;
     this.zoom = 1;
   }
+
+  //#region Touch Support
+  onTouchStart(event: TouchEvent): void {
+    event.preventDefault();
+    const touches = event.touches;
+
+    if (touches.length === 1) {
+      // Single finger pan
+      this.isTouching = true;
+      this.isPanning = false;
+      this.touchStartX = touches[0].clientX;
+      this.touchStartY = touches[0].clientY;
+      this.downClientX = touches[0].clientX;
+      this.downClientY = touches[0].clientY;
+      this.panStartX = touches[0].clientX - this.panX;
+      this.panStartY = touches[0].clientY - this.panY;
+    } else if (touches.length === 2) {
+      // Two finger pinch-to-zoom
+      this.isTouching = true;
+      this.isPanning = true; // skip click detection for pinch
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      this.touchStartDistance = Math.hypot(dx, dy);
+      this.touchStartZoom = this.zoom;
+
+      // Center between two fingers for pan origin
+      const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+      const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+      this.panStartX = centerX - this.panX;
+      this.panStartY = centerY - this.panY;
+    }
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    if (!this.isTouching) return;
+    event.preventDefault();
+    const touches = event.touches;
+
+    if (touches.length === 1) {
+      // Single finger pan
+      const dx = touches[0].clientX - this.downClientX;
+      const dy = touches[0].clientY - this.downClientY;
+      if (!this.isPanning) {
+        const dist = Math.hypot(dx, dy);
+        if (dist >= this.dragThreshold) {
+          this.isPanning = true;
+        }
+      }
+      if (this.isPanning) {
+        this.panX = touches[0].clientX - this.panStartX;
+        this.panY = touches[0].clientY - this.panStartY;
+      }
+    } else if (touches.length === 2) {
+      // Two finger pinch-to-zoom
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      const distance = Math.hypot(dx, dy);
+      const scale = distance / this.touchStartDistance;
+      const newZoom = Math.max(0.5, Math.min(3, this.touchStartZoom * scale));
+
+      // Center between fingers
+      const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+      const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+
+      // Adjust pan to keep center stable during zoom
+      const zoomRatio = newZoom / this.zoom;
+      this.panX = centerX - (centerX - this.panX) * zoomRatio;
+      this.panY = centerY - (centerY - this.panY) * zoomRatio;
+      this.zoom = newZoom;
+    }
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    if (!this.isTouching) return;
+    event.preventDefault();
+
+    if (this.isPanning) {
+      this.suppressClicksUntil = Date.now() + 250;
+    }
+    this.isTouching = false;
+    this.isPanning = false;
+  }
+  //#endregion
   //#endregion
 }

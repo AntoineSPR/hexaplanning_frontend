@@ -2,12 +2,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 90vh;
-  padding-right: 8px;
+  width: 100vw;
+  height: 90vh;
+  margin: 0;
+  padding: 0;
   position: relative;
+  overflow: hidden;
 }
 
 #hexmap {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
