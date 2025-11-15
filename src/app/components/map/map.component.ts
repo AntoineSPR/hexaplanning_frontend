@@ -226,21 +226,18 @@ export class MapComponent implements OnInit {
         questId: questToAssign.id,
       };
 
-      this._hexService
-        .saveAssignment(hexAssignment)
-        .pipe(switchMap(() => this._questService.updateQuest({ ...questToAssign })))
-        .subscribe({
-          next: () => {
-            hexToUpdate.quest = questToAssign;
-            this.dialogVisible = false;
-            this.selectedHex = null;
-            this.selectedQuest = null;
-            this._questService.loadUnassignedPendingQuests();
-          },
-          error: err => {
-            console.error('Failed to assign quest:', err);
-          },
-        });
+      this._hexService.saveAssignment(hexAssignment).subscribe({
+        next: () => {
+          hexToUpdate.quest = questToAssign;
+          this.dialogVisible = false;
+          this.selectedHex = null;
+          this.selectedQuest = null;
+          this._questService.loadUnassignedPendingQuests();
+        },
+        error: err => {
+          console.error('Failed to assign quest:', err);
+        },
+      });
     }
   }
 

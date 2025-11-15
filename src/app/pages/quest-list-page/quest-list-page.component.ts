@@ -34,7 +34,7 @@ export class QuestListPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this._questService.loadPendingQuests();
+    this._questService.getAllPendingQuests().subscribe();
 
     this.menuItems = [{ label: 'Quêtes à accomplir' }, { label: 'Quêtes accomplies' }];
     this.activeItem = this.menuItems[0];
@@ -43,7 +43,7 @@ export class QuestListPageComponent implements OnInit {
   navigateOnMenu(event: MenuItem): void {
     this.activeItem = event;
     if (this.activeItem === this.menuItems[1] && !this._completedQuestsLoaded) {
-      this._questService.loadCompletedQuests();
+      this._questService.getAllCompletedQuests().subscribe();
       this._completedQuestsLoaded = true;
     }
   }
