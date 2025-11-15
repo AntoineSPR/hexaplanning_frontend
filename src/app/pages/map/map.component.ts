@@ -10,7 +10,7 @@ import { QuestService } from 'src/app/services/quest.service';
 import { HexService } from 'src/app/services/hex.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
 import { switchMap } from 'rxjs';
-import { MenuComponent } from '../menu/menu.component';
+import { MenuComponent } from '../../components/menu/menu.component';
 
 type Hex = {
   q: number;
