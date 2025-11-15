@@ -88,11 +88,19 @@ export class MapComponent implements OnInit, OnDestroy {
 
     effect(() => {
       const deletedQuestId = this._questService.deletedQuestId();
-      this.hexes.forEach(hex => {
-        if (hex.quest?.id === deletedQuestId) {
-          hex.quest = undefined;
+      if (deletedQuestId) {
+        let changed = false;
+        this.hexes.forEach(hex => {
+          if (hex.quest?.id === deletedQuestId) {
+            hex.quest = undefined;
+            changed = true;
+          }
+        });
+        if (changed) {
+          this._mapGrid.removeOrphanedDynamicHexes(this.hexes);
+          this._mapGrid.cacheHexes(this.hexes, this.mapWidth, this.mapHeight);
         }
-      });
+      }
     });
   }
 
