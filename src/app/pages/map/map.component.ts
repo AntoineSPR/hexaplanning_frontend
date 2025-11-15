@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -12,6 +12,7 @@ import { QuestModalService } from 'src/app/services/quest-modal.service';
 import { MenuComponent } from '../../components/menu/menu.component';
 import { MapGridService } from 'src/app/services/map-grid.service';
 import { QuestAssignmentService } from 'src/app/services/quest-assignment.service';
+import { CameraStateService } from 'src/app/services/camera-state.service';
 import { Hex } from 'src/app/models/hex.model';
 
 const MAP_WIDTH = 290;
@@ -27,12 +28,13 @@ const MAX_EXPANSION = 3;
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
-export class MapComponent implements OnInit {
+export class MapComponent implements OnInit, OnDestroy {
   _questService = inject(QuestService);
   _hexService = inject(HexService);
   _questModalService = inject(QuestModalService);
   _mapGrid = inject(MapGridService);
   _questAssignment = inject(QuestAssignmentService);
+  _cameraState = inject(CameraStateService);
   private readonly _confirmationService = inject(ConfirmationService);
 
   hexes: Hex[] = [];
@@ -97,7 +99,16 @@ export class MapComponent implements OnInit {
   ngOnInit(): void {
     this._questService.loadUnassignedPendingQuests();
     this.generateHexes();
-    this.centerCameraOnCenterHex();
+
+    // Restore camera state if it exists, otherwise center on center hex
+    const savedState = this._cameraState.getState();
+    if (savedState) {
+      this.panX = savedState.panX;
+      this.panY = savedState.panY;
+      this.zoom = savedState.zoom;
+    } else {
+      this.centerCameraOnCenterHex();
+    }
 
     // Register callback for bounds changes
     this._questAssignment.setOnBoundsChange(bounds => {
@@ -107,6 +118,11 @@ export class MapComponent implements OnInit {
 
     // Load assignments and expand around existing quests
     this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    // Save camera state when leaving the component
+    this._cameraState.saveState(this.panX, this.panY, this.zoom);
   }
 
   //#region Generate Map
