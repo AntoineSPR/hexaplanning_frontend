@@ -41,6 +41,19 @@ export class MapComponent implements OnInit {
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
 
+  // Camera state for panning and zoom
+  panX = 0;
+  panY = 0;
+  zoom = 1;
+  isPanning = false;
+  private panStartX = 0;
+  private panStartY = 0;
+  private isMouseDown = false;
+  private downClientX = 0;
+  private downClientY = 0;
+  private dragThreshold = 5; // pixels before we consider it a drag
+  private suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
+
   get unassignedPendingQuests(): QuestUpdateDTO[] {
     return this._questService.unassignedPendingQuests();
   }
@@ -100,6 +113,10 @@ export class MapComponent implements OnInit {
 
   //#region Quests
   handleHexClick(hex: Hex): void {
+    // If a drag just occurred, ignore the click that follows mouseup
+    if (Date.now() < this.suppressClicksUntil) {
+      return;
+    }
     this._questAssignment.getAssignmentForHex(hex.q, hex.r, hex.s).subscribe({
       next: assignment => {
         if (assignment) {
@@ -244,4 +261,89 @@ export class MapComponent implements OnInit {
   getHexClipId(hex: Hex): string {
     return `hex-clip-${hex.q}-${hex.r}-${hex.s}`;
   }
+
+  //#region Camera & Panning
+  /**
+   * Camera pan and zoom controls:
+   * - Click and drag anywhere to pan the map
+   * - Scroll wheel to zoom in/out (zoom towards cursor position)
+   * - Click the reset button to return to default view
+   * - Hex clicks still work normally; a small movement threshold prevents accidental drags
+   */
+  getCameraTransform(): string {
+    return `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`;
+  }
+
+  onSvgMouseDown(event: MouseEvent): void {
+    // Only react to left button
+    if (event.button !== 0) return;
+    this.isMouseDown = true;
+    this.isPanning = false; // will become true after threshold is exceeded
+    this.panStartX = event.clientX - this.panX;
+    this.panStartY = event.clientY - this.panY;
+    this.downClientX = event.clientX;
+    this.downClientY = event.clientY;
+    event.preventDefault();
+  }
+
+  onSvgMouseMove(event: MouseEvent): void {
+    if (!this.isMouseDown) return;
+    const dx = event.clientX - this.downClientX;
+    const dy = event.clientY - this.downClientY;
+    if (!this.isPanning) {
+      const dist = Math.hypot(dx, dy);
+      if (dist >= this.dragThreshold) {
+        this.isPanning = true;
+      }
+    }
+    if (this.isPanning) {
+      this.panX = event.clientX - this.panStartX;
+      this.panY = event.clientY - this.panStartY;
+      event.preventDefault();
+    }
+  }
+
+  onSvgMouseUp(event: MouseEvent): void {
+    if (!this.isMouseDown) return;
+    if (this.isPanning) {
+      // briefly suppress clicks right after a drag ends
+      this.suppressClicksUntil = Date.now() + 250;
+    }
+    this.isPanning = false;
+    this.isMouseDown = false;
+    event.preventDefault();
+  }
+
+  onSvgMouseLeave(event: MouseEvent): void {
+    if (!this.isMouseDown) return;
+    if (this.isPanning) {
+      this.suppressClicksUntil = Date.now() + 250;
+    }
+    this.isPanning = false;
+    this.isMouseDown = false;
+  }
+
+  onSvgWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(0.5, Math.min(3, this.zoom * zoomFactor));
+
+    // Zoom towards mouse position
+    const rect = (event.currentTarget as SVGElement).getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+
+    // Adjust pan to keep mouse position stable during zoom
+    const zoomRatio = newZoom / this.zoom;
+    this.panX = mouseX - (mouseX - this.panX) * zoomRatio;
+    this.panY = mouseY - (mouseY - this.panY) * zoomRatio;
+    this.zoom = newZoom;
+  }
+
+  resetCamera(): void {
+    this.panX = 0;
+    this.panY = 0;
+    this.zoom = 1;
+  }
+  //#endregion
 }
