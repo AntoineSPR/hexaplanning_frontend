@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HexService } from './hex.service';
 import { QuestService } from './quest.service';
+import { MapGridService } from './map-grid.service';
 import { Hex } from '../models/hex.model';
 import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { QuestUpdateDTO } from '../models/quest.model';
@@ -9,18 +10,47 @@ import { QuestUpdateDTO } from '../models/quest.model';
 export class QuestAssignmentService {
   private readonly _hexService = inject(HexService);
   private readonly _questService = inject(QuestService);
+  private readonly _mapGrid = inject(MapGridService);
 
-  loadAssignmentsIntoHexes(hexes: Hex[]): Observable<void> {
+  // Callback to notify map component of bounds changes
+  private onBoundsChange?: (bounds: { width: number; height: number }) => void;
+
+  setOnBoundsChange(callback: (bounds: { width: number; height: number }) => void): void {
+    this.onBoundsChange = callback;
+  }
+
+  loadAssignmentsIntoHexes(hexes: Hex[], size: number): Observable<void> {
     return this._hexService.getAllAssignments().pipe(
       switchMap(assignments => {
         const tasks: Observable<QuestUpdateDTO>[] = [];
         for (const a of assignments) {
           const hex = hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
           if (hex) {
-            tasks.push(this._questService.getQuestById(a.questId).pipe(tap(q => (hex.quest = q))));
+            tasks.push(
+              this._questService.getQuestById(a.questId).pipe(
+                tap(q => {
+                  hex.quest = q;
+                  // Expand around assigned hexes on load to ensure edges are filled
+                  this._mapGrid.ensureNeighborsOf(hexes, hex, size);
+                })
+              )
+            );
           }
         }
-        return tasks.length ? forkJoin(tasks).pipe(map(() => void 0)) : of(void 0);
+
+        if (tasks.length) {
+          return forkJoin(tasks).pipe(
+            map(() => {
+              // After loading all assignments, adjust bounds
+              const bounds = this._mapGrid.adjustMapBounds(hexes, size);
+              if (this.onBoundsChange) {
+                this.onBoundsChange(bounds);
+              }
+              return void 0;
+            })
+          );
+        }
+        return of(void 0);
       })
     );
   }
@@ -29,7 +59,7 @@ export class QuestAssignmentService {
     return this._hexService.getAssignmentByCoordinates(q, r, s);
   }
 
-  assignQuestToHex(selectedHex: Hex, selectedQuest: QuestUpdateDTO): Observable<void> {
+  assignQuestToHex(selectedHex: Hex, selectedQuest: QuestUpdateDTO, hexes: Hex[], size: number): Observable<void> {
     const hexAssignment = {
       q: selectedHex.q,
       r: selectedHex.r,
@@ -41,6 +71,15 @@ export class QuestAssignmentService {
       tap(() => {
         selectedHex.quest = selectedQuest;
         this._questService.loadUnassignedPendingQuests();
+
+        // Expand the map by adding neighbors around the assigned hex
+        this._mapGrid.ensureNeighborsOf(hexes, selectedHex, size);
+
+        // Recalculate and notify map bounds
+        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
+        if (this.onBoundsChange) {
+          this.onBoundsChange(bounds);
+        }
       }),
       map(() => void 0)
     );

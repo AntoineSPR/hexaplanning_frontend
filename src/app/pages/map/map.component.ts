@@ -97,7 +97,15 @@ export class MapComponent implements OnInit {
   ngOnInit(): void {
     this._questService.loadUnassignedPendingQuests();
     this.generateHexes();
-    this._questAssignment.loadAssignmentsIntoHexes(this.hexes).subscribe();
+
+    // Register callback for bounds changes
+    this._questAssignment.setOnBoundsChange(bounds => {
+      this.mapWidth = bounds.width;
+      this.mapHeight = bounds.height;
+    });
+
+    // Load assignments and expand around existing quests
+    this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe();
   }
 
   //#region Generate Map
@@ -106,7 +114,7 @@ export class MapComponent implements OnInit {
   }
 
   hexToPixel(q: number, r: number): { cx: number; cy: number } {
-    return this._mapGrid.hexToPixel(q, r, this.size, this.mapHeight);
+    return this._mapGrid.hexToPixel(q, r, this.size);
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {
@@ -168,7 +176,7 @@ export class MapComponent implements OnInit {
 
   assignQuestToHex(): void {
     if (this.selectedHex && this.selectedQuest) {
-      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest).subscribe({
+      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest, this.hexes, this.size).subscribe({
         next: () => {
           this.dialogVisible = false;
           this.selectedHex = null;
