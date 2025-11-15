@@ -24,18 +24,21 @@ export class QuestAssignmentService {
       switchMap(assignments => {
         const tasks: Observable<QuestUpdateDTO>[] = [];
         for (const a of assignments) {
-          const hex = hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
-          if (hex) {
-            tasks.push(
-              this._questService.getQuestById(a.questId).pipe(
-                tap(q => {
-                  hex.quest = q;
-                  // Expand around assigned hexes on load to ensure edges are filled
-                  this._mapGrid.ensureNeighborsOf(hexes, hex, size);
-                })
-              )
-            );
+          // Ensure a hex exists at the assignment coordinates; create if missing
+          let hex = hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
+          if (!hex) {
+            hex = this._mapGrid.addHex(hexes, a.q, a.r, a.s, size);
           }
+
+          tasks.push(
+            this._questService.getQuestById(a.questId).pipe(
+              tap(q => {
+                hex!.quest = q;
+                // Expand around assigned hexes on load to ensure edges are filled
+                this._mapGrid.ensureNeighborsOf(hexes, hex!, size);
+              })
+            )
+          );
         }
 
         if (tasks.length) {
