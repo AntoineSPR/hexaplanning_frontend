@@ -65,7 +65,7 @@ flowchart LR
     QuestList -- CRUD Quêtes --> QuestService
     QuestService -- HTTP + JWT Token --> Interceptor
     Interceptor -- Routes /quest/* --> Auth
-    Auth --> CheckUserAttr & CheckUserAttr & CheckUserAttr & UserCtrl
+    Auth --> CheckUserAttr
     CheckUserAttr --> QuestCtrl & HexCtrl & StatusCtrl & PrioCtrl
     QuestCtrl --> QuestSvc
     QuestSvc --> DataContext
