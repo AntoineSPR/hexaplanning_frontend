@@ -136,9 +136,9 @@ export class QuestService {
         this._completedQuests.update(quests => quests.filter(q => q.id !== id));
         this._pendingQuests.update(quests => quests.filter(q => q.id !== id));
         this._unassignedPendingQuests.update(quests => quests.filter(q => q.id !== id));
-        // this._hexService.getAssignmentByQuestId(id).subscribe(assignment => {
-        //   this._hexService.deleteAssignment(assignment.q, assignment.r, assignment.s).subscribe();
-        // });
+        this._hexService.getAssignmentByQuestId(id).subscribe(assignment => {
+          this._hexService.deleteAssignment(assignment.q, assignment.r, assignment.s).subscribe();
+        });
         this._deletedQuestId.set(id);
       })
     );

@@ -17,7 +17,7 @@ export class HexService {
     return this._http.get<HexAssignment>(`${this._apiUrl}/${id}`);
   }
 
-  getAssignmentByQuestId(questId: number): Observable<HexAssignment> {
+  getAssignmentByQuestId(questId: string): Observable<HexAssignment> {
     return this._http.get<HexAssignment>(`${this._apiUrl}/quest/${questId}`);
   }
 
