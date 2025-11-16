@@ -66,6 +66,7 @@ export class MapComponent implements OnInit, OnDestroy {
   private isTouching = false;
   private touchStartX = 0;
   private touchStartY = 0;
+  private wasPinch = false;
 
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
@@ -305,8 +306,9 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteQuestFromHex(hex: Hex, event: MouseEvent): void {
+  deleteQuestFromHex(hex: Hex, event: MouseEvent | TouchEvent): void {
     event.stopPropagation();
+    event.preventDefault();
 
     if (hex.quest) {
       const questToUpdate = hex.quest;
@@ -499,13 +501,13 @@ export class MapComponent implements OnInit, OnDestroy {
 
   //#region Touch Support
   onTouchStart(event: TouchEvent): void {
-    event.preventDefault();
     const touches = event.touches;
 
     if (touches.length === 1) {
       // Single finger pan
       this.isTouching = true;
       this.isPanning = false;
+      this.wasPinch = false;
       this.touchStartX = touches[0].clientX;
       this.touchStartY = touches[0].clientY;
       this.downClientX = touches[0].clientX;
@@ -516,6 +518,7 @@ export class MapComponent implements OnInit, OnDestroy {
       // Two finger pinch-to-zoom
       this.isTouching = true;
       this.isPanning = true; // skip click detection for pinch
+      this.wasPinch = true;
       const dx = touches[0].clientX - touches[1].clientX;
       const dy = touches[0].clientY - touches[1].clientY;
       this.touchStartDistance = Math.hypot(dx, dy);
@@ -531,7 +534,6 @@ export class MapComponent implements OnInit, OnDestroy {
 
   onTouchMove(event: TouchEvent): void {
     if (!this.isTouching) return;
-    event.preventDefault();
     const touches = event.touches;
 
     if (touches.length === 1) {
@@ -545,10 +547,14 @@ export class MapComponent implements OnInit, OnDestroy {
         }
       }
       if (this.isPanning) {
+        // prevent default only when actually panning
+        event.preventDefault();
         this.panX = touches[0].clientX - this.panStartX;
         this.panY = touches[0].clientY - this.panStartY;
       }
     } else if (touches.length === 2) {
+      // During pinch, prevent default
+      event.preventDefault();
       // Two finger pinch-to-zoom
       const dx = touches[0].clientX - touches[1].clientX;
       const dy = touches[0].clientY - touches[1].clientY;
@@ -570,13 +576,14 @@ export class MapComponent implements OnInit, OnDestroy {
 
   onTouchEnd(event: TouchEvent): void {
     if (!this.isTouching) return;
-    event.preventDefault();
-
-    if (this.isPanning) {
+    // Only prevent default if we were panning or pinching to avoid suppressing synthetic click
+    if (this.isPanning || this.wasPinch) {
+      event.preventDefault();
       this.suppressClicksUntil = Date.now() + 250;
     }
     this.isTouching = false;
     this.isPanning = false;
+    this.wasPinch = false;
   }
   //#endregion
   //#endregion

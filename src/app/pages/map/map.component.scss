@@ -135,6 +135,7 @@ polygon {
   filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  pointer-events: auto; // Ensure touch events reach the polygon
 }
 
 .hex-polygon:focus-visible {
