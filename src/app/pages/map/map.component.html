@@ -131,4 +131,10 @@
   </ng-template>
 </p-confirmdialog>
 
+@if (isLoading) {
+<div class="loading-overlay">
+  <div class="spinner" aria-label="Chargement"></div>
+</div>
+}
+
 <app-menu></app-menu>
