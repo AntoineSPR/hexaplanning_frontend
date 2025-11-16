@@ -7,7 +7,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { CguComponent } from './pages/cgu/cgu.component';
 import { RgpdComponent } from './pages/rgpd/rgpd.component';
-import { MapComponent } from './components/map/map.component';
+import { MapComponent } from './pages/map/map.component';
 import { isLoggedInGuard, isLoggedOutGuard } from './guards/is-logged-in.guard';
 
 export const routes: Routes = [

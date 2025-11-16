@@ -5,6 +5,7 @@
   --text-color: #ffffff;
   --theme-color: #8a2be2;
   --light-theme-color: #b87fed;
+  --ultra-light-theme-color: #b2abf2;
   --dark-theme-color: #521987;
   --primary-priority-color: #ffb300;
   --secondary-priority-color: #e1bee7;
@@ -13,13 +14,25 @@
   --tertiary-priority-bg-color: #5e5b5b;
   --progress-bar-color: #5e309674;
   --focus-color: #667eea;
-  // --progress-bar-color: #b2abf2;
+  --base-hex-color: #1d1e1e;
   font-family: 'Inter', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body {
-  height: 100vh;
+  height: 100%;
+  width: 100%;
 }
 
 body {
@@ -76,6 +89,7 @@ app-root {
 .confirmation-dialog {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;

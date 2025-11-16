@@ -15,7 +15,7 @@ export class DashboardPageComponent {
   private readonly _userService = inject(UserService);
   private readonly _questService = inject(QuestService);
   user = this._userService.user;
-  pending_quests_number = computed(() => this._questService.pendingQuests().length);
+  pendingQuestsNumber = computed(() => this._questService.pendingQuests().length);
 
   constructor() {
     this._questService.getAllPendingQuests().subscribe();
