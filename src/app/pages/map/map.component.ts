@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -7,13 +7,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { QuestUpdateDTO } from 'src/app/models/quest.model';
 import { QuestService } from 'src/app/services/quest.service';
-import { HexService } from 'src/app/services/hex.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
 import { MenuComponent } from '../../components/menu/menu.component';
 import { MapGridService } from 'src/app/services/map-grid.service';
 import { QuestAssignmentService } from 'src/app/services/quest-assignment.service';
 import { CameraStateService } from 'src/app/services/camera-state.service';
 import { Hex } from 'src/app/models/hex.model';
+import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
@@ -28,13 +28,19 @@ const MAX_EXPANSION = 3;
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
-export class MapComponent implements OnInit, OnDestroy {
+export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('svgRoot', { static: false }) svgRoot?: ElementRef<SVGSVGElement>;
+  @ViewChild('cameraGroup', { static: false }) cameraGroup?: ElementRef<SVGGElement>;
   _questService = inject(QuestService);
-  _hexService = inject(HexService);
   _questModalService = inject(QuestModalService);
   _mapGrid = inject(MapGridService);
   _questAssignment = inject(QuestAssignmentService);
   _cameraState = inject(CameraStateService);
+  _el = inject(ElementRef<HTMLElement>);
+  _svgZoom = inject(SvgZoomService);
+
+  // zoom handle
+  private zoomHandle?: SvgZoomHandle;
 
   private readonly _confirmationService = inject(ConfirmationService);
 
@@ -49,21 +55,7 @@ export class MapComponent implements OnInit, OnDestroy {
   panY = 0;
   zoom = 1;
   isPanning = false;
-  private panStartX = 0;
-  private panStartY = 0;
-  private isMouseDown = false;
-  private downClientX = 0;
-  private downClientY = 0;
-  private dragThreshold = 5; // pixels before we consider it a drag
   private suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
-
-  // Touch support
-  private touchStartDistance = 0;
-  private touchStartZoom = 1;
-  private isTouching = false;
-  private touchStartX = 0;
-  private touchStartY = 0;
-  private wasPinch = false;
 
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
@@ -161,9 +153,32 @@ export class MapComponent implements OnInit, OnDestroy {
     });
   }
 
+  async ngAfterViewInit(): Promise<void> {
+    if (!this.svgRoot || !this.cameraGroup) return;
+    const saved = this._cameraState.getState();
+    this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
+      scaleMin: 0.5,
+      scaleMax: 3,
+      onStart: () => this.togglePanning(true),
+      onEnd: () => {
+        this.togglePanning(false);
+        this.suppressClicksUntil = Date.now() + 250;
+      },
+      onTransform: t => {
+        this.panX = t.x;
+        this.panY = t.y;
+        this.zoom = t.k;
+        this._cameraState.saveState(this.panX, this.panY, this.zoom);
+      },
+    });
+    // Apply initial transform
+    this.zoomHandle.setTransform(saved?.panX ?? this.panX, saved?.panY ?? this.panY, saved?.zoom ?? this.zoom);
+  }
+
   ngOnDestroy(): void {
     // Save camera state and hexes when leaving the component
     this._cameraState.saveState(this.panX, this.panY, this.zoom);
+    this.zoomHandle?.destroy();
 
     // Cleanup listeners
     window.removeEventListener('beforeunload', this._persistCamera);
@@ -353,74 +368,11 @@ export class MapComponent implements OnInit, OnDestroy {
     return `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`;
   }
 
-  onSvgMouseDown(event: MouseEvent): void {
-    // Only react to left button
-    if (event.button !== 0) return;
-    this.isMouseDown = true;
-    this.isPanning = false; // will become true after threshold is exceeded
-    this.panStartX = event.clientX - this.panX;
-    this.panStartY = event.clientY - this.panY;
-    this.downClientX = event.clientX;
-    this.downClientY = event.clientY;
-    event.preventDefault();
-  }
-
-  onSvgMouseMove(event: MouseEvent): void {
-    if (!this.isMouseDown) return;
-    const dx = event.clientX - this.downClientX;
-    const dy = event.clientY - this.downClientY;
-    if (!this.isPanning) {
-      const dist = Math.hypot(dx, dy);
-      if (dist >= this.dragThreshold) {
-        this.isPanning = true;
-      }
-    }
-    if (this.isPanning) {
-      this.panX = event.clientX - this.panStartX;
-      this.panY = event.clientY - this.panStartY;
-      event.preventDefault();
-    }
-  }
-
-  onSvgMouseUp(event: MouseEvent): void {
-    if (!this.isMouseDown) return;
-    if (this.isPanning) {
-      // briefly suppress clicks right after a drag ends
-      this.suppressClicksUntil = Date.now() + 250;
-    }
-    this.isPanning = false;
-    this.isMouseDown = false;
-    event.preventDefault();
-  }
-
-  onSvgMouseLeave(event: MouseEvent): void {
-    if (!this.isMouseDown) return;
-    if (this.isPanning) {
-      this.suppressClicksUntil = Date.now() + 250;
-    }
-    this.isPanning = false;
-    this.isMouseDown = false;
-  }
-
-  onSvgWheel(event: WheelEvent): void {
-    event.preventDefault();
-    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.max(0.5, Math.min(3, this.zoom * zoomFactor));
-
-    // Zoom towards mouse position
-    const rect = (event.currentTarget as SVGElement).getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    // Adjust pan to keep mouse position stable during zoom
-    const zoomRatio = newZoom / this.zoom;
-    this.panX = mouseX - (mouseX - this.panX) * zoomRatio;
-    this.panY = mouseY - (mouseY - this.panY) * zoomRatio;
-    this.zoom = newZoom;
-  }
-
   resetCamera(): void {
     this.centerCameraOnCenterHex();
+    if (this.zoomHandle) {
+      this.zoomHandle.setTransform(this.panX, this.panY, this.zoom);
+    }
   }
 
   centerCameraOnCenterHex(): void {
@@ -440,92 +392,9 @@ export class MapComponent implements OnInit, OnDestroy {
     this.zoom = 1;
   }
 
-  //#region Touch Support
-  onTouchStart(event: TouchEvent): void {
-    const touches = event.touches;
-
-    if (touches.length === 1) {
-      // Single finger pan
-      this.isTouching = true;
-      this.isPanning = false;
-      this.wasPinch = false;
-      this.touchStartX = touches[0].clientX;
-      this.touchStartY = touches[0].clientY;
-      this.downClientX = touches[0].clientX;
-      this.downClientY = touches[0].clientY;
-      this.panStartX = touches[0].clientX - this.panX;
-      this.panStartY = touches[0].clientY - this.panY;
-    } else if (touches.length === 2) {
-      // Two finger pinch-to-zoom
-      this.isTouching = true;
-      this.isPanning = true; // skip click detection for pinch
-      this.wasPinch = true;
-      const dx = touches[0].clientX - touches[1].clientX;
-      const dy = touches[0].clientY - touches[1].clientY;
-      this.touchStartDistance = Math.hypot(dx, dy);
-      this.touchStartZoom = this.zoom;
-
-      // Center between two fingers for pan origin
-      const centerX = (touches[0].clientX + touches[1].clientX) / 2;
-      const centerY = (touches[0].clientY + touches[1].clientY) / 2;
-      this.panStartX = centerX - this.panX;
-      this.panStartY = centerY - this.panY;
-    }
+  private togglePanning(active: boolean) {
+    this.isPanning = active;
+    this._el.nativeElement.classList.toggle('is-panning', active);
   }
-
-  onTouchMove(event: TouchEvent): void {
-    if (!this.isTouching) return;
-    const touches = event.touches;
-
-    if (touches.length === 1) {
-      // Single finger pan
-      const dx = touches[0].clientX - this.downClientX;
-      const dy = touches[0].clientY - this.downClientY;
-      if (!this.isPanning) {
-        const dist = Math.hypot(dx, dy);
-        if (dist >= this.dragThreshold) {
-          this.isPanning = true;
-        }
-      }
-      if (this.isPanning) {
-        // prevent default only when actually panning
-        event.preventDefault();
-        this.panX = touches[0].clientX - this.panStartX;
-        this.panY = touches[0].clientY - this.panStartY;
-      }
-    } else if (touches.length === 2) {
-      // During pinch, prevent default
-      event.preventDefault();
-      // Two finger pinch-to-zoom
-      const dx = touches[0].clientX - touches[1].clientX;
-      const dy = touches[0].clientY - touches[1].clientY;
-      const distance = Math.hypot(dx, dy);
-      const scale = distance / this.touchStartDistance;
-      const newZoom = Math.max(0.5, Math.min(3, this.touchStartZoom * scale));
-
-      // Center between fingers
-      const centerX = (touches[0].clientX + touches[1].clientX) / 2;
-      const centerY = (touches[0].clientY + touches[1].clientY) / 2;
-
-      // Adjust pan to keep center stable during zoom
-      const zoomRatio = newZoom / this.zoom;
-      this.panX = centerX - (centerX - this.panX) * zoomRatio;
-      this.panY = centerY - (centerY - this.panY) * zoomRatio;
-      this.zoom = newZoom;
-    }
-  }
-
-  onTouchEnd(event: TouchEvent): void {
-    if (!this.isTouching) return;
-    // Only prevent default if we were panning or pinching to avoid suppressing synthetic click
-    if (this.isPanning || this.wasPinch) {
-      event.preventDefault();
-      this.suppressClicksUntil = Date.now() + 250;
-    }
-    this.isTouching = false;
-    this.isPanning = false;
-    this.wasPinch = false;
-  }
-  //#endregion
   //#endregion
 }

@@ -1,16 +1,8 @@
 <svg
+  #svgRoot
   id="hexmap"
   [attr.viewBox]="'0 0 ' + mapWidth + ' ' + mapHeight"
   preserveAspectRatio="xMidYMid meet"
-  (mousedown)="onSvgMouseDown($event)"
-  (mousemove)="onSvgMouseMove($event)"
-  (mouseup)="onSvgMouseUp($event)"
-  (mouseleave)="onSvgMouseLeave($event)"
-  (wheel)="onSvgWheel($event)"
-  (touchstart)="onTouchStart($event)"
-  (touchmove)="onTouchMove($event)"
-  (touchend)="onTouchEnd($event)"
-  (touchcancel)="onTouchEnd($event)"
   [style.cursor]="isPanning ? 'grabbing' : 'grab'"
   style="user-select: none; touch-action: none">
   <!-- Define clipping paths for each hexagon -->
@@ -23,7 +15,7 @@
   </defs>
 
   <!-- Camera transform group -->
-  <g [attr.transform]="getCameraTransform()">
+  <g #cameraGroup [attr.transform]="getCameraTransform()">
     @for (h of hexes; track $index) {
     <!-- Base hexagon -->
     <polygon
