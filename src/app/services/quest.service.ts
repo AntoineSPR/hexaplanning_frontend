@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, of, catchError, throwError } from 'rxjs';
 import { QuestUpdateDTO, QuestCreateDTO } from '../models/quest.model';
 import { environment } from '../../environments/environment.development';
 import { HexService } from './hex.service';
@@ -82,9 +82,12 @@ export class QuestService {
   createQuest(quest: QuestCreateDTO): Observable<QuestUpdateDTO> {
     return this._http.post<QuestUpdateDTO>(this._apiUrl, quest).pipe(
       tap(newQuest => {
-        this._quests.update(quests => [...quests, newQuest]);
-        this._pendingQuests.update(quests => this.sortQuestsByPriority([...quests, newQuest]));
-        this._unassignedPendingQuests.update(quests => this.sortQuestsByPriority([...quests, newQuest]));
+        this.loadQuests();
+        this.loadPendingQuests();
+        this.loadUnassignedPendingQuests();
+        if (newQuest.statusId === this.statusDoneId) {
+          this.loadCompletedQuests();
+        }
       })
     );
   }
@@ -92,31 +95,10 @@ export class QuestService {
   updateQuest(quest: QuestUpdateDTO): Observable<QuestUpdateDTO> {
     return this._http.put<QuestUpdateDTO>(`${this._apiUrl}/${quest.id}`, quest).pipe(
       tap(updatedQuest => {
-        // Update main quests list
-        this._quests.update(quests => quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)));
-
-        if (updatedQuest.statusId === this.statusDoneId) {
-          // Remove from pending if completed
-          this._pendingQuests.update(quests => quests.filter(q => q.id !== updatedQuest.id));
-          // Add to completed if not already there
-          this._completedQuests.update(quests => {
-            const exists = quests.some(q => q.id === updatedQuest.id);
-            return exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
-          });
-          // Refresh unassigned list to ensure removal if it was present there
-          this.loadUnassignedPendingQuests();
-        } else {
-          // Remove from completed if pending
-          this._completedQuests.update(quests => quests.filter(q => q.id !== updatedQuest.id));
-          // Add to pending if not already there and maintain sorting
-          this._pendingQuests.update(quests => {
-            const exists = quests.some(q => q.id === updatedQuest.id);
-            const updatedQuests = exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
-            return this.sortQuestsByPriority(updatedQuests);
-          });
-          // Refresh unassigned pending list from backend
-          this.loadUnassignedPendingQuests();
-        }
+        this.loadQuests();
+        this.loadPendingQuests();
+        this.loadCompletedQuests();
+        this.loadUnassignedPendingQuests();
       })
     );
   }
@@ -124,13 +106,19 @@ export class QuestService {
   deleteQuest(id: string): Observable<void> {
     return this._http.delete<void>(`${this._apiUrl}/${id}`).pipe(
       tap(() => {
-        this._quests.update(quests => quests.filter(q => q.id !== id));
-        this._completedQuests.update(quests => quests.filter(q => q.id !== id));
-        this._pendingQuests.update(quests => quests.filter(q => q.id !== id));
-        this._unassignedPendingQuests.update(quests => quests.filter(q => q.id !== id));
-        this._hexService.getAssignmentByQuestId(id).subscribe(assignment => {
-          this._hexService.deleteAssignment(assignment.q, assignment.r, assignment.s).subscribe();
-        });
+        this.loadQuests();
+        this.loadPendingQuests();
+        this.loadCompletedQuests();
+        this.loadUnassignedPendingQuests();
+        // Try to delete assignment if it exists; ignore 404
+        this._hexService
+          .getAssignmentByQuestId(id)
+          .pipe(catchError(err => (err?.status === 404 ? of(null) : throwError(() => err))))
+          .subscribe(assignment => {
+            if (assignment) {
+              this._hexService.deleteAssignment(assignment.q, assignment.r, assignment.s).subscribe();
+            }
+          });
         this._deletedQuestId.set(id);
       })
     );
