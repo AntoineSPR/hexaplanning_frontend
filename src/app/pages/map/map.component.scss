@@ -164,7 +164,6 @@
 }
 
 polygon {
-  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   pointer-events: auto; // Ensure touch events reach the polygon
@@ -176,12 +175,6 @@ polygon {
   stroke-width: 4 !important;
   filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
 }
-
-// .hex-polygon:hover {
-//   stroke: var(--theme-color);
-//   stroke-width: 2;
-//   filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
-// }
 
 // Progress path styling
 path {
