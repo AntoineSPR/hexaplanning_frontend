@@ -132,7 +132,7 @@
 </p-confirmdialog>
 
 @if (isLoading) {
-<div class="loading-overlay">
+<div class="loading-overlay" [class.fade-out]="isFadingOut">
   <div class="spinner" aria-label="Chargement"></div>
 </div>
 }

@@ -83,6 +83,7 @@ export class MapComponent implements OnInit, OnDestroy {
   dialogVisible = false;
   selectedHex: Hex | null = null;
   isLoading = true;
+  isFadingOut = false;
 
   constructor() {
     effect(() => {
@@ -150,7 +151,12 @@ export class MapComponent implements OnInit, OnDestroy {
         this._mapGrid.removeOrphanedDynamicHexes(this.hexes);
       },
       complete: () => {
-        this.isLoading = false;
+        // Trigger fade-out animation first
+        this.isFadingOut = true;
+        // Then remove from DOM after animation completes
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 400);
       },
     });
   }

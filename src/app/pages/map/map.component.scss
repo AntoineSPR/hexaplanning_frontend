@@ -19,17 +19,24 @@
 .loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.6);
+  background: black;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+
+  &.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 .spinner {
-  width: 36px;
-  height: 36px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 8rem;
+  height: 8rem;
+  border: 1rem solid rgba(255, 255, 255, 0.1);
   border-top-color: var(--theme-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
