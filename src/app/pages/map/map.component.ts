@@ -305,7 +305,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getHexColor(hex: Hex): string {
-    let color = '#eee';
+    let color = 'var(--base-hex-color)';
     if (!hex.quest) return color;
     if (hex.quest.statusId === this._questService.statusDoneId) {
       color = 'var(--dark-theme-color)';
