@@ -98,7 +98,7 @@
   <div class="quest-selection">
     <div class="quest-list">
       @if (unassignedPendingQuests.length === 0) {
-      <p>Aucune nouvelle quête à accomplir !</p>
+      <p id="no-quest">Aucune nouvelle quête à accomplir !</p>
       } @else { @for (quest of unassignedPendingQuests; track quest.id) {
       <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
         <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
