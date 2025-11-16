@@ -134,29 +134,7 @@ export class MapComponent implements OnInit, OnDestroy {
       this.mapWidth = persisted.width;
       this.mapHeight = persisted.height;
 
-      // Hydrate quests for persisted questIds and ensure neighbors
-      const tasks = (persisted.hexes as PersistedHex[])
-        .filter(h => !!h.questId)
-        .map(h => {
-          const hex = this.hexes.find(x => x.q === h.q && x.r === h.r && x.s === h.s)!;
-          return this._questService.getQuestById(h.questId!).pipe(
-            tap(q => {
-              hex.quest = q;
-              this._mapGrid.ensureNeighborsOf(this.hexes, hex, this.size);
-            })
-          );
-        });
-
-      if (tasks.length) {
-        forkJoin(tasks).subscribe({
-          next: () => {
-            const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
-            this.mapWidth = bounds.width;
-            this.mapHeight = bounds.height;
-            this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight);
-          },
-        });
-      }
+      // Skip hydrating quests from persisted questIds; we'll refresh assignments from backend below
     } else {
       // Fallback: Try in-memory cache
       const cachedHexes = this._mapGrid.getCachedHexes();
@@ -202,12 +180,12 @@ export class MapComponent implements OnInit, OnDestroy {
     window.addEventListener('pagehide', this._persistCamera); // iOS Safari friendly
     document.addEventListener('visibilitychange', this._onVisibilityChange);
 
-    // Only load assignments if we generated fresh hexes (not from cache)
-    if (!usedPersisted) {
-      this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
-        next: () => this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight),
-      });
-    }
+    // Always refresh assignments from backend to avoid stale local cache across browsers
+    // Clear any persisted quest references first, then hydrate from server
+    this.hexes.forEach(h => (h.quest = undefined));
+    this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
+      next: () => this._persistence.saveMap(this.hexes, this.mapWidth, this.mapHeight),
+    });
   }
 
   ngOnDestroy(): void {
