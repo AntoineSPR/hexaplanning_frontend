@@ -56,6 +56,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   zoom = 1;
   isPanning = false;
   private suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
+  private hadCameraMove = false; // track if any pan/zoom occurred during a gesture
 
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
@@ -159,12 +160,24 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
       scaleMin: 0.5,
       scaleMax: 3,
-      onStart: () => this.togglePanning(true),
+      onStart: () => {
+        this.hadCameraMove = false;
+        this.togglePanning(true);
+      },
       onEnd: () => {
         this.togglePanning(false);
-        this.suppressClicksUntil = Date.now() + 250;
+        if (this.hadCameraMove) {
+          this.suppressClicksUntil = Date.now() + 250;
+        }
       },
       onTransform: t => {
+        // Detect meaningful changes to mark that a camera move occurred
+        const dx = Math.abs(t.x - this.panX);
+        const dy = Math.abs(t.y - this.panY);
+        const dk = Math.abs(t.k - this.zoom);
+        if (dx > 0.5 || dy > 0.5 || dk > 0.001) {
+          this.hadCameraMove = true;
+        }
         this.panX = t.x;
         this.panY = t.y;
         this.zoom = t.k;
@@ -189,10 +202,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   //#region Generate Map
   generateHexes(): void {
     this.hexes = this._mapGrid.generateHexes(this.maxExpansion, this.size, this.mapHeight);
-  }
-
-  hexToPixel(q: number, r: number): { cx: number; cy: number } {
-    return this._mapGrid.hexToPixel(q, r, this.size);
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {
@@ -272,8 +281,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     event.preventDefault();
 
     if (hex.quest) {
-      const questToUpdate = hex.quest;
-
       this._confirmationService.confirm({
         message: `Retirer la quête de la carte ?`,
         closable: true,

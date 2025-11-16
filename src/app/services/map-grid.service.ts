@@ -7,11 +7,6 @@ export class MapGridService {
   private originX = 45;
   private originY = 245; // Default centered position
 
-  // Cache for hexes to persist across navigation
-  private cachedHexes: Hex[] | null = null;
-  private cachedMapWidth: number | null = null;
-  private cachedMapHeight: number | null = null;
-
   // Six directions for neighbor calculation (axial coordinates)
   private readonly directions = [
     { q: 1, r: 0, s: -1 },
@@ -21,39 +16,6 @@ export class MapGridService {
     { q: -1, r: 1, s: 0 },
     { q: 0, r: 1, s: -1 },
   ];
-
-  // Initialize the service with a stable origin
-  setOrigin(originX: number, originY: number): void {
-    this.originX = originX;
-    this.originY = originY;
-  }
-
-  // Get cached hexes if available
-  getCachedHexes(): Hex[] | null {
-    return this.cachedHexes;
-  }
-
-  // Get cached map dimensions
-  getCachedMapDimensions(): { width: number; height: number } | null {
-    if (this.cachedMapWidth !== null && this.cachedMapHeight !== null) {
-      return { width: this.cachedMapWidth, height: this.cachedMapHeight };
-    }
-    return null;
-  }
-
-  // Cache the hexes and map dimensions
-  cacheHexes(hexes: Hex[], mapWidth: number, mapHeight: number): void {
-    this.cachedHexes = hexes;
-    this.cachedMapWidth = mapWidth;
-    this.cachedMapHeight = mapHeight;
-  }
-
-  // Clear the cache
-  clearCache(): void {
-    this.cachedHexes = null;
-    this.cachedMapWidth = null;
-    this.cachedMapHeight = null;
-  }
 
   // Create the axial hexes by outward rings from 0..maxExpansion
   generateHexes(maxExpansion: number, size: number, mapHeight: number): Hex[] {
