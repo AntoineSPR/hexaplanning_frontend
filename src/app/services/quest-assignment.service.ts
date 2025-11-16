@@ -73,7 +73,7 @@ export class QuestAssignmentService {
     return this._hexService.saveAssignment(hexAssignment).pipe(
       tap(() => {
         selectedHex.quest = selectedQuest;
-        this._questService.loadUnassignedPendingQuests();
+        this._questService.getAllUnassignedPendingQuests().subscribe();
 
         // Expand the map by adding neighbors around the assigned hex
         this._mapGrid.ensureNeighborsOf(hexes, selectedHex, size);
@@ -100,7 +100,7 @@ export class QuestAssignmentService {
       switchMap(() => this._questService.updateQuest(questToUpdate)),
       tap(() => {
         hex.quest = undefined;
-        this._questService.loadUnassignedPendingQuests();
+        this._questService.getAllUnassignedPendingQuests().subscribe();
 
         // Clean up orphaned dynamic hexes
         const removed = this._mapGrid.removeOrphanedDynamicHexes(hexes);

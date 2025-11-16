@@ -86,8 +86,6 @@ export class MapComponent implements OnInit, OnDestroy {
   selectedHex: Hex | null = null;
 
   constructor() {
-    this._questService.loadQuests();
-
     effect(() => {
       const allQuests = this._questService.quests();
       this.hexes.forEach(hex => {
@@ -119,7 +117,7 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this._questService.loadUnassignedPendingQuests();
+    this._questService.getAllUnassignedPendingQuests().subscribe();
 
     // Try to load persisted map first
     const persisted = this._persistence.loadMap();

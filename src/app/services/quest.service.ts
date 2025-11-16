@@ -33,19 +33,10 @@ export class QuestService {
   statusDoneId = '6662dfc1-9c40-4d78-806f-34cd22e07023';
   statusPendingId = '17c07323-d5b4-4568-b773-de3487ff30b1';
 
-  loadQuests(): void {
+  refreshAllQuestLists(): void {
     this.getAllQuests().subscribe();
-  }
-
-  loadPendingQuests(): void {
     this.getAllPendingQuests().subscribe();
-  }
-
-  loadCompletedQuests(): void {
     this.getAllCompletedQuests().subscribe();
-  }
-
-  loadUnassignedPendingQuests(): void {
     this.getAllUnassignedPendingQuests().subscribe();
   }
 
@@ -82,12 +73,7 @@ export class QuestService {
   createQuest(quest: QuestCreateDTO): Observable<QuestUpdateDTO> {
     return this._http.post<QuestUpdateDTO>(this._apiUrl, quest).pipe(
       tap(newQuest => {
-        this.loadQuests();
-        this.loadPendingQuests();
-        this.loadUnassignedPendingQuests();
-        if (newQuest.statusId === this.statusDoneId) {
-          this.loadCompletedQuests();
-        }
+        this.refreshAllQuestLists();
       })
     );
   }
@@ -95,10 +81,7 @@ export class QuestService {
   updateQuest(quest: QuestUpdateDTO): Observable<QuestUpdateDTO> {
     return this._http.put<QuestUpdateDTO>(`${this._apiUrl}/${quest.id}`, quest).pipe(
       tap(updatedQuest => {
-        this.loadQuests();
-        this.loadPendingQuests();
-        this.loadCompletedQuests();
-        this.loadUnassignedPendingQuests();
+        this.refreshAllQuestLists();
       })
     );
   }
@@ -106,10 +89,7 @@ export class QuestService {
   deleteQuest(id: string): Observable<void> {
     return this._http.delete<void>(`${this._apiUrl}/${id}`).pipe(
       tap(() => {
-        this.loadQuests();
-        this.loadPendingQuests();
-        this.loadCompletedQuests();
-        this.loadUnassignedPendingQuests();
+        this.refreshAllQuestLists();
         // Try to delete assignment if it exists; ignore 404
         this._hexService
           .getAssignmentByQuestId(id)
