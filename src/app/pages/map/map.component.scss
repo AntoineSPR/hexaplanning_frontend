@@ -89,8 +89,8 @@
   text-overflow: ellipsis;
   width: 90%;
   display: -webkit-box;
-  line-clamp: 3;
-  -webkit-line-clamp: 3;
+  line-clamp: 4;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   word-break: normal;
   overflow-wrap: break-word;
@@ -100,7 +100,7 @@
   }
   line-height: 1.2;
   font-size: 0.4rem;
-  padding-top: 18px;
+  padding-top: 14px;
   color: var(--text-color);
   font-weight: bold;
 }
@@ -108,9 +108,10 @@
 .quest-delete {
   position: absolute;
   top: 0px;
-  right: 35%;
+  left: 50%;
+  transform: translateX(-50%);
   background-color: black;
-  color: #b2abf2;
+  color: var(--ultra-light-theme-color);
   border: none;
   border-radius: 50%;
   width: 18px;
@@ -122,8 +123,8 @@
   cursor: pointer;
   z-index: 10;
   pointer-events: auto;
-  padding-bottom: 2px;
-  padding-left: 5px;
+  padding: 0;
+  padding-bottom: 1px;
 }
 
 polygon {
