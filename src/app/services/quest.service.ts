@@ -103,6 +103,8 @@ export class QuestService {
             const exists = quests.some(q => q.id === updatedQuest.id);
             return exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
           });
+          // Refresh unassigned list to ensure removal if it was present there
+          this.loadUnassignedPendingQuests();
         } else {
           // Remove from completed if pending
           this._completedQuests.update(quests => quests.filter(q => q.id !== updatedQuest.id));
@@ -112,18 +114,8 @@ export class QuestService {
             const updatedQuests = exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
             return this.sortQuestsByPriority(updatedQuests);
           });
-
-          if (!updatedQuest.hexAssignmentId) {
-            // Add to unassigned if not already there and maintain sorting
-            this._unassignedPendingQuests.update(quests => {
-              const exists = quests.some(q => q.id === updatedQuest.id);
-              const updatedQuests = exists ? quests.map(q => (q.id === updatedQuest.id ? updatedQuest : q)) : [...quests, updatedQuest];
-              return this.sortQuestsByPriority(updatedQuests);
-            });
-          } else {
-            // Remove from unassigned if now assigned
-            this._unassignedPendingQuests.update(quests => quests.filter(q => q.id !== updatedQuest.id));
-          }
+          // Refresh unassigned pending list from backend
+          this.loadUnassignedPendingQuests();
         }
       })
     );
