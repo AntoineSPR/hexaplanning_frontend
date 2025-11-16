@@ -180,10 +180,14 @@ polygon {
 path {
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.2));
   transition: opacity 0.3s ease;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
-path:hover {
-  opacity: 0.8;
+/* While actively panning, override interactive shapes to show a grabbing cursor */
+:host(.is-panning) polygon,
+:host(.is-panning) path {
+  cursor: grabbing !important;
 }
 
 ::ng-deep .select-dialog {
