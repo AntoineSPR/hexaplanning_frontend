@@ -22,15 +22,15 @@ export class AppComponent implements OnInit {
     localStorage.getItem('user');
     localStorage.getItem('token');
 
+    // load statuses and priorities
+    this._questService.loadStatuses().subscribe();
+    this._questService.loadPriorities().subscribe();
+
     if (!localStorage.getItem('user') || !localStorage.getItem('token')) {
       return;
     }
 
     this._userService.user.set(JSON.parse(localStorage.getItem('user') || 'null'));
     this._userService.token.set(localStorage.getItem('token'));
-
-    // load statuses and priorities
-    this._questService.loadStatuses().subscribe();
-    this._questService.loadPriorities().subscribe();
   }
 }
