@@ -1,5 +1,5 @@
 <main class="dashboard">
-  <h1>Bienvenue {{ user()?.firstName | titlecase }} {{ user()?.lastName | titlecase }} !</h1>
+  <h1>Bienvenue {{ user()?.name }} !</h1>
   <p>
     Vous avez <span class="quest-count">{{ pendingQuestsNumber() }}</span> quête{{ pendingQuestsNumber() > 1 ? 's' : '' }} à accomplir.
   </p>

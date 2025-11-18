@@ -36,8 +36,7 @@ export class RegisterComponent {
   constructor() {
     this.registerForm = this._formBuilder.group(
       {
-        firstName: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH)]],
-        lastName: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH)]],
+        name: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH)]],
         email: ['', [Validators.required, Validators.email]],
         password: ['', [Validators.required, apiPasswordValidator()]],
         confirmPassword: ['', [Validators.required]],
@@ -53,8 +52,7 @@ export class RegisterComponent {
       this.isLoading = true;
 
       const userData: UserCreateDTO = {
-        firstName: this.registerForm.value.firstName,
-        lastName: this.registerForm.value.lastName,
+        name: this.registerForm.value.name,
         email: this.registerForm.value.email,
         password: this.registerForm.value.password,
       };
@@ -91,24 +89,8 @@ export class RegisterComponent {
     });
   }
 
-  get firstNameError(): string | null {
-    const field = this.registerForm.get('firstName');
-
-    if (field?.touched && field?.errors) {
-      if (field.errors['required']) {
-        return 'Ce champ est requis';
-      }
-      if (field.errors['minlength']) {
-        const requiredLength = field.errors['minlength'].requiredLength;
-        return `Ce champ doit contenir au moins ${requiredLength} caractères`;
-      }
-    }
-
-    return null;
-  }
-
-  get lastNameError(): string | null {
-    const field = this.registerForm.get('lastName');
+  get nameError(): string | null {
+    const field = this.registerForm.get('name');
 
     if (field?.touched && field?.errors) {
       if (field.errors['required']) {
@@ -161,13 +143,8 @@ export class RegisterComponent {
     return null;
   }
 
-  get hasFirstNameError(): boolean {
-    const field = this.registerForm.get('firstName');
-    return !!(field?.touched && field?.errors);
-  }
-
-  get hasLastNameError(): boolean {
-    const field = this.registerForm.get('lastName');
+  get hasNameError(): boolean {
+    const field = this.registerForm.get('name');
     return !!(field?.touched && field?.errors);
   }
 

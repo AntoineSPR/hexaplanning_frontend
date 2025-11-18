@@ -1,7 +1,6 @@
 export type UserResponseDTO = {
   userId: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   roles: string[];
 };
