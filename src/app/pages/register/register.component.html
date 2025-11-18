@@ -3,42 +3,22 @@
 
   <p-card header="Hexaplanning - Créer un compte" class="register-card">
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form" role="form" aria-label="Formulaire de création de compte">
-      <div class="form-row">
-        <div class="form-field">
-          <label for="firstName" class="form-label">Prénom *</label>
-          <input
-            pInputText
-            id="firstName"
-            formControlName="firstName"
-            placeholder="Entrez votre prénom"
-            [class.p-invalid]="hasFirstNameError"
-            [attr.aria-describedby]="hasFirstNameError ? 'firstName-error' : null"
-            [attr.aria-invalid]="hasFirstNameError"
-            class="form-input" />
-          @if (hasFirstNameError) {
-          <small class="p-error" id="firstName-error" role="alert" aria-live="polite">
-            {{ firstNameError }}
-          </small>
-          }
-        </div>
-
-        <div class="form-field">
-          <label for="lastName" class="form-label">Nom *</label>
-          <input
-            pInputText
-            id="lastName"
-            formControlName="lastName"
-            placeholder="Entrez votre nom"
-            [class.p-invalid]="hasLastNameError"
-            [attr.aria-describedby]="hasLastNameError ? 'lastName-error' : null"
-            [attr.aria-invalid]="hasLastNameError"
-            class="form-input" />
-          @if (hasLastNameError) {
-          <small class="p-error" id="lastName-error" role="alert" aria-live="polite">
-            {{ lastNameError }}
-          </small>
-          }
-        </div>
+      <div class="form-field">
+        <label for="name" class="form-label">Nom d'utilisateur *</label>
+        <input
+          pInputText
+          id="name"
+          formControlName="name"
+          placeholder="Entrez votre nom d'utilisateur"
+          [class.p-invalid]="hasNameError"
+          [attr.aria-describedby]="hasNameError ? 'name-error' : null"
+          [attr.aria-invalid]="hasNameError"
+          class="form-input" />
+        @if (hasNameError) {
+        <small class="p-error" id="name-error" role="alert" aria-live="polite">
+          {{ nameError }}
+        </small>
+        }
       </div>
 
       <div class="form-field">
