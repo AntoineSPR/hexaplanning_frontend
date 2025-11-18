@@ -16,6 +16,15 @@ import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage }
 const MIN_NAME_LENGTH = 2;
 const NO_ERRORS = 0;
 
+function noSpaceValidator() {
+  return (control: any): ValidationErrors | null => {
+    if (control.value && /\s/.test(control.value)) {
+      return { containsSpace: true };
+    }
+    return null;
+  };
+}
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -36,7 +45,7 @@ export class RegisterComponent {
   constructor() {
     this.registerForm = this._formBuilder.group(
       {
-        name: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH)]],
+        name: ['', [Validators.required, Validators.minLength(MIN_NAME_LENGTH), noSpaceValidator()]],
         email: ['', [Validators.required, Validators.email]],
         password: ['', [Validators.required, apiPasswordValidator()]],
         confirmPassword: ['', [Validators.required]],
@@ -95,6 +104,9 @@ export class RegisterComponent {
     if (field?.touched && field?.errors) {
       if (field.errors['required']) {
         return 'Ce champ est requis';
+      }
+      if (field.errors['containsSpace']) {
+        return "Le nom ne peut pas contenir d'espaces";
       }
       if (field.errors['minlength']) {
         const requiredLength = field.errors['minlength'].requiredLength;
