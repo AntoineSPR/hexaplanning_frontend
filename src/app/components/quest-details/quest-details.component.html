@@ -1,7 +1,5 @@
 <form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
-  <div class="flex gap-2 justify-content-start align-content-start">
-    <!-- BOUTON RETOUR -->
-    <button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
+  <div class="scrollable-content">
     <!-- TITRE -->
     <div class="title">
       <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
@@ -23,7 +21,6 @@
       <small class="p-error block mt-1"> Le titre est obligatoire </small>
       }
     </div>
-  </div>
 
   <!-- STATUT -->
   <div class="flex flex-column align-content-center mt-2">
@@ -137,17 +134,20 @@
       [ngClass]="{ 'quest-readonly': !isEdit }"></textarea>
   </div>
   }
+  </div>
 
-  <!-- BOUTONS -->
+  <!-- BOUTONS: pinned to the bottom of the dialog so they stay reachable without scrolling -->
   @if (isEdit) {
   <div class="button-group">
-    <button type="button" (click)="onCancel()" class="quest-button">ANNULER</button>
-    <button type="submit" class="quest-button">VALIDER</button>
+    <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour"><i class="pi pi-chevron-left"></i></button>
+    <button type="button" (click)="onCancel()" class="icon-button" aria-label="Annuler" title="Annuler"><i class="pi pi-times"></i></button>
+    <button type="submit" class="icon-button" aria-label="Valider" title="Valider"><i class="pi pi-check"></i></button>
   </div>
   } @else {
   <div class="button-group">
-    <button type="button" (click)="onDelete()" class="quest-button">SUPPRIMER</button>
-    <button type="button" (click)="onEdit()" class="quest-button">EDITER</button>
+    <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour"><i class="pi pi-chevron-left"></i></button>
+    <button type="button" (click)="onDelete()" class="icon-button" aria-label="Supprimer" title="Supprimer"><i class="pi pi-trash"></i></button>
+    <button type="button" (click)="onEdit()" class="icon-button" aria-label="Éditer" title="Éditer"><i class="pi pi-pencil"></i></button>
   </div>
   }
 </form>
@@ -158,8 +158,8 @@
     <div class="confirmation-dialog">
       <p>{{ message.message }}</p>
       <div class="flex items-center gap-2">
-        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
-        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Supprimer</button>
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">{{ message.rejectLabel }}</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">{{ message.acceptLabel }}</button>
       </div>
     </div>
   </ng-template>

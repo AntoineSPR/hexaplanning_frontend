@@ -1,18 +1,26 @@
-.return:focus {
-  outline-color: var(--theme-color) !important;
-  box-shadow: 0 0 0 2px var(--theme-color) !important;
-}
-
 .quest-form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1rem;
-  gap: 1rem;
   width: 18rem;
   margin: auto;
   padding: 1rem;
-  justify-content: center;
   align-items: center;
+  // Bounded independently of whatever height PrimeNG's own dialog wrapper allows, so this
+  // component's own scroll region (.scrollable-content) engages before the dialog's would -
+  // that's what keeps .button-group pinned in view instead of scrolling with long content.
+  max-height: 80vh;
+}
+
+// Everything except the button bar; scrolls on its own once the form exceeds max-height.
+.scrollable-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .done_checkbox {
@@ -54,27 +62,43 @@ input {
   width: 100%;
   display: flex;
   justify-content: space-around;
+  align-items: center;
+  flex: 0 0 auto;
   margin-top: 1rem;
-
-  button {
-    width: 6rem;
-    background-color: var(--theme-color);
-    color: var(--text-color);
-    box-shadow: var(--theme-color) 0px 0px 5px 5px;
-    border: none;
-    border-radius: 2px;
-    padding: 0.5rem;
-    cursor: pointer;
-  }
+  padding-top: 0.75rem;
 }
 
-.pi-chevron-left {
-  background-color: var(--background-color);
+.icon-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  background-color: var(--theme-color);
+  color: var(--text-color);
+  box-shadow: var(--theme-color) 0px 0px 5px 5px;
   border: none;
-  color: var(--theme-color);
-  text-shadow: var(--theme-color) 0px 0px 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 2rem;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 1.2rem;
+  }
+
+  &:hover {
+    background-color: var(--dark-theme-color);
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline-color: var(--theme-color) !important;
+    box-shadow: 0 0 0 2px var(--focus-color) !important;
+  }
 }
 
 .p-error {

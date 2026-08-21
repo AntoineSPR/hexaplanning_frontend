@@ -31,6 +31,9 @@ html,
 body {
   height: 100%;
   width: 100%;
+  // Disable pinch-to-zoom/double-tap-zoom on the page; the map has its own zoom
+  // (touch-action: none on #hexmap in map.component.html) that this doesn't affect.
+  touch-action: pan-x pan-y;
 }
 
 body {

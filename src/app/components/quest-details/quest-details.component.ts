@@ -191,12 +191,14 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   }
 
   onCancel(): void {
-    if (this.isNew) {
-      this.onReturn();
-    } else if (this.isEdit) {
-      this._setFormValues();
-      this.isEdit = false;
-    }
+    this._confirmDiscard(() => {
+      if (this.isNew) {
+        this.onReturn();
+      } else if (this.isEdit) {
+        this._setFormValues();
+        this.isEdit = false;
+      }
+    });
   }
 
   onReturn(): void {
@@ -205,9 +207,47 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this.closeDialog.emit();
   }
 
+  // Whether discarding right now would silently lose something: a brand-new quest that hasn't
+  // been saved yet, or edits made to an existing one that haven't been submitted.
+  hasUnsavedChanges(): boolean {
+    return this.isNew || (this.isEdit && this.questForm.dirty);
+  }
+
+  // Single entry point for every way of leaving the form (the return button, clicking outside
+  // the dialog, Escape, the Cancel button) so unsaved work always gets the same confirmation
+  // before being dropped.
+  confirmClose(): void {
+    this._confirmDiscard(() => this.onReturn());
+  }
+
+  private _confirmDiscard(onAccept: () => void): void {
+    if (!this.hasUnsavedChanges()) {
+      onAccept();
+      return;
+    }
+    this._confirmationService.confirm({
+      message: 'Annuler les modifications non enregistrées ?',
+      acceptLabel: 'Quitter',
+      rejectLabel: 'Continuer',
+      closable: true,
+      closeOnEscape: true,
+      accept: onAccept,
+    });
+
+    // Focus management for the confirmation dialog, matching onDelete()'s pattern
+    setTimeout(() => {
+      const acceptButton = document.querySelector('.accept-confirmation-button') as HTMLElement;
+      if (acceptButton) {
+        acceptButton.focus();
+      }
+    }, 100);
+  }
+
   onDelete(): void {
     this._confirmationService.confirm({
       message: 'Confimer la suppression ?',
+      acceptLabel: 'Supprimer',
+      rejectLabel: 'Annuler',
       closable: true,
       closeOnEscape: true,
       accept: () => {
@@ -297,6 +337,10 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       statusId: this.quest?.statusId ?? this.defaultStatus,
       advancement: this.quest?.advancement ?? 0,
     });
+    // setValue() doesn't clear the dirty flag on its own; without this, hasUnsavedChanges()
+    // would keep reporting stale edits as "unsaved" after they've just been reverted here
+    // (e.g. edit -> cancel -> re-edit -> cancel again with no new changes).
+    this.questForm.markAsPristine();
   }
 
   onAdvancementChange(event: any) {
