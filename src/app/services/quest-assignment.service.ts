@@ -5,6 +5,7 @@ import { MapGridService } from './map-grid.service';
 import { Hex } from '../models/hex.model';
 import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { QuestUpdateDTO } from '../models/quest.model';
+import { HexAssignment } from '../models/hexAssignment.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuestAssignmentService {
@@ -34,6 +35,7 @@ export class QuestAssignmentService {
             this._questService.getQuestById(a.questId).pipe(
               tap(q => {
                 hex!.quest = q;
+                hex!.hexAssignmentId = a.id;
                 // Expand around assigned hexes on load to ensure edges are filled
                 this._mapGrid.ensureNeighborsOf(hexes, hex!, size);
               })
@@ -71,8 +73,9 @@ export class QuestAssignmentService {
     } as any;
 
     return this._hexService.saveAssignment(hexAssignment).pipe(
-      tap(() => {
+      tap(created => {
         selectedHex.quest = selectedQuest;
+        selectedHex.hexAssignmentId = created.id;
         this._questService.getAllUnassignedPendingQuests().subscribe();
 
         // Expand the map by adding neighbors around the assigned hex
@@ -100,6 +103,7 @@ export class QuestAssignmentService {
       switchMap(() => this._questService.updateQuest(questToUpdate)),
       tap(() => {
         hex.quest = undefined;
+        hex.hexAssignmentId = undefined;
         this._questService.getAllUnassignedPendingQuests().subscribe();
 
         // Clean up orphaned dynamic hexes
@@ -111,6 +115,87 @@ export class QuestAssignmentService {
         if (this.onBoundsChange) {
           this.onBoundsChange(bounds);
         }
+      }),
+      map(() => void 0)
+    );
+  }
+
+  // Move a quest already on the map to another hex. If the target hex is occupied,
+  // the two quests swap positions instead. Uses PUT /hexAssignment (update in place)
+  // rather than delete+recreate, so the quest never transiently disappears from the map.
+  // Note: the backend has no active DB constraint on (q, r, s) uniqueness, so occupancy
+  // is only checked client-side against the currently loaded hexes.
+  moveQuestToHex(fromHex: Hex, toHex: Hex, hexes: Hex[], size: number): Observable<void> {
+    if (!fromHex.quest || !fromHex.hexAssignmentId || fromHex === toHex) {
+      return new Observable<void>(subscriber => {
+        subscriber.next();
+        subscriber.complete();
+      });
+    }
+
+    if (!toHex.quest) {
+      // Empty target: move the existing assignment to the new coordinates
+      const updated: HexAssignment = {
+        id: fromHex.hexAssignmentId,
+        questId: fromHex.quest.id,
+        q: toHex.q,
+        r: toHex.r,
+        s: toHex.s,
+      };
+
+      return this._hexService.updateAssignment(fromHex.hexAssignmentId, updated).pipe(
+        tap(() => {
+          toHex.quest = fromHex.quest;
+          toHex.hexAssignmentId = fromHex.hexAssignmentId;
+          fromHex.quest = undefined;
+          fromHex.hexAssignmentId = undefined;
+
+          this._mapGrid.ensureNeighborsOf(hexes, toHex, size);
+          this._mapGrid.removeOrphanedDynamicHexes(hexes);
+
+          const bounds = this._mapGrid.adjustMapBounds(hexes, size);
+          if (this.onBoundsChange) {
+            this.onBoundsChange(bounds);
+          }
+        }),
+        map(() => void 0)
+      );
+    }
+
+    // Occupied target: swap the two assignments' coordinates
+    if (!toHex.hexAssignmentId) {
+      return new Observable<void>(subscriber => {
+        subscriber.next();
+        subscriber.complete();
+      });
+    }
+
+    const fromUpdated: HexAssignment = {
+      id: fromHex.hexAssignmentId,
+      questId: fromHex.quest.id,
+      q: toHex.q,
+      r: toHex.r,
+      s: toHex.s,
+    };
+    const toUpdated: HexAssignment = {
+      id: toHex.hexAssignmentId,
+      questId: toHex.quest.id,
+      q: fromHex.q,
+      r: fromHex.r,
+      s: fromHex.s,
+    };
+
+    return forkJoin([
+      this._hexService.updateAssignment(fromHex.hexAssignmentId, fromUpdated),
+      this._hexService.updateAssignment(toHex.hexAssignmentId, toUpdated),
+    ]).pipe(
+      tap(() => {
+        const fromQuest = fromHex.quest;
+        const fromAssignmentId = fromHex.hexAssignmentId;
+        fromHex.quest = toHex.quest;
+        fromHex.hexAssignmentId = toHex.hexAssignmentId;
+        toHex.quest = fromQuest;
+        toHex.hexAssignmentId = fromAssignmentId;
       }),
       map(() => void 0)
     );

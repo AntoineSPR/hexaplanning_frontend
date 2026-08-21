@@ -7,70 +7,111 @@
   style="user-select: none; touch-action: none">
   <!-- Define clipping paths for each hexagon -->
   <defs>
-    @for (h of hexes; track $index) {
-    <clipPath [attr.id]="getHexClipId(h)">
-      <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
-    </clipPath>
+    @for (h of hexes; track getHexClipId(h)) {
+      <clipPath [attr.id]="getHexClipId(h)">
+        <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
+      </clipPath>
     }
   </defs>
 
   <!-- Camera transform group -->
   <g #cameraGroup [attr.transform]="getCameraTransform()">
-    @for (h of hexes; track $index) {
-    <!-- Base hexagon -->
-    <polygon
-      [attr.points]="getHexPoints(h.cx, h.cy)"
-      stroke="black"
-      stroke-width="1"
-      [attr.fill]="getHexColor(h)"
-      (click)="handleHexClick(h)"
-      (keydown)="handleHexKeydown($event, h)"
-      tabindex="0"
-      role="button"
-      [attr.aria-label]="getHexAriaLabel(h)"
-      class="hex-polygon" />
+    @for (h of hexes; track getHexClipId(h)) {
+      <!-- Base hexagon -->
+      <polygon
+        [attr.points]="getHexPoints(h.cx, h.cy)"
+        [attr.data-hex-q]="h.q"
+        [attr.data-hex-r]="h.r"
+        [attr.data-hex-s]="h.s"
+        stroke="black"
+        stroke-width="1"
+        [attr.fill]="getHexColor(h)"
+        (click)="handleHexClick(h)"
+        (keydown)="handleHexKeydown($event, h)"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="getHexAriaLabel(h)"
+        [class.hex-drag-origin]="draggingHex === h"
+        [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
-    <!-- Progress overlay (if quest has advancement and is in progress) -->
-    @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
-    <path
-      [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
-      [attr.fill]="'var(--dark-theme-color)'"
-      [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
-      stroke="none"
-      (click)="handleHexClick(h)"
-      tabindex="-1"
-      role="presentation" />
-    }
-
-    <!-- Border -->
-    <polygon
-      [attr.points]="getHexPoints(h.cx, h.cy, -2)"
-      [attr.stroke]="getHexBorderColor(h)"
-      [attr.stroke-width]="2"
-      fill="none"
-      (click)="handleHexClick(h)"
-      tabindex="-1"
-      role="presentation" />
-    <foreignObject
-      class="hex_text_wrapper"
-      [attr.x]="h.cx - size * 0.75"
-      [attr.y]="h.cy - size * 0.75"
-      [attr.width]="size * 1.5"
-      [attr.height]="size * 1.3">
-      @if (h.quest) {
-      <!-- Unassign button -->
-      <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
+      <!-- Progress overlay (if quest has advancement and is in progress) -->
+      @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
+        <path
+          [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
+          [attr.fill]="'var(--dark-theme-color)'"
+          [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
+          stroke="none"
+          tabindex="-1"
+          role="presentation" />
       }
-      <!-- Quest title -->
-      <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
-        <div class="hex_quest_title">
-          {{ h.quest?.title || '' }}
-        </div>
-      </xhtml:div>
-    </foreignObject>
+
+      <!-- Border -->
+      <polygon
+        [attr.points]="getHexPoints(h.cx, h.cy, -2)"
+        [attr.stroke]="getHexBorderColor(h)"
+        [attr.stroke-width]="2"
+        fill="none"
+        tabindex="-1"
+        role="presentation"
+        [class]="getDropHighlightClass(h)" />
+      <!-- Sized to the hex's full bounding box and clipped to the hex
+         shape, so a long-press anywhere on the hex can start a drag. -->
+      <foreignObject class="hex_text_wrapper" [attr.x]="h.cx - size" [attr.y]="h.cy - size" [attr.width]="size * 2" [attr.height]="size * 2">
+        <xhtml:div
+          xmlns="http://www.w3.org/1999/xhtml"
+          class="hex_text_container"
+          [class.hex-drag-surface]="!!h.quest"
+          (click)="handleHexClick(h)"
+          (pointerdown)="onHexPointerDown(h, $event)"
+          (pointermove)="onHexPointerMove($event)"
+          (pointerup)="onHexPointerUp($event)"
+          (pointercancel)="onHexPointerCancel($event)">
+          <div class="hex_quest_title">
+            {{ h.quest?.title || '' }}
+          </div>
+        </xhtml:div>
+        @if (h.quest) {
+          <!-- Unassign button: sits after the drag surface in DOM order so it stays clickable on top -->
+          <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
+        }
+      </foreignObject>
     }
   </g>
 </svg>
+
+@if (draggingHex && draggingHex.quest) {
+  <!-- Floating preview that follows the pointer while dragging a quest between hexes: an exact
+     replica of the real hex, built from the same polygon/border/title markup and the same
+     getHexPoints/getHexColor/getHexBorderColor helpers, just scaled to a standalone mini-SVG so
+     it renders identically (including how its foreignObject text scales). -->
+  <svg
+    class="quest-drag-overlay"
+    [style.left.px]="dragPreviewX"
+    [style.top.px]="dragPreviewY"
+    [attr.width]="size * 2 * dragOverlayScale"
+    [attr.height]="size * 2 * dragOverlayScale"
+    [attr.viewBox]="'0 0 ' + size * 2 + ' ' + size * 2">
+    <defs>
+      <clipPath id="drag-preview-clip">
+        <polygon [attr.points]="getHexPoints(size, size)" />
+      </clipPath>
+    </defs>
+    <polygon [attr.points]="getHexPoints(size, size)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(draggingHex)" />
+    @if (getQuestAdvancement(draggingHex) > 0 && draggingHex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
+      <path
+        [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))"
+        [attr.fill]="'var(--dark-theme-color)'"
+        clip-path="url(#drag-preview-clip)"
+        stroke="none" />
+    }
+    <polygon [attr.points]="getHexPoints(size, size, -2)" [attr.stroke]="getHexBorderColor(draggingHex)" stroke-width="2" fill="none" />
+    <foreignObject [attr.width]="size * 2" [attr.height]="size * 2">
+      <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
+        <div class="hex_quest_title">{{ draggingHex.quest.title }}</div>
+      </xhtml:div>
+    </foreignObject>
+  </svg>
+}
 
 <!-- Camera controls -->
 <div class="camera-controls">
@@ -83,25 +124,27 @@
 <p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
   <ng-template #header>
     @if (selectedHex) {
-    <h3>Assigner une quête à accomplir</h3>
+      <h3>Assigner une quête à accomplir</h3>
     }
   </ng-template>
 
   <div class="quest-selection">
     <div class="quest-list">
       @if (unassignedPendingQuests.length === 0) {
-      <p id="no-quest">Aucune nouvelle quête à accomplir !</p>
-      } @else { @for (quest of unassignedPendingQuests; track quest.id) {
-      <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
-        <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
-        <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
-        <img
-          class="priority-icon"
-          [src]="getPriorityImagePath(quest)"
-          [alt]="getPriorityAltText(quest)"
-          [class]="'priority-' + getPriorityIcon(quest)" />
-      </div>
-      } }
+        <p id="no-quest">Aucune nouvelle quête à accomplir !</p>
+      } @else {
+        @for (quest of unassignedPendingQuests; track quest.id) {
+          <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
+            <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
+            <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
+            <img
+              class="priority-icon"
+              [src]="getPriorityImagePath(quest)"
+              [alt]="getPriorityAltText(quest)"
+              [class]="'priority-' + getPriorityIcon(quest)" />
+          </div>
+        }
+      }
     </div>
   </div>
   <ng-template #footer>
@@ -124,9 +167,9 @@
 </p-confirmdialog>
 
 @if (isLoading) {
-<div class="loading-overlay" [class.fade-out]="isFadingOut">
-  <div class="spinner" aria-label="Chargement"></div>
-</div>
+  <div class="loading-overlay" [class.fade-out]="isFadingOut">
+    <div class="spinner" aria-label="Chargement"></div>
+  </div>
 }
 
 <app-menu></app-menu>

@@ -78,6 +78,37 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoading = true;
   isFadingOut = false;
 
+  // Quest drag-and-drop state
+  draggingHex: Hex | null = null;
+  dragOverHex: Hex | null = null;
+  // A floating replica of the dragged hex (see the mini <svg> in the template) that follows
+  // the pointer at these fixed-position coordinates.
+  dragPreviewX = 0;
+  dragPreviewY = 0;
+  // The <svg viewBox> makes on-map hexes render larger than their raw `size` units once the
+  // browser scales the viewBox to fit the container (times the camera zoom on top of that).
+  // The overlay lives outside the SVG as a plain fixed-position div, so it needs this same
+  // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
+  dragOverlayScale = 1;
+  private lastLandedHex: Hex | null = null;
+
+  // Hand-rolled long-press-then-drag gesture, using native Pointer Events directly rather than
+  // @angular/cdk's DragRef: CDK's non-touch drag detection is gated behind a lazily-attached
+  // `mousemove` document listener that in practice doesn't reliably fire for this gesture across
+  // browsers/input devices, so real mouse dragging silently never started. `pointermove` fires
+  // consistently for every pointer type, and `setPointerCapture` guarantees this element keeps
+  // receiving move/up events for the gesture regardless of where the pointer physically travels.
+  private static readonly DRAG_START_DELAY_MS = 150;
+  private static readonly DRAG_START_THRESHOLD_PX = 5;
+  private pointerDrag: {
+    hex: Hex;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startTime: number;
+    cancelled: boolean;
+  } | null = null;
+
   constructor() {
     effect(() => {
       const allQuests = this._questService.quests();
@@ -302,6 +333,150 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }, 100);
     }
+  }
+
+  onHexPointerDown(hex: Hex, event: PointerEvent): void {
+    if (!hex.quest || event.button !== 0) {
+      return;
+    }
+    this.pointerDrag = {
+      hex,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startTime: Date.now(),
+      cancelled: false,
+    };
+    // Guarantees this element keeps receiving pointermove/pointerup for this gesture
+    // even if the cursor moves off it mid-drag; doesn't prevent a plain click from firing.
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  onHexPointerMove(event: PointerEvent): void {
+    const drag = this.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId || drag.cancelled) {
+      return;
+    }
+
+    if (this.draggingHex) {
+      this.dragPreviewX = event.clientX;
+      this.dragPreviewY = event.clientY;
+      this.dragOverHex = this.findHexAtPoint(event.clientX, event.clientY);
+      return;
+    }
+
+    const distance = Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY);
+    if (distance < MapComponent.DRAG_START_THRESHOLD_PX) {
+      return;
+    }
+    if (Date.now() - drag.startTime < MapComponent.DRAG_START_DELAY_MS) {
+      // Moved before the hold delay elapsed: treat as a failed long-press, not a drag.
+      drag.cancelled = true;
+      return;
+    }
+
+    event.preventDefault();
+    this.draggingHex = drag.hex;
+    this.dragOverHex = null;
+    this.dragPreviewX = event.clientX;
+    this.dragPreviewY = event.clientY;
+    this.dragOverlayScale = this.computeMapScale();
+  }
+
+  private computeMapScale(): number {
+    if (!this.svgRoot) return 1;
+    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return 1;
+    // preserveAspectRatio="xMidYMid meet": the viewBox is scaled uniformly by the smaller of
+    // the two ratios so it fits entirely within the rendered element.
+    const fitScale = Math.min(rect.width / this.mapWidth, rect.height / this.mapHeight);
+    return fitScale * this.zoom;
+  }
+
+  onHexPointerUp(event: PointerEvent): void {
+    const drag = this.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
+    (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
+    this.pointerDrag = null;
+
+    if (!this.draggingHex) {
+      return; // was a plain tap (or a cancelled early-movement); let the native click fire
+    }
+
+    const hex = this.draggingHex;
+    const target = this.dragOverHex;
+    // A real drag just occurred: ignore the click that follows pointerup
+    this.suppressClicksUntil = Date.now() + 250;
+
+    if (target && target !== hex) {
+      // Keep the origin hex dimmed and the preview visible until the move actually resolves,
+      // instead of clearing draggingHex immediately - otherwise the origin hex snaps back to
+      // full opacity (still showing its old quest) for the length of the request, then fades
+      // out again once the response arrives, which reads as a flash.
+      this._questAssignment.moveQuestToHex(hex, target, this.hexes, this.size).subscribe({
+        next: () => {
+          this.markLandedHex(target);
+          this.draggingHex = null;
+          this.dragOverHex = null;
+        },
+        error: err => {
+          console.error('Failed to move quest:', err);
+          this.draggingHex = null;
+          this.dragOverHex = null;
+        },
+      });
+    } else {
+      this.draggingHex = null;
+      this.dragOverHex = null;
+    }
+  }
+
+  onHexPointerCancel(event: PointerEvent): void {
+    const drag = this.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
+    this.pointerDrag = null;
+    this.draggingHex = null;
+    this.dragOverHex = null;
+  }
+
+  private findHexAtPoint(x: number, y: number): Hex | null {
+    // Use the full element stack (not just the topmost hit) since a drop point over an
+    // occupied hex often lands on that hex's own quest chip, which sits above the polygon.
+    const stack = document.elementsFromPoint(x, y);
+    for (const el of stack) {
+      const hexEl = el.closest('[data-hex-q]') as HTMLElement | null;
+      if (hexEl) {
+        const q = Number(hexEl.dataset['hexQ']);
+        const r = Number(hexEl.dataset['hexR']);
+        const s = Number(hexEl.dataset['hexS']);
+        return this.hexes.find(h => h.q === q && h.r === r && h.s === s) ?? null;
+      }
+    }
+    return null;
+  }
+
+  private markLandedHex(hex: Hex): void {
+    this.lastLandedHex = hex;
+    setTimeout(() => {
+      if (this.lastLandedHex === hex) {
+        this.lastLandedHex = null;
+      }
+    }, 500);
+  }
+
+  isLandedHex(hex: Hex): boolean {
+    return this.lastLandedHex === hex;
+  }
+
+  getDropHighlightClass(hex: Hex): string {
+    if (!this.draggingHex || this.dragOverHex !== hex || hex === this.draggingHex) {
+      return '';
+    }
+    return hex.quest ? 'hex-drop-swap' : 'hex-drop-move';
   }
 
   getHexColor(hex: Hex): string {

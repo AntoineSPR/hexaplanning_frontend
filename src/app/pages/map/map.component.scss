@@ -102,6 +102,11 @@
   pointer-events: none;
 }
 
+// Clips a box to the same pointy-top hexagon shape produced by MapGridService.getHexPoints,
+// expressed as percentages of a square box centered on the hex (so it can be reused for both
+// the whole-hex drag/click surface and the floating drag preview).
+$hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 0%);
+
 .hex_text_container {
   position: relative;
   text-align: center;
@@ -113,13 +118,28 @@
   align-items: center;
   justify-content: center;
   color: black;
-  pointer-events: none;
+  // The whole hex is the click surface, clipped to the true hex shape
+  // so hit-testing doesn't bleed into neighboring hexes' corners.
+  clip-path: $hex-clip-path;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+// Only occupied hexes are draggable; empty hexes keep the plain click cursor above and let
+// camera panning (touch or mouse) work normally over them (see svg-zoom.service.ts's filter).
+.hex-drag-surface {
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .hex_quest_title {
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 90%;
+  width: 70%;
   display: -webkit-box;
   line-clamp: 4;
   -webkit-line-clamp: 4;
@@ -132,14 +152,52 @@
   }
   line-height: 1.2;
   font-size: 0.4rem;
-  padding-top: 14px;
   color: var(--text-color);
   font-weight: bold;
+  pointer-events: none;
+}
+
+.quest-drag-overlay {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+  z-index: 2000;
+  overflow: visible;
+}
+
+.hex-drag-origin {
+  opacity: 0.35;
+}
+
+.hex-drop-move {
+  filter: drop-shadow(0 0 6px var(--focus-color));
+  stroke: var(--focus-color) !important;
+  stroke-width: 3 !important;
+}
+
+.hex-drop-swap {
+  filter: drop-shadow(0 0 6px var(--light-theme-color));
+  stroke: var(--light-theme-color) !important;
+  stroke-width: 3 !important;
+}
+
+.hex-landed {
+  animation: hex-land-pulse 0.5s ease-out;
+}
+
+@keyframes hex-land-pulse {
+  0% {
+    filter: drop-shadow(0 0 10px var(--theme-color));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
 }
 
 .quest-delete {
   position: absolute;
-  top: 0px;
+  top: 8%;
   left: 50%;
   transform: translateX(-50%);
   background-color: black;
