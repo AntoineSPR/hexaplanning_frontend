@@ -1,7 +1,7 @@
 <form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
   <div class="flex gap-2 justify-content-start align-content-start">
     <!-- BOUTON RETOUR -->
-    <button type="button" class="return pi pi-chevron-left" (click)="onReturn()" aria-label="bouton retour"></button>
+    <button type="button" class="return pi pi-chevron-left" (click)="confirmClose()" aria-label="bouton retour"></button>
     <!-- TITRE -->
     <div class="title">
       <label for="title" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Titre :</label>
@@ -158,8 +158,8 @@
     <div class="confirmation-dialog">
       <p>{{ message.message }}</p>
       <div class="flex items-center gap-2">
-        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
-        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Supprimer</button>
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">{{ message.rejectLabel }}</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">{{ message.acceptLabel }}</button>
       </div>
     </div>
   </ng-template>

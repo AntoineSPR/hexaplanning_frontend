@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { QuestDetailsComponent } from '../quest-details/quest-details.component';
 import { QuestModalService } from '../../services/quest-modal.service'; // Adjust the path as needed
@@ -15,6 +15,8 @@ import { QuestUpdateDTO } from '../../models/quest.model'; // Adjust the path as
 export class QuestContainerComponent {
   _questModalService = inject(QuestModalService);
 
+  @ViewChild(QuestDetailsComponent) private _questDetails?: QuestDetailsComponent;
+
   get isVisible(): boolean {
     return this._questModalService.questModalVisible();
   }
@@ -28,10 +30,15 @@ export class QuestContainerComponent {
     return this._questModalService.questModalData().isNew;
   }
 
-  //For the dismissable mask:
+  // For the dismissable mask and Escape key: route through the same unsaved-changes
+  // confirmation as the form's own return button, instead of discarding silently.
   handleVisibilityChange(visible: boolean): void {
     if (!visible) {
-      this._questModalService.closeQuestModal();
+      if (this._questDetails) {
+        this._questDetails.confirmClose();
+      } else {
+        this._questModalService.closeQuestModal();
+      }
     }
   }
 }
