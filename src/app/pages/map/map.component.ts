@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnDestroy, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, effect, inject, NgZone, OnDestroy, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
@@ -44,6 +44,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   _el = inject(ElementRef<HTMLElement>);
   _svgZoom = inject(SvgZoomService);
   _connectivity = inject(ConnectivityService);
+  _ngZone = inject(NgZone);
 
   zoomHandle?: SvgZoomHandle;
 
@@ -267,33 +268,46 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     window.addEventListener('resize', this._updateMenuHeightVar);
     this.matchMapDimensionsToContainer();
     const saved = this._cameraState.getState();
-    this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
-      scaleMin: ZOOM_MIN,
-      scaleMax: this._zoomMax,
-      onStart: () => {
-        this.hadCameraMove = false;
-        this.togglePanning(true);
-      },
-      onEnd: () => {
-        this.togglePanning(false);
-        if (this.hadCameraMove) {
-          this.suppressClicksUntil = Date.now() + 250;
-        }
-      },
-      onTransform: t => {
-        // Detect meaningful changes to mark that a camera move occurred
-        const dx = Math.abs(t.x - this.panX);
-        const dy = Math.abs(t.y - this.panY);
-        const dk = Math.abs(t.k - this.zoom);
-        if (dx > 0.5 || dy > 0.5 || dk > 0.001) {
-          this.hadCameraMove = true;
-        }
-        this.panX = t.x;
-        this.panY = t.y;
-        this.zoom = t.k;
-        this._cameraState.saveState(this.panX, this.panY, this.zoom);
-      },
-    });
+    // The zoom/pan gesture itself (and the d3-zoom listeners it registers) is run outside
+    // Angular's zone: d3 already applies the transform straight to the DOM (see
+    // svg-zoom.service.ts), so re-running change detection over the ~1000-hex grid on every
+    // single pointermove tick of a drag/pinch was pure waste - and was the main cause of jank on
+    // mobile. Only onStart/onEnd (once per gesture, not once per frame) re-enter the zone.
+    this.zoomHandle = await this._ngZone.runOutsideAngular(() =>
+      this._svgZoom.attach(this.svgRoot!.nativeElement, this.cameraGroup!.nativeElement, {
+        scaleMin: ZOOM_MIN,
+        scaleMax: this._zoomMax,
+        onStart: () => {
+          this._ngZone.run(() => {
+            this.hadCameraMove = false;
+            this.togglePanning(true);
+          });
+        },
+        onEnd: () => {
+          this._ngZone.run(() => {
+            this.togglePanning(false);
+            if (this.hadCameraMove) {
+              this.suppressClicksUntil = Date.now() + 250;
+            }
+            // Persisted once per gesture (here) rather than on every transform tick, which used
+            // to mean a synchronous localStorage write on every frame of a drag/pinch.
+            this._cameraState.saveState(this.panX, this.panY, this.zoom);
+          });
+        },
+        onTransform: t => {
+          // Runs outside Angular's zone at gesture frame-rate - just track the values, no CD.
+          const dx = Math.abs(t.x - this.panX);
+          const dy = Math.abs(t.y - this.panY);
+          const dk = Math.abs(t.k - this.zoom);
+          if (dx > 0.5 || dy > 0.5 || dk > 0.001) {
+            this.hadCameraMove = true;
+          }
+          this.panX = t.x;
+          this.panY = t.y;
+          this.zoom = t.k;
+        },
+      })
+    );
     // Apply initial transform
     this.zoomHandle.setTransform(saved?.panX ?? this.panX, saved?.panY ?? this.panY, saved?.zoom ?? this.zoom);
   }
@@ -640,45 +654,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       this.panX = 0;
       this.panY = 0;
     }
-    this.zoom = 1;
-  }
-
-  // Re-centers on a hex, keeping the current zoom (unlike centerCameraOnCenterHex/resetCamera).
-  // Called by HexDragController after a successful drop.
-  centerCameraOnHex(hex: Hex): void {
-    this.panX = this.mapWidth / 2 - hex.cx * this.zoom;
-    this.panY = this.mapHeight / 2 - hex.cy * this.zoom;
-    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
-  }
-
-  // Zooms/pans to frame every currently assigned quest at once - an escape hatch back to an
-  // overview when quests end up spread across a large map. Falls back to the default centered
-  // view when there's nothing assigned yet.
-  fitAllQuests(): void {
-    const assignedHexes = this.hexes.filter(h => h.quest);
-    if (assignedHexes.length === 0) {
-      this.resetCamera();
-      return;
-    }
-
-    const pad = this.size + 10;
-    const xs = assignedHexes.map(h => h.cx);
-    const ys = assignedHexes.map(h => h.cy);
-    const minX = Math.min(...xs) - pad;
-    const maxX = Math.max(...xs) + pad;
-    const minY = Math.min(...ys) - pad;
-    const maxY = Math.max(...ys) + pad;
-    const boxWidth = Math.max(maxX - minX, 1);
-    const boxHeight = Math.max(maxY - minY, 1);
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), ZOOM_MIN), this._zoomMax);
-
-    this.zoom = newZoom;
-    this.panX = this.mapWidth / 2 - centerX * newZoom;
-    this.panY = this.mapHeight / 2 - centerY * newZoom;
-    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
   }
 
   // Re-centers on a hex, keeping the current zoom (unlike centerCameraOnCenterHex/resetCamera).
