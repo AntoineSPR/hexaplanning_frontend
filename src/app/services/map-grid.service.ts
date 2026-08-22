@@ -123,6 +123,88 @@ export class MapGridService {
     }
   }
 
+  // All axial coordinates within `radius` steps of `center` (a filled hex "disk"), regardless
+  // of whether hexes actually exist there yet.
+  coordinatesInRadius(center: { q: number; r: number; s: number }, radius: number): { q: number; r: number; s: number }[] {
+    const coords: { q: number; r: number; s: number }[] = [];
+    for (let dq = -radius; dq <= radius; dq++) {
+      const rMin = Math.max(-radius, -dq - radius);
+      const rMax = Math.min(radius, -dq + radius);
+      for (let dr = rMin; dr <= rMax; dr++) {
+        const ds = -dq - dr;
+        coords.push({ q: center.q + dq, r: center.r + dr, s: center.s + ds });
+      }
+    }
+    return coords;
+  }
+
+  // Ensure every hex within `radius` steps of `center` exists (adding any missing ones),
+  // regardless of whether `center` itself is currently occupied/assigned. Used to grow the
+  // grid live ahead of the cursor while dragging a quest toward territory that doesn't exist
+  // yet, rather than only expanding around already-assigned hexes. Returns the "q,r,s" keys of
+  // whatever was actually added, so callers can track/undo speculative growth.
+  ensureHexesInRadius(hexes: Hex[], center: { q: number; r: number; s: number }, radius: number, size: number): string[] {
+    const added: string[] = [];
+    for (const { q, r, s } of this.coordinatesInRadius(center, radius)) {
+      if (!this.hasHex(hexes, q, r, s)) {
+        this.addHex(hexes, q, r, s, size);
+        added.push(`${q},${r},${s}`);
+      }
+    }
+    return added;
+  }
+
+  // Rounds fractional cube coordinates to the nearest valid hex (q + r + s === 0), correcting
+  // whichever axis has the largest rounding error.
+  private cubeRound(qFrac: number, rFrac: number, sFrac: number): { q: number; r: number; s: number } {
+    let q = Math.round(qFrac);
+    let r = Math.round(rFrac);
+    let s = Math.round(sFrac);
+
+    const dq = Math.abs(q - qFrac);
+    const dr = Math.abs(r - rFrac);
+    const ds = Math.abs(s - sFrac);
+
+    if (dq > dr && dq > ds) {
+      q = -r - s;
+    } else if (dr > ds) {
+      r = -q - s;
+    } else {
+      s = -q - r;
+    }
+
+    return { q, r, s };
+  }
+
+  // Inverse of hexToPixel: given a point in the same hex-local coordinate space, find the
+  // nearest axial hex coordinate (using cube rounding), whether or not a hex actually exists
+  // there yet.
+  pixelToAxial(localX: number, localY: number, size: number): { q: number; r: number; s: number } {
+    const rFrac = (localY - this.originY) / ((size * 3) / 2);
+    const qFrac = (localX - this.originX) / (size * Math.sqrt(3)) - rFrac / 2;
+    const sFrac = -qFrac - rFrac;
+    return this.cubeRound(qFrac, rFrac, sFrac);
+  }
+
+  // If `target` is further than `maxDistance` hex-steps from `origin`, projects it back onto
+  // the boundary of that range instead - so a target that goes out of bounds "slides" along the
+  // edge of the allowed area rather than becoming unreachable.
+  clampToDistance(
+    origin: { q: number; r: number; s: number },
+    target: { q: number; r: number; s: number },
+    maxDistance: number
+  ): { q: number; r: number; s: number } {
+    const dq = target.q - origin.q;
+    const dr = target.r - origin.r;
+    const ds = target.s - origin.s;
+    const distance = (Math.abs(dq) + Math.abs(dr) + Math.abs(ds)) / 2;
+    if (distance <= maxDistance || distance === 0) {
+      return target;
+    }
+    const scale = maxDistance / distance;
+    return this.cubeRound(origin.q + dq * scale, origin.r + dr * scale, origin.s + ds * scale);
+  }
+
   // Calculate bounding box and adjust map dimensions
   adjustMapBounds(hexes: Hex[], size: number): { width: number; height: number } {
     if (hexes.length === 0) {

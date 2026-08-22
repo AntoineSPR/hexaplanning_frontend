@@ -19,7 +19,7 @@ import { ConnectivityService } from 'src/app/services/connectivity.service';
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
-const MAX_EXPANSION = 3;
+const MAX_EXPANSION = 8;
 
 @Component({
   selector: 'app-map',
@@ -93,6 +93,26 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
   dragOverlayScale = 1;
   private lastLandedHex: Hex | null = null;
+  // Edge auto-pan while dragging: how close (in screen px) to the SVG's edge before panning
+  // kicks in, and the fastest the camera moves (in screen px/frame) right at the very edge.
+  private static readonly EDGE_PAN_ZONE_PX = 48;
+  private static readonly EDGE_PAN_MAX_SPEED_PX = 14;
+  private edgePanDirection: { dx: number; dy: number } | null = null;
+  // "q,r,s" keys of hexes added by live grid growth during the current drag, so the halo of
+  // grey hexes can move with the held hex (shrinking behind it) instead of leaving a trail.
+  private speculativeGrowthCoords = new Set<string>();
+  private static readonly DRAG_GROWTH_RADIUS = 1;
+  // The pointer's *true* screen position, updated only from real pointer events - never from
+  // the (possibly clamped/pinned) drag preview position. The edge-pan loop re-derives the
+  // target from this every frame; feeding the clamped preview back in as if it were the cursor
+  // created a feedback loop (target kept drifting as pan changed) that showed up as jitter.
+  private pointerClientX = 0;
+  private pointerClientY = 0;
+  private edgePanFrameId: number | null = null;
+  // True once the drag target has hit the maxExpansion boundary - edge-pan stops advancing the
+  // camera further in that case, so the user can't keep panning away from the held hex without
+  // it actually going anywhere, losing track of where they'll end up dropping it.
+  private dragTargetClamped = false;
   // Set when the initial assignment load had to fall back to the offline snapshot; tells the
   // reconnect effect below to quietly re-fetch the authoritative state once back online, so the
   // map self-heals instead of requiring a manual page reload.
@@ -422,6 +442,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       panStartY: 0,
     };
     this.pointerDrag = drag;
+    this.speculativeGrowthCoords.clear();
     // Guarantees this element keeps receiving pointermove/pointerup for this gesture
     // even if the cursor moves off it mid-drag; doesn't prevent a plain click from firing.
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
@@ -443,9 +464,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (this.draggingHex) {
-      this.dragPreviewX = event.clientX;
-      this.dragPreviewY = event.clientY;
-      this.dragOverHex = this.findHexAtPoint(event.clientX, event.clientY);
+      this.pointerClientX = event.clientX;
+      this.pointerClientY = event.clientY;
+      // dragPreviewX/Y get set inside updateDragOverHex - clamped to the edge of the halo
+      // instead of the raw pointer position once the drag goes past maxExpansion.
+      this.updateDragOverHex();
+      this.updateEdgePan(event.clientX, event.clientY);
       return;
     }
 
@@ -478,6 +502,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.draggingHex = drag.hex;
     this.armedHex = null;
     this.dragOverHex = null;
+    this.pointerClientX = event.clientX;
+    this.pointerClientY = event.clientY;
     this.dragPreviewX = event.clientX;
     this.dragPreviewY = event.clientY;
     this.dragOverlayScale = this.computeMapScale();
@@ -496,6 +522,211 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.computeFitScale() * this.zoom;
   }
 
+  // Sets dragOverHex to whatever hex is under the true cursor position (this.pointerClientX/Y -
+  // never the possibly-clamped dragPreviewX/Y, which would create a feedback loop with the
+  // camera pan), growing a small halo of grey hexes around that point first if nothing exists
+  // there yet. Runs on every update (not just when growth is needed) so the halo also shrinks
+  // behind the held hex as it moves, rather than leaving a trail across the whole drag path.
+  private updateDragOverHex(): void {
+    const drag = this.pointerDrag;
+    if (!drag) {
+      this.dragOverHex = null;
+      this.dragTargetClamped = false;
+      return;
+    }
+    const clientX = this.pointerClientX;
+    const clientY = this.pointerClientY;
+
+    const local = this.clientPointToHexLocal(clientX, clientY);
+    if (!local) {
+      // svgRoot not ready yet - fall back to DOM hit-testing rather than growing blind.
+      this.dragPreviewX = clientX;
+      this.dragPreviewY = clientY;
+      this.dragOverHex = this.findHexAtPoint(clientX, clientY);
+      this.dragTargetClamped = false;
+      return;
+    }
+
+    const rawTarget = this._mapGrid.pixelToAxial(local.x, local.y, this.size);
+    const origin = drag.hex;
+    // Past maxExpansion rings from the origin, slide the target back onto the boundary instead
+    // of giving up - keeps a halo visible and reachable rather than vanishing into empty space.
+    const target = this._mapGrid.clampToDistance(origin, rawTarget, this.maxExpansion);
+    this.dragTargetClamped = target.q !== rawTarget.q || target.r !== rawTarget.r || target.s !== rawTarget.s;
+
+    if (this.dragTargetClamped) {
+      // Clamped: pin the visual preview to the edge of the halo instead of following the
+      // pointer further out, so the held hex can't drift somewhere the camera hasn't reached.
+      const targetLocal = this._mapGrid.hexToPixel(target.q, target.r, this.size);
+      const clampedScreen = this.hexLocalToClient(targetLocal.cx, targetLocal.cy);
+      this.dragPreviewX = clampedScreen?.x ?? clientX;
+      this.dragPreviewY = clampedScreen?.y ?? clientY;
+    } else {
+      this.dragPreviewX = clientX;
+      this.dragPreviewY = clientY;
+    }
+
+    const desiredCoords = new Set(
+      this._mapGrid.coordinatesInRadius(target, MapComponent.DRAG_GROWTH_RADIUS).map(c => `${c.q},${c.r},${c.s}`)
+    );
+    this.shrinkSpeculativeGrowth(desiredCoords);
+
+    const added = this._mapGrid.ensureHexesInRadius(this.hexes, target, MapComponent.DRAG_GROWTH_RADIUS, this.size);
+    for (const key of added) {
+      this.speculativeGrowthCoords.add(key);
+    }
+
+    // Grow the viewBox only when the hex set actually needs more room than it currently has,
+    // and never shrink mid-drag (shrinking is handled once the drag ends). Reserving the whole
+    // possible drag radius up front instead caused an immediate, disorienting rescale/jump the
+    // moment a drag started - any viewBox size change rescales the whole map, since fitScale is
+    // purely a function of mapWidth/mapHeight vs the fixed container size. Growing lazily like
+    // this means it only happens occasionally, as territory is actually reached, not constantly.
+    if (added.length) {
+      const needed = this._mapGrid.adjustMapBounds(this.hexes, this.size);
+      if (needed.width > this.mapWidth || needed.height > this.mapHeight) {
+        this.mapWidth = Math.max(this.mapWidth, needed.width);
+        this.mapHeight = Math.max(this.mapHeight, needed.height);
+        this.dragOverlayScale = this.computeMapScale();
+      }
+    }
+
+    this.dragOverHex = this.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
+  }
+
+  // Converts a screen point into the hex-local coordinate space (undoing the SVG's letterboxed
+  // fit-scale, then the camera's own pan/zoom), the same space hexToPixel/pixelToAxial use.
+  private clientPointToHexLocal(clientX: number, clientY: number): { x: number; y: number } | null {
+    if (!this.svgRoot) return null;
+    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const fitScale = this.computeFitScale();
+    if (!fitScale) return null;
+
+    const renderedWidth = this.mapWidth * fitScale;
+    const renderedHeight = this.mapHeight * fitScale;
+    // xMidYMid centers the viewBox within the element when the aspect ratios don't match.
+    const offsetX = rect.left + (rect.width - renderedWidth) / 2;
+    const offsetY = rect.top + (rect.height - renderedHeight) / 2;
+
+    const viewBoxX = (clientX - offsetX) / fitScale;
+    const viewBoxY = (clientY - offsetY) / fitScale;
+
+    // Undo translate(panX,panY) scale(zoom) to get back to hex-local space.
+    return {
+      x: (viewBoxX - this.panX) / this.zoom,
+      y: (viewBoxY - this.panY) / this.zoom,
+    };
+  }
+
+  // Inverse of clientPointToHexLocal: converts hex-local coordinates back into a screen point,
+  // used to pin the drag preview to a clamped target's actual on-screen position.
+  private hexLocalToClient(localX: number, localY: number): { x: number; y: number } | null {
+    if (!this.svgRoot) return null;
+    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const fitScale = this.computeFitScale();
+    if (!fitScale) return null;
+
+    const renderedWidth = this.mapWidth * fitScale;
+    const renderedHeight = this.mapHeight * fitScale;
+    const offsetX = rect.left + (rect.width - renderedWidth) / 2;
+    const offsetY = rect.top + (rect.height - renderedHeight) / 2;
+
+    // Re-apply translate(panX,panY) scale(zoom), then the fit-scale and letterbox offset.
+    const viewBoxX = localX * this.zoom + this.panX;
+    const viewBoxY = localY * this.zoom + this.panY;
+
+    return {
+      x: offsetX + viewBoxX * fitScale,
+      y: offsetY + viewBoxY * fitScale,
+    };
+  }
+
+  // Removes any hex that was speculatively grown earlier in this drag but isn't part of
+  // `keepCoords` (the halo around the current target) - lets the grey halo move with the held
+  // hex instead of leaving every previously-visited spot filled in behind it.
+  private shrinkSpeculativeGrowth(keepCoords: Set<string>): void {
+    if (this.speculativeGrowthCoords.size === 0) return;
+
+    // mapWidth/mapHeight are intentionally left alone here too - see updateDragOverHex.
+    for (let i = this.hexes.length - 1; i >= 0; i--) {
+      const h = this.hexes[i];
+      const key = `${h.q},${h.r},${h.s}`;
+      if (this.speculativeGrowthCoords.has(key) && !keepCoords.has(key)) {
+        this.hexes.splice(i, 1);
+        this.speculativeGrowthCoords.delete(key);
+      }
+    }
+  }
+
+  // While the pointer sits within EDGE_PAN_ZONE_PX of the SVG's edge during an active drag,
+  // continuously pans the camera toward that edge - the map moves under a stationary pointer,
+  // so dragOverHex/grid growth get re-evaluated every frame rather than only on pointermove.
+  private updateEdgePan(clientX: number, clientY: number): void {
+    if (!this.svgRoot) {
+      this.stopEdgePan();
+      return;
+    }
+    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
+    const zone = MapComponent.EDGE_PAN_ZONE_PX;
+
+    const distLeft = Math.max(clientX - rect.left, 0);
+    const distRight = Math.max(rect.right - clientX, 0);
+    const distTop = Math.max(clientY - rect.top, 0);
+    const distBottom = Math.max(rect.bottom - clientY, 0);
+
+    let dx = 0;
+    let dy = 0;
+    if (distLeft < zone) dx = -(zone - distLeft) / zone;
+    else if (distRight < zone) dx = (zone - distRight) / zone;
+    if (distTop < zone) dy = -(zone - distTop) / zone;
+    else if (distBottom < zone) dy = (zone - distBottom) / zone;
+
+    if (dx === 0 && dy === 0) {
+      this.stopEdgePan();
+      return;
+    }
+
+    this.edgePanDirection = { dx, dy };
+    this.startEdgePanLoop();
+  }
+
+  private startEdgePanLoop(): void {
+    if (this.edgePanFrameId !== null) return;
+    const step = () => {
+      if (!this.edgePanDirection || !this.draggingHex) {
+        this.edgePanFrameId = null;
+        return;
+      }
+      // Once the drag target has hit the maxExpansion boundary, panning further wouldn't reach
+      // anything new anyway - stop advancing the camera so the held hex doesn't drift out of
+      // view while the user has no way of telling where they'll actually end up dropping it.
+      if (!this.dragTargetClamped) {
+        const fitScale = this.computeFitScale() || 1;
+        const speed = MapComponent.EDGE_PAN_MAX_SPEED_PX / fitScale;
+        this.panX -= this.edgePanDirection.dx * speed;
+        this.panY -= this.edgePanDirection.dy * speed;
+        this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
+      }
+
+      // Re-derive from the true (unchanged) cursor position, not dragPreviewX/Y - the pan just
+      // changed, so the hex under that same screen point is different now too.
+      this.updateDragOverHex();
+
+      this.edgePanFrameId = requestAnimationFrame(step);
+    };
+    this.edgePanFrameId = requestAnimationFrame(step);
+  }
+
+  private stopEdgePan(): void {
+    this.edgePanDirection = null;
+    if (this.edgePanFrameId !== null) {
+      cancelAnimationFrame(this.edgePanFrameId);
+      this.edgePanFrameId = null;
+    }
+  }
+
   onHexPointerUp(event: PointerEvent): void {
     const drag = this.pointerDrag;
     if (!drag || drag.pointerId !== event.pointerId) {
@@ -504,6 +735,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
     this.pointerDrag = null;
     this.armedHex = null;
+    this.stopEdgePan();
 
     if (!this.draggingHex) {
       return; // was a plain tap, or resolved into a camera pan; let the native click fire if applicable
@@ -524,17 +756,29 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
           this.markLandedHex(target);
           this.draggingHex = null;
           this.dragOverHex = null;
+          this.centerCameraOnHex(target);
         },
         error: err => {
           console.error('Failed to move quest:', err);
           this.draggingHex = null;
           this.dragOverHex = null;
+          this.pruneSpeculativeGrowth();
         },
       });
     } else {
       this.draggingHex = null;
       this.dragOverHex = null;
+      this.pruneSpeculativeGrowth();
     }
+  }
+
+  // Drops anything that was speculatively grown while dragging (edge-pan/grid growth) but
+  // didn't end up used for an actual move, same pruning already applied elsewhere.
+  private pruneSpeculativeGrowth(): void {
+    this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+    const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
+    this.mapWidth = bounds.width;
+    this.mapHeight = bounds.height;
   }
 
   onHexPointerCancel(event: PointerEvent): void {
@@ -544,8 +788,13 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     this.pointerDrag = null;
     this.armedHex = null;
+    this.stopEdgePan();
+    const wasDragging = this.draggingHex;
     this.draggingHex = null;
     this.dragOverHex = null;
+    if (wasDragging) {
+      this.pruneSpeculativeGrowth();
+    }
   }
 
   private findHexAtPoint(x: number, y: number): Hex | null {
@@ -677,6 +926,15 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       this.panY = 0;
     }
     this.zoom = 1;
+  }
+
+  // Re-centers the camera on a hex, keeping the current zoom level (unlike
+  // centerCameraOnCenterHex/resetCamera, which reset zoom to 1). Used after dropping a quest
+  // onto a new hex, so the camera follows it there instead of leaving the view where it was.
+  private centerCameraOnHex(hex: Hex): void {
+    this.panX = this.mapWidth / 2 - hex.cx * this.zoom;
+    this.panY = this.mapHeight / 2 - hex.cy * this.zoom;
+    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
   }
 
   private togglePanning(active: boolean) {
