@@ -3,5 +3,6 @@ import { UserResponseDTO } from './userResponseDTO.model';
 
 export type LoginResponseDTO = {
   token: string;
+  refreshToken: string;
   user: UserResponseDTO;
 };

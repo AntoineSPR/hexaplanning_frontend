@@ -39,9 +39,6 @@ export class AppComponent implements OnInit, OnDestroy {
     document.addEventListener('gesturestart', this._blockSafariGesture, { passive: false });
     document.addEventListener('gesturechange', this._blockSafariGesture, { passive: false });
 
-    localStorage.getItem('user');
-    localStorage.getItem('token');
-
     // load statuses and priorities
     this._questService.loadStatuses().subscribe();
     this._questService.loadPriorities().subscribe();
