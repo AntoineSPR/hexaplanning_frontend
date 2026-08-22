@@ -4,9 +4,25 @@
   [attr.viewBox]="'0 0 ' + mapWidth + ' ' + mapHeight"
   preserveAspectRatio="xMidYMid meet"
   [style.cursor]="isPanning ? 'grabbing' : 'grab'"
-  style="user-select: none; touch-action: none">
-  <!-- Only occupied hexes need a clip path (for the progress arc below). -->
+  style="user-select: none; touch-action: none"
+  (pointermove)="onMapPointerMove($event)"
+  (pointerleave)="onMapPointerLeave()">
   <defs>
+    <!-- Cursor-following highlight (desktop only, see onMapPointerMove) -->
+    @for (n of cursorLightNeighbors; track $index) {
+      <linearGradient
+        [attr.id]="'cursor-light-dir-' + $index"
+        gradientUnits="userSpaceOnUse"
+        [attr.x1]="n.x1"
+        [attr.y1]="n.y1"
+        [attr.x2]="n.x2"
+        [attr.y2]="n.y2">
+        <stop offset="0%" stop-color="var(--light-theme-color)" stop-opacity="0.8" />
+        <stop offset="40%" stop-color="var(--light-theme-color)" stop-opacity="0.2" />
+        <stop offset="100%" stop-color="var(--light-theme-color)" stop-opacity="0" />
+      </linearGradient>
+    }
+    <!-- Only occupied hexes need a clip path (for the progress arc below). -->
     @for (h of hexes; track getHexClipId(h)) {
       @if (h.quest) {
         <clipPath [attr.id]="getHexClipId(h)">
@@ -75,9 +91,32 @@
         </xhtml:div>
         @if (h.quest) {
           <!-- Unassign button: sits after the drag surface in DOM order so it stays clickable on top -->
-          <button class="quest-delete" [disabled]="_connectivity.isOffline()" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
+          <button
+            class="quest-delete"
+            [disabled]="_connectivity.isOffline()"
+            (click)="deleteQuestFromHex(h, $event)"
+            (touchend)="deleteQuestFromHex(h, $event)">
+            X
+          </button>
         }
       </foreignObject>
+    }
+
+    @if (cursorLightVisible) {
+      <polygon
+        class="cursor-light"
+        [attr.points]="getHexPoints(cursorLightX, cursorLightY)"
+        fill="none"
+        stroke="var(--light-theme-color)"
+        stroke-width="1" />
+      @for (n of cursorLightNeighbors; track $index) {
+        <polygon
+          class="cursor-light"
+          [attr.points]="getHexPoints(n.cx, n.cy)"
+          fill="none"
+          [attr.stroke]="'url(#cursor-light-dir-' + $index + ')'"
+          stroke-width="1" />
+      }
     }
   </g>
 </svg>

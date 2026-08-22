@@ -8,6 +8,26 @@ export class MapGridService {
   private originX = 145;
   private originY = 245;
 
+  private readonly directions = [
+    { q: 1, r: 0, s: -1 },
+    { q: 1, r: -1, s: 0 },
+    { q: 0, r: -1, s: 1 },
+    { q: -1, r: 0, s: 1 },
+    { q: -1, r: 1, s: 0 },
+    { q: 0, r: 1, s: -1 },
+  ];
+
+  // The 6 hexes adjacent to `center`, with both their axial coordinates and pixel centers.
+  neighborsOf(center: { q: number; r: number; s: number }, size: number): { q: number; r: number; s: number; cx: number; cy: number }[] {
+    return this.directions.map(d => {
+      const q = center.q + d.q;
+      const r = center.r + d.r;
+      const s = center.s + d.s;
+      const { cx, cy } = this.hexToPixel(q, r, size);
+      return { q, r, s, cx, cy };
+    });
+  }
+
   // Creates every hex within `radius` steps of the origin - the whole grid, generated up front.
   generateHexes(size: number, mapWidth: number, mapHeight: number, radius: number): Hex[] {
     this.originX = mapWidth / 2;
@@ -123,6 +143,34 @@ export class MapGridService {
     const qFrac = (localX - this.originX) / (size * Math.sqrt(3)) - rFrac / 2;
     const sFrac = -qFrac - rFrac;
     return this.cubeRound(qFrac, rFrac, sFrac);
+  }
+
+  // Converts a screen point into hex-local coordinate space, undoing the SVG's letterboxed
+  // fit-scale (preserveAspectRatio="xMidYMid meet") and then the camera's own pan/zoom. Shared
+  // by drag handling and the cursor-light overlay.
+  screenToHexLocal(
+    clientX: number,
+    clientY: number,
+    rect: { left: number; top: number; width: number; height: number },
+    mapWidth: number,
+    mapHeight: number,
+    panX: number,
+    panY: number,
+    zoom: number
+  ): { x: number; y: number } | null {
+    if (!rect.width || !rect.height) return null;
+    const fitScale = Math.min(rect.width / mapWidth, rect.height / mapHeight);
+    if (!fitScale) return null;
+
+    const offsetX = rect.left + (rect.width - mapWidth * fitScale) / 2;
+    const offsetY = rect.top + (rect.height - mapHeight * fitScale) / 2;
+    const viewBoxX = (clientX - offsetX) / fitScale;
+    const viewBoxY = (clientY - offsetY) / fitScale;
+
+    return {
+      x: (viewBoxX - panX) / zoom,
+      y: (viewBoxY - panY) / zoom,
+    };
   }
 
   // Clamps `target` to lie within `maxDistance` hex-steps of `center`. Hex-distance disks are

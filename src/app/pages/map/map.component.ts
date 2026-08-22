@@ -74,6 +74,57 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
   private hadCameraMove = false; // track if any pan/zoom occurred during a gesture
 
+  // Cursor-following hex highlight, mouse only (see onMapPointerMove)
+  cursorLightVisible = false;
+  cursorLightX = 0;
+  cursorLightY = 0;
+  // The 6 neighbor hexes, each with its own linear-gradient endpoints: x1/y1 near the edge
+  // shared with the hovered hex (bright), x2/y2 at its own far tip (dim).
+  cursorLightNeighbors: { cx: number; cy: number; x1: number; y1: number; x2: number; y2: number }[] = [];
+
+  onMapPointerMove(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse' || !this.svgRoot) return;
+    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
+    const local = this._mapGrid.screenToHexLocal(event.clientX, event.clientY, rect, this.mapWidth, this.mapHeight, this.panX, this.panY, this.zoom);
+    if (!local) return;
+    const hovered = this._mapGrid.pixelToAxial(local.x, local.y, this.size);
+    if (!this.isWithinMapRadius(hovered)) {
+      this.cursorLightVisible = false;
+      return;
+    }
+
+    const center = this._mapGrid.hexToPixel(hovered.q, hovered.r, this.size);
+    this.cursorLightX = center.cx;
+    this.cursorLightY = center.cy;
+    this.cursorLightNeighbors = this._mapGrid
+      .neighborsOf(hovered, this.size)
+      .filter(n => this.isWithinMapRadius(n))
+      .map(n => {
+        const dx = n.cx - center.cx;
+        const dy = n.cy - center.cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const ux = dx / dist;
+        const uy = dy / dist;
+        return {
+          cx: n.cx,
+          cy: n.cy,
+          x1: n.cx - ux * this.size,
+          y1: n.cy - uy * this.size,
+          x2: n.cx + ux * this.size,
+          y2: n.cy + uy * this.size,
+        };
+      });
+    this.cursorLightVisible = true;
+  }
+
+  private isWithinMapRadius(c: { q: number; r: number; s: number }): boolean {
+    return Math.max(Math.abs(c.q), Math.abs(c.r), Math.abs(c.s)) <= MAP_RADIUS;
+  }
+
+  onMapPointerLeave(): void {
+    this.cursorLightVisible = false;
+  }
+
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
     this._cameraState.saveState(this.panX, this.panY, this.zoom);

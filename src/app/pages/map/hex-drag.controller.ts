@@ -305,8 +305,8 @@ export class HexDragController {
   }
 
   // The SVG's rendered fit-scale plus the letterbox offset xMidYMid adds when the element's
-  // aspect ratio doesn't match the viewBox's - shared by clientPointToHexLocal/hexLocalToClient
-  // below, which convert screen <-> hex-local coordinates in opposite directions.
+  // aspect ratio doesn't match the viewBox's - used by hexLocalToClient below to convert
+  // hex-local coordinates back into a screen point.
   private computeLetterbox(): { fitScale: number; offsetX: number; offsetY: number } | null {
     if (!this.host.svgRoot) return null;
     const rect = this.host.svgRoot.nativeElement.getBoundingClientRect();
@@ -323,21 +323,12 @@ export class HexDragController {
     };
   }
 
-  // Converts a screen point into the hex-local coordinate space (undoing the SVG's letterboxed
-  // fit-scale, then the camera's own pan/zoom), the same space hexToPixel/pixelToAxial use.
+  // Converts a screen point into the hex-local coordinate space, the same space
+  // hexToPixel/pixelToAxial use.
   private clientPointToHexLocal(clientX: number, clientY: number): { x: number; y: number } | null {
-    const letterbox = this.computeLetterbox();
-    if (!letterbox) return null;
-    const { fitScale, offsetX, offsetY } = letterbox;
-
-    const viewBoxX = (clientX - offsetX) / fitScale;
-    const viewBoxY = (clientY - offsetY) / fitScale;
-
-    // Undo translate(panX,panY) scale(zoom) to get back to hex-local space.
-    return {
-      x: (viewBoxX - this.host.panX) / this.host.zoom,
-      y: (viewBoxY - this.host.panY) / this.host.zoom,
-    };
+    if (!this.host.svgRoot) return null;
+    const rect = this.host.svgRoot.nativeElement.getBoundingClientRect();
+    return this.mapGrid.screenToHexLocal(clientX, clientY, rect, this.host.mapWidth, this.host.mapHeight, this.host.panX, this.host.panY, this.host.zoom);
   }
 
   // Inverse of clientPointToHexLocal: converts hex-local coordinates back into a screen point,
