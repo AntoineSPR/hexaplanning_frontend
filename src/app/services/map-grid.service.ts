@@ -4,56 +4,23 @@ import { Hex } from '../models/hex.model';
 @Injectable({ providedIn: 'root' })
 export class MapGridService {
   // Stable origin for coordinate calculations - overwritten with the actual centered position by
-  // generateHexes; these defaults just match the initial MAP_WIDTH/MAP_HEIGHT (290/490) in case
-  // anything reads them before generateHexes runs.
+  // generateHexes; this default just matches the initial MAP_WIDTH/MAP_HEIGHT in case anything
+  // reads it before generateHexes runs.
   private originX = 145;
   private originY = 245;
 
-  // Six directions for neighbor calculation (axial coordinates)
-  private readonly directions = [
-    { q: 1, r: 0, s: -1 },
-    { q: 1, r: -1, s: 0 },
-    { q: 0, r: -1, s: 1 },
-    { q: -1, r: 0, s: 1 },
-    { q: -1, r: 1, s: 0 },
-    { q: 0, r: 1, s: -1 },
-  ];
-
-  // Coordinates of the starting island: 1 center (level 0) + 6 neighbors (level 1)
-  private seedCoordinates(): { q: number; r: number; s: number }[] {
-    const coords: { q: number; r: number; s: number }[] = [];
-    const initialMaxLevel = 1;
-
-    for (let level = 0; level <= initialMaxLevel; level++) {
-      for (let q = -level; q <= level; q++) {
-        for (let r = Math.max(-level, -level - q); r <= Math.min(level, level - q); r++) {
-          const s = -q - r;
-          if (Math.max(Math.abs(q), Math.abs(r), Math.abs(s)) === level) {
-            coords.push({ q, r, s });
-          }
-        }
-      }
-    }
-
-    return coords;
-  }
-
-  // Create the starting island's axial hexes
-  generateHexes(size: number, mapWidth: number, mapHeight: number): Hex[] {
-    // Center the origin hex in the initial viewBox on both axes - originX previously stayed at a
-    // hardcoded 45 regardless of mapWidth, while originY was correctly centered here, leaving the
-    // origin only 45 units from the left edge but 245 from the right (mapWidth=290). That meant
-    // dragging left ran out of room - triggering grid-growth's viewBox resize/rescale - far
-    // sooner than dragging right, right, up, or down, which showed up as auto-dezoom kicking in
-    // inconsistently depending on drag direction.
+  // Create every hex within `radius` hex-steps of the origin, once - the map is a fixed-size
+  // grid generated up front rather than grown live as quests get dragged around (see
+  // hex-drag.controller.ts's clampToDistance call, which keeps drags within this same radius).
+  generateHexes(size: number, mapWidth: number, mapHeight: number, radius: number): Hex[] {
     this.originX = mapWidth / 2;
     this.originY = mapHeight / 2;
     const hexes: Hex[] = [];
 
-    for (const { q, r, s } of this.seedCoordinates()) {
+    for (const { q, r, s } of this.coordinatesInRadius({ q: 0, r: 0, s: 0 }, radius)) {
       const { cx, cy } = this.hexToPixel(q, r, size);
       const level = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-      hexes.push({ q, r, s, cx, cy, level, isInitial: true }); // Mark as initial
+      hexes.push({ q, r, s, cx, cy, level });
     }
 
     return hexes;
@@ -105,34 +72,18 @@ export class MapGridService {
     }
   }
 
-  // Check if a hex exists at given coordinates
-  hasHex(hexes: Hex[], q: number, r: number, s: number): boolean {
-    return hexes.some(h => h.q === q && h.r === r && h.s === s);
-  }
-
-  // Add a new hex at the given coordinates
+  // Add a new hex at the given coordinates - used as a fallback for a quest assignment whose
+  // coordinates fall outside the pre-generated grid (e.g. legacy data from before the grid's
+  // radius was fixed), so it still renders instead of silently vanishing.
   addHex(hexes: Hex[], q: number, r: number, s: number, size: number): Hex {
     const { cx, cy } = this.hexToPixel(q, r, size);
     const level = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-    const newHex: Hex = { q, r, s, cx, cy, level, isInitial: false }; // Mark as dynamic
+    const newHex: Hex = { q, r, s, cx, cy, level };
     hexes.push(newHex);
     return newHex;
   }
 
-  // Ensure all 6 neighbors exist around a given hex
-  ensureNeighborsOf(hexes: Hex[], hex: Hex, size: number): void {
-    for (const dir of this.directions) {
-      const nq = hex.q + dir.q;
-      const nr = hex.r + dir.r;
-      const ns = hex.s + dir.s;
-      if (!this.hasHex(hexes, nq, nr, ns)) {
-        this.addHex(hexes, nq, nr, ns, size);
-      }
-    }
-  }
-
-  // All axial coordinates within `radius` steps of `center` (a filled hex "disk"), regardless
-  // of whether hexes actually exist there yet.
+  // All axial coordinates within `radius` steps of `center` (a filled hex "disk").
   coordinatesInRadius(center: { q: number; r: number; s: number }, radius: number): { q: number; r: number; s: number }[] {
     const coords: { q: number; r: number; s: number }[] = [];
     for (let dq = -radius; dq <= radius; dq++) {
@@ -144,22 +95,6 @@ export class MapGridService {
       }
     }
     return coords;
-  }
-
-  // Ensure every hex within `radius` steps of `center` exists (adding any missing ones),
-  // regardless of whether `center` itself is currently occupied/assigned. Used to grow the
-  // grid live ahead of the cursor while dragging a quest toward territory that doesn't exist
-  // yet, rather than only expanding around already-assigned hexes. Returns the "q,r,s" keys of
-  // whatever was actually added, so callers can track/undo speculative growth.
-  ensureHexesInRadius(hexes: Hex[], center: { q: number; r: number; s: number }, radius: number, size: number): string[] {
-    const added: string[] = [];
-    for (const { q, r, s } of this.coordinatesInRadius(center, radius)) {
-      if (!this.hasHex(hexes, q, r, s)) {
-        this.addHex(hexes, q, r, s, size);
-        added.push(`${q},${r},${s}`);
-      }
-    }
-    return added;
   }
 
   // Rounds fractional cube coordinates to the nearest valid hex (q + r + s === 0), correcting
@@ -194,46 +129,22 @@ export class MapGridService {
     return this.cubeRound(qFrac, rFrac, sFrac);
   }
 
-  // Aggregate per-axis [min,max] bounds used by clampToDistanceOfAll: hex-distance disks are
-  // equivalent to axis-aligned bounding boxes in cube coordinates (distance = max(|dq|,|dr|,|ds|)
-  // for any two hexes, since q+r+s is always 0), so the intersection of several "distance <=
-  // maxDistance" disks is just the intersection of their per-axis intervals.
-  private computeSpreadBounds(
-    centers: { q: number; r: number; s: number }[],
-    maxDistance: number
-  ): { qMin: number; qMax: number; rMin: number; rMax: number; sMin: number; sMax: number } | null {
-    if (centers.length === 0) return null;
-
-    let qMin = -Infinity,
-      qMax = Infinity;
-    let rMin = -Infinity,
-      rMax = Infinity;
-    let sMin = -Infinity,
-      sMax = Infinity;
-    for (const c of centers) {
-      qMin = Math.max(qMin, c.q - maxDistance);
-      qMax = Math.min(qMax, c.q + maxDistance);
-      rMin = Math.max(rMin, c.r - maxDistance);
-      rMax = Math.min(rMax, c.r + maxDistance);
-      sMin = Math.max(sMin, c.s - maxDistance);
-      sMax = Math.min(sMax, c.s + maxDistance);
-    }
-    return { qMin, qMax, rMin, rMax, sMin, sMax };
-  }
-
-  // Clamps `target` to lie within the intersection of several "distance <= maxDistance" disks,
-  // each centered on a different point - computed directly here rather than by iteratively
-  // clamping toward whichever constraint is currently worst, which isn't guaranteed to converge
-  // to the same answer for two very close starting points and could make the boundary jump
-  // around inconsistently as the cursor moves smoothly across it.
-  clampToDistanceOfAll(
+  // Clamps `target` to lie within `maxDistance` hex-steps of `center` - the map's fixed
+  // boundary, a single regular hexagon (unlike an earlier design where this had to intersect
+  // several quest-centered disks at once, which needed a much more involved computation).
+  // Hex-distance disks are equivalent to axis-aligned bounding boxes in cube coordinates
+  // (distance = max(|dq|,|dr|,|ds|) for any two hexes, since q+r+s is always 0).
+  clampToDistance(
     target: { q: number; r: number; s: number },
-    centers: { q: number; r: number; s: number }[],
+    center: { q: number; r: number; s: number },
     maxDistance: number
   ): { q: number; r: number; s: number } {
-    const bounds = this.computeSpreadBounds(centers, maxDistance);
-    if (!bounds) return target;
-    const { qMin, qMax, rMin, rMax, sMin, sMax } = bounds;
+    const qMin = center.q - maxDistance;
+    const qMax = center.q + maxDistance;
+    const rMin = center.r - maxDistance;
+    const rMax = center.r + maxDistance;
+    const sMin = center.s - maxDistance;
+    const sMax = center.s + maxDistance;
 
     // Project target onto {q+r+s=0} intersected with the box [qMin,qMax]x[rMin,rMax]x[sMin,sMax],
     // via iterative even redistribution (a standard technique for projecting onto a box cut by a
@@ -241,12 +152,6 @@ export class MapGridService {
     // whatever sum-to-zero deficit that leaves across the still-free axes equally, and repeat.
     // Each pass either finishes or permanently pins at least one more axis, so this always
     // converges within 3 passes for 3 axes.
-    //
-    // An earlier version picked a single axis to re-derive from the other two, using clamp error
-    // as a tie-break. That is discontinuous: as the cursor crosses the line where two axes' clamp
-    // errors are equal, the chosen axis flips abruptly, producing a visible jump - reported as the
-    // dragged hex "teleporting" past a fixed point along a straight drag path. Spreading the
-    // deficit evenly instead of picking a single axis has no such tie to flip on.
     let q = target.q;
     let r = target.r;
     let s = target.s;
@@ -302,105 +207,17 @@ export class MapGridService {
     return { q, r, s };
   }
 
-  // Calculate bounding box and adjust map dimensions. floorWidth/floorHeight are the caller's
-  // baseline viewBox size (never shrink below it) - MapComponent computes this once at startup
-  // to match the actual container's aspect ratio, rather than a fixed constant, so growing
-  // either dimension during a drag always dezooms; see matchMapDimensionsToContainer there.
-  adjustMapBounds(hexes: Hex[], size: number, floorWidth: number, floorHeight: number): { width: number; height: number } {
-    if (hexes.length === 0) {
-      return { width: floorWidth, height: floorHeight };
-    }
-
+  // Raw pixel bounding box of a hex set, padded by half a hex - used once at startup to size the
+  // viewBox to fit the whole pre-generated grid (see MapComponent.matchMapDimensionsToContainer).
+  computeContentBounds(hexes: Hex[], size: number): { minX: number; maxX: number; minY: number; maxY: number } {
     const pad = size + 10;
     const xs = hexes.map(h => h.cx);
     const ys = hexes.map(h => h.cy);
-    const minX = Math.min(...xs) - pad;
-    const maxX = Math.max(...xs) + pad;
-    const minY = Math.min(...ys) - pad;
-    const maxY = Math.max(...ys) + pad;
-
-    const width = Math.max(floorWidth, Math.ceil(maxX - Math.min(0, minX)));
-    const height = Math.max(floorHeight, Math.ceil(maxY - Math.min(0, minY)));
-
-    return { width, height };
-  }
-
-  // How far (in hex-local units) the current hex set extends past the viewBox's fixed x=0/y=0
-  // origin - i.e. how much of adjustMapBounds' computed width/height is "to the left/above"
-  // that origin. The viewBox itself never moves, so whenever this changes, the camera's pan
-  // needs to shift by the same amount to keep on-screen content in the same place - otherwise a
-  // resize (e.g. the map growing during a drag) can silently push content outside the fixed
-  // [0,width]x[0,height] rectangle, where it gets clipped instead of just rescaled.
-  computeOverflow(hexes: Hex[], size: number): { left: number; top: number } {
-    if (hexes.length === 0) {
-      return { left: 0, top: 0 };
-    }
-    const pad = size + 10;
-    const minX = Math.min(...hexes.map(h => h.cx)) - pad;
-    const minY = Math.min(...hexes.map(h => h.cy)) - pad;
-    return { left: Math.max(0, -minX), top: Math.max(0, -minY) };
-  }
-
-  /**
-   * Remove hexes that are empty and not neighbors of any assigned hex. The starting island
-   * (the initial 7 hexes) is only preserved while the map has no quests on it at all, so
-   * there's always something to click on a fresh map; once a first quest is placed anywhere,
-   * it's pruned like any other empty hex. If pruning brings the map back to zero quests (e.g.
-   * the only quest on the map gets removed), the starting island is restored so the map never
-   * ends up with nothing left to click.
-   */
-  removeOrphanedDynamicHexes(hexes: Hex[], size: number): { removedCount: number; islandRestored: boolean } {
-    const assignedHexes = hexes.filter(h => h.quest);
-
-    if (assignedHexes.length === 0) {
-      const seedCoords = this.seedCoordinates();
-      // Whether the map is already exactly the starting island - if so, there's nothing to
-      // restore (avoids signalling a restore, e.g. an unwanted camera reset, on every call
-      // while the map is simply sitting empty rather than just having become empty).
-      const alreadyJustSeedIsland =
-        hexes.length === seedCoords.length &&
-        hexes.every(h => seedCoords.some(c => c.q === h.q && c.r === h.r && c.s === h.s));
-
-      // Reset to exactly the starting island: drop every other leftover hex (e.g. the ring
-      // that was protecting whatever hex just lost its last quest) so it doesn't sit there as
-      // a second, merged empty cluster next to the restored seed island.
-      hexes.length = 0;
-      for (const { q, r, s } of seedCoords) {
-        this.addHex(hexes, q, r, s, size).isInitial = true;
-      }
-      return { removedCount: 0, islandRestored: !alreadyJustSeedIsland };
-    }
-
-    // Build set of all neighbors of assigned hexes
-    const protectedCoords = new Set<string>();
-    for (const hex of assignedHexes) {
-      // The assigned hex itself
-      protectedCoords.add(`${hex.q},${hex.r},${hex.s}`);
-      // All neighbors
-      for (const dir of this.directions) {
-        const nq = hex.q + dir.q;
-        const nr = hex.r + dir.r;
-        const ns = hex.s + dir.s;
-        protectedCoords.add(`${nq},${nr},${ns}`);
-      }
-    }
-
-    // Count before cleanup
-    const initialLength = hexes.length;
-
-    // Remove hexes that are not protected
-    const toKeep = hexes.filter(h => {
-      // Keep if has quest
-      if (h.quest) return true;
-      // Keep if neighbor of assigned hex
-      const coord = `${h.q},${h.r},${h.s}`;
-      return protectedCoords.has(coord);
-    });
-
-    // Update array in place
-    hexes.length = 0;
-    hexes.push(...toKeep);
-
-    return { removedCount: initialLength - hexes.length, islandRestored: false };
+    return {
+      minX: Math.min(...xs) - pad,
+      maxX: Math.max(...xs) + pad,
+      minY: Math.min(...ys) - pad,
+      maxY: Math.max(...ys) + pad,
+    };
   }
 }

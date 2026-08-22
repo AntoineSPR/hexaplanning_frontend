@@ -14,16 +14,9 @@ import { SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 const DRAG_START_DELAY_MS = 150;
 const DRAG_START_THRESHOLD_PX = 5;
 
-// Radius (in hex rings) of the grey halo grown live around the drag target.
-const DRAG_GROWTH_RADIUS = 1;
-
-// How far apart (in hex-distance) any two assigned quests are allowed to get - keeps the whole
-// quest set within a navigable area rather than letting drags spread them arbitrarily far apart.
-const MAX_QUEST_SPREAD = 60;
-
-// The subset of MapComponent this controller needs to read/drive - camera state, map bounds and
-// the hex array are all owned by the component (other, non-drag code reads/writes them too), so
-// the controller operates on them through this interface rather than duplicating them.
+// The subset of MapComponent this controller needs to read/drive - camera state and the hex
+// array are owned by the component (other, non-drag code reads/writes them too), so the
+// controller operates on them through this interface rather than duplicating them.
 export interface HexDragHost {
   readonly hexes: Hex[];
   readonly size: number;
@@ -36,25 +29,25 @@ export interface HexDragHost {
   readonly zoomHandle?: SvgZoomHandle;
   suppressClicksUntil: number;
   centerCameraOnHex(hex: Hex): void;
-  // Resizes the viewBox to fit the current hex set and pan-compensates for it, through one
-  // shared, centrally-tracked piece of state (see MapComponent._lastOverflow) - the controller
-  // must never set mapWidth/mapHeight directly, since QuestAssignmentService can also trigger a
-  // resize (on assign/unassign/move) through the same host, and the two need to agree on what
-  // pan already accounts for or they end up fighting each other.
-  syncMapBounds(): void;
 }
 
-// Drives the whole quest drag-and-drop gesture: long-press-to-arm, the drag itself (including
-// live grid growth ahead of the cursor), and the drop. Extracted out of
-// MapComponent since this is a large, mostly self-contained chunk of behavior - the component
-// still owns camera/bounds/hexes state (see HexDragHost above) and template-facing methods
-// delegate straight through to this controller.
+// Drives the whole quest drag-and-drop gesture: long-press-to-arm, the drag itself, and the
+// drop. Extracted out of MapComponent since this is a large, mostly self-contained chunk of
+// behavior - the component still owns camera/hexes state (see HexDragHost above) and
+// template-facing methods delegate straight through to this controller.
+//
+// The map is a fixed-size, fully pre-generated grid (see MapGridService.generateHexes) rather
+// than one grown live as a quest gets dragged near unexplored territory - so unlike an earlier
+// version of this controller, there's no grid growth, no viewBox resizing, and no camera
+// auto-panning happening here. Dragging just clamps the target to the map's fixed radius (see
+// mapRadius below) and follows the cursor within whatever's already on screen.
 export class HexDragController {
   constructor(
     private readonly host: HexDragHost,
     private readonly mapGrid: MapGridService,
     private readonly questAssignment: QuestAssignmentService,
-    private readonly connectivity: ConnectivityService
+    private readonly connectivity: ConnectivityService,
+    private readonly mapRadius: number
   ) {}
 
   // Quest drag-and-drop state
@@ -70,19 +63,13 @@ export class HexDragController {
   // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
   dragOverlayScale = 1;
   private lastLandedHex: Hex | null = null;
-  // "q,r,s" keys of hexes added by live grid growth during the current drag, so the halo of
-  // grey hexes can move with the held hex (shrinking behind it) instead of leaving a trail.
-  private speculativeGrowthCoords = new Set<string>();
   // The pointer's *true* screen position, updated only from real pointer events - never from
   // the (possibly clamped/pinned) drag preview position, which would create a feedback loop.
   private pointerClientX = 0;
   private pointerClientY = 0;
-  // True once the drag target has hit the MAX_QUEST_SPREAD boundary - drives the "pin the
-  // preview at the edge instead of following the cursor further" behavior below.
+  // True once the drag target has hit the map's radius boundary - drives the "pin the preview
+  // at the edge instead of following the cursor further" behavior below.
   private dragTargetClamped = false;
-  // True when dropping on the current target would push some other assigned quest further than
-  // MAX_QUEST_SPREAD away - drives a "not allowed here" visual cue and blocks the drop itself.
-  dragTargetTooFar = false;
 
   private pointerDrag: {
     hex: Hex;
@@ -120,7 +107,6 @@ export class HexDragController {
       panStartY: 0,
     };
     this.pointerDrag = drag;
-    this.speculativeGrowthCoords.clear();
     // Guarantees this element keeps receiving pointermove/pointerup for this gesture
     // even if the cursor moves off it mid-drag; doesn't prevent a plain click from firing.
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
@@ -144,8 +130,8 @@ export class HexDragController {
     if (this.draggingHex) {
       this.pointerClientX = event.clientX;
       this.pointerClientY = event.clientY;
-      // dragPreviewX/Y get set inside updateDragOverHex - clamped to the edge of the halo
-      // instead of the raw pointer position once the drag goes past MAX_QUEST_SPREAD.
+      // dragPreviewX/Y get set inside updateDragOverHex - clamped to the edge of the map's
+      // radius instead of the raw pointer position once the drag goes past it.
       this.updateDragOverHex();
       return;
     }
@@ -201,37 +187,30 @@ export class HexDragController {
 
     const hex = this.draggingHex;
     const target = this.dragOverHex;
-    const tooFar = this.dragTargetTooFar;
     // A real drag just occurred: ignore the click that follows pointerup
     this.host.suppressClicksUntil = Date.now() + 250;
 
-    if (target && target !== hex && !tooFar) {
+    if (target && target !== hex) {
       // Keep the origin hex dimmed and the preview visible until the move actually resolves,
       // instead of clearing draggingHex immediately - otherwise the origin hex snaps back to
       // full opacity (still showing its old quest) for the length of the request, then fades
       // out again once the response arrives, which reads as a flash.
-      this.questAssignment.moveQuestToHex(hex, target, this.host.hexes, this.host.size).subscribe({
+      this.questAssignment.moveQuestToHex(hex, target).subscribe({
         next: () => {
           this.markLandedHex(target);
           this.draggingHex = null;
           this.dragOverHex = null;
-          // Shrink the viewBox back down from whatever reserveBoundsForDrag sized it up to for
-          // the whole reachable area - otherwise a successful move would permanently keep that
-          // reservation even though the actual move likely only used a fraction of it.
-          this.pruneSpeculativeGrowth();
           this.host.centerCameraOnHex(target);
         },
         error: err => {
           console.error('Failed to move quest:', err);
           this.draggingHex = null;
           this.dragOverHex = null;
-          this.pruneSpeculativeGrowth();
         },
       });
     } else {
       this.draggingHex = null;
       this.dragOverHex = null;
-      this.pruneSpeculativeGrowth();
     }
   }
 
@@ -242,12 +221,8 @@ export class HexDragController {
     }
     this.pointerDrag = null;
     this.armedHex = null;
-    const wasDragging = this.draggingHex;
     this.draggingHex = null;
     this.dragOverHex = null;
-    if (wasDragging) {
-      this.pruneSpeculativeGrowth();
-    }
   }
 
   isLandedHex(hex: Hex): boolean {
@@ -258,29 +233,7 @@ export class HexDragController {
     if (!this.draggingHex || this.dragOverHex !== hex || hex === this.draggingHex) {
       return '';
     }
-    if (this.dragTargetTooFar) {
-      return 'hex-drop-invalid';
-    }
     return hex.quest ? 'hex-drop-swap' : 'hex-drop-move';
-  }
-
-  // Whether `hex` sits outside the area currently reachable by the drag in progress (far enough
-  // from some other quest to violate MAX_QUEST_SPREAD) - a persistent "this is the edge"
-  // indicator, separate from the one-off invalid-drop flash on the specific target hex.
-  isOutOfDragBounds(hex: Hex): boolean {
-    const drag = this.pointerDrag;
-    if (!this.draggingHex || !drag) return false;
-
-    // Only consider hexes near the current drag target (the visible halo) - otherwise a hex
-    // belonging to a distant, unrelated island can independently be further than
-    // MAX_QUEST_SPREAD from some third quest and light up red anywhere on the map, with no
-    // relation to where this drag can actually reach.
-    const reference = this.dragOverHex ?? drag.hex;
-    if (this.hexDistance(reference, hex) > DRAG_GROWTH_RADIUS + 1) return false;
-
-    const origin = drag.hex;
-    const farthest = this.findFarthestOtherQuest(origin, hex);
-    return farthest !== null && this.hexDistance(farthest, hex) > MAX_QUEST_SPREAD;
   }
 
   private computeFitScale(): number {
@@ -298,15 +251,12 @@ export class HexDragController {
 
   // Sets dragOverHex to whatever hex is under the true cursor position (this.pointerClientX/Y -
   // never the possibly-clamped dragPreviewX/Y, which would create a feedback loop with the
-  // camera pan), growing a small halo of grey hexes around that point first if nothing exists
-  // there yet. Runs on every update (not just when growth is needed) so the halo also shrinks
-  // behind the held hex as it moves, rather than leaving a trail across the whole drag path.
+  // camera pan), clamped to the map's fixed radius around the origin.
   private updateDragOverHex(): void {
     const drag = this.pointerDrag;
     if (!drag) {
       this.dragOverHex = null;
       this.dragTargetClamped = false;
-      this.dragTargetTooFar = false;
       return;
     }
     const clientX = this.pointerClientX;
@@ -314,29 +264,24 @@ export class HexDragController {
 
     const local = this.clientPointToHexLocal(clientX, clientY);
     if (!local) {
-      // svgRoot not ready yet - fall back to DOM hit-testing rather than growing blind.
+      // svgRoot not ready yet - fall back to DOM hit-testing rather than guessing blind.
       this.dragPreviewX = clientX;
       this.dragPreviewY = clientY;
       this.dragOverHex = this.findHexAtPoint(clientX, clientY);
       this.dragTargetClamped = false;
-      this.dragTargetTooFar = false;
       return;
     }
 
     const rawTarget = this.mapGrid.pixelToAxial(local.x, local.y, this.host.size);
-    const origin = drag.hex;
 
     // Rather than only flagging the drop as invalid once released, slide the target back to the
-    // edge of the allowed zone so the cursor can't drag it into "red territory" in the first
-    // place - clamped against every other assigned quest at once (not just the current worst
-    // offender), so the boundary is a fixed shape the cursor traces consistently.
-    const otherQuestCenters = this.host.hexes.filter(h => h.quest && h !== origin);
-    const target = this.mapGrid.clampToDistanceOfAll(rawTarget, otherQuestCenters, MAX_QUEST_SPREAD);
+    // edge of the map so the cursor can't drag it into territory that doesn't exist.
+    const target = this.mapGrid.clampToDistance(rawTarget, { q: 0, r: 0, s: 0 }, this.mapRadius);
     this.dragTargetClamped = target.q !== rawTarget.q || target.r !== rawTarget.r || target.s !== rawTarget.s;
 
     if (this.dragTargetClamped) {
-      // Clamped: pin the visual preview to the edge of the halo instead of following the
-      // pointer further out, so the held hex can't drift somewhere the camera hasn't reached.
+      // Clamped: pin the visual preview to the edge of the map instead of following the
+      // pointer further out, so the held hex can't drift somewhere off the grid.
       const targetLocal = this.mapGrid.hexToPixel(target.q, target.r, this.host.size);
       const clampedScreen = this.hexLocalToClient(targetLocal.cx, targetLocal.cy);
       this.dragPreviewX = clampedScreen?.x ?? clientX;
@@ -347,25 +292,7 @@ export class HexDragController {
     }
     this.clampPreviewToMapViewport();
 
-    const desiredCoords = new Set(this.mapGrid.coordinatesInRadius(target, DRAG_GROWTH_RADIUS).map(c => `${c.q},${c.r},${c.s}`));
-    this.shrinkSpeculativeGrowth(desiredCoords);
-
-    const added = this.mapGrid.ensureHexesInRadius(this.host.hexes, target, DRAG_GROWTH_RADIUS, this.host.size);
-    for (const key of added) {
-      this.speculativeGrowthCoords.add(key);
-    }
-
-    // Grow the viewBox only as territory is actually reached, rather than reserving the whole
-    // MAX_QUEST_SPREAD area up front - reserving upfront meant an immediate, large rescale the
-    // moment any drag started (as soon as another quest existed to measure a spread against),
-    // which was far more disorienting than the occasional small resize this causes instead.
-    if (added.length) {
-      this.host.syncMapBounds();
-      this.dragOverlayScale = this.computeMapScale();
-    }
-
     this.dragOverHex = this.host.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
-    this.dragTargetTooFar = this.wouldExceedMaxSpread(origin, target);
   }
 
   // The floating drag preview (.quest-drag-overlay) is a position:fixed element tracking raw
@@ -378,36 +305,6 @@ export class HexDragController {
     if (!rect || !rect.width || !rect.height) return;
     this.dragPreviewX = Math.min(Math.max(this.dragPreviewX, rect.left), rect.right);
     this.dragPreviewY = Math.min(Math.max(this.dragPreviewY, rect.top), rect.bottom);
-  }
-
-  private hexDistance(a: { q: number; r: number; s: number }, b: { q: number; r: number; s: number }): number {
-    return (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.s - b.s)) / 2;
-  }
-
-  // The assigned quest (other than `origin`, which is mid-move) furthest from `target` - the
-  // one that actually determines whether MAX_QUEST_SPREAD would be violated.
-  private findFarthestOtherQuest(origin: Hex, target: { q: number; r: number; s: number }): Hex | null {
-    let farthest: Hex | null = null;
-    let farthestDistance = -1;
-    for (const h of this.host.hexes) {
-      if (!h.quest || h === origin) continue;
-      const distance = this.hexDistance(h, target);
-      if (distance > farthestDistance) {
-        farthestDistance = distance;
-        farthest = h;
-      }
-    }
-    return farthest;
-  }
-
-  // Whether dropping `origin`'s quest at `target` would leave some other already-assigned quest
-  // further than MAX_QUEST_SPREAD away. Existing pairs among the other quests aren't rechecked -
-  // only their distance to the new target matters, since this move can't affect distances that
-  // don't involve it. Normally redundant with the live clamp above (which already keeps `target`
-  // within range), but stays as the authoritative check for drop-time enforcement.
-  private wouldExceedMaxSpread(origin: Hex, target: { q: number; r: number; s: number }): boolean {
-    const farthest = this.findFarthestOtherQuest(origin, target);
-    return farthest !== null && this.hexDistance(farthest, target) > MAX_QUEST_SPREAD;
   }
 
   // The SVG's rendered fit-scale plus the letterbox offset xMidYMid adds when the element's
@@ -461,32 +358,6 @@ export class HexDragController {
       x: offsetX + viewBoxX * fitScale,
       y: offsetY + viewBoxY * fitScale,
     };
-  }
-
-  // Removes any hex that was speculatively grown earlier in this drag but isn't part of
-  // `keepCoords` (the halo around the current target) - lets the grey halo move with the held
-  // hex instead of leaving every previously-visited spot filled in behind it.
-  private shrinkSpeculativeGrowth(keepCoords: Set<string>): void {
-    if (this.speculativeGrowthCoords.size === 0) return;
-
-    // mapWidth/mapHeight are intentionally left alone here too - see updateDragOverHex.
-    const hexes = this.host.hexes;
-    for (let i = hexes.length - 1; i >= 0; i--) {
-      const h = hexes[i];
-      const key = `${h.q},${h.r},${h.s}`;
-      if (this.speculativeGrowthCoords.has(key) && !keepCoords.has(key)) {
-        hexes.splice(i, 1);
-        this.speculativeGrowthCoords.delete(key);
-      }
-    }
-  }
-
-  // Drops anything that was speculatively grown while dragging but didn't end up used for an
-  // actual move, same pruning already applied elsewhere, and shrinks the viewBox back down to
-  // fit whatever's actually there.
-  private pruneSpeculativeGrowth(): void {
-    this.mapGrid.removeOrphanedDynamicHexes(this.host.hexes, this.host.size);
-    this.host.syncMapBounds();
   }
 
   private findHexAtPoint(x: number, y: number): Hex | null {

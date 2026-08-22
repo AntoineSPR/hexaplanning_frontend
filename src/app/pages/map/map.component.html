@@ -5,12 +5,15 @@
   preserveAspectRatio="xMidYMid meet"
   [style.cursor]="isPanning ? 'grabbing' : 'grab'"
   style="user-select: none; touch-action: none">
-  <!-- Define clipping paths for each hexagon -->
+  <!-- Define clipping paths - only occupied hexes ever need one (for the progress-arc clip
+     below), so skip generating one for every empty hex in this large, fully pre-generated grid. -->
   <defs>
     @for (h of hexes; track getHexClipId(h)) {
-      <clipPath [attr.id]="getHexClipId(h)">
-        <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
-      </clipPath>
+      @if (h.quest) {
+        <clipPath [attr.id]="getHexClipId(h)">
+          <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
+        </clipPath>
+      }
     }
   </defs>
 
@@ -23,7 +26,7 @@
         [attr.data-hex-q]="h.q"
         [attr.data-hex-r]="h.r"
         [attr.data-hex-s]="h.s"
-        stroke="black"
+        [attr.stroke]="getHexStrokeColor(h)"
         stroke-width="1"
         [attr.fill]="getHexColor(h)"
         (click)="handleHexClick(h)"
@@ -33,7 +36,6 @@
         [attr.aria-label]="getHexAriaLabel(h)"
         [class.hex-drag-origin]="draggingHex === h"
         [class.hex-armed]="armedHex === h"
-        [class.hex-out-of-bounds]="!h.quest && isOutOfDragBounds(h)"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
       <!-- Progress overlay (if quest has advancement and is in progress) -->

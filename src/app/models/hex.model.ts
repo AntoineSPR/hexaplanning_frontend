@@ -9,5 +9,4 @@ export type Hex = {
   level: number;
   quest?: QuestUpdateDTO;
   hexAssignmentId?: string;
-  isInitial?: boolean; // True for the original 7 hexes, false/undefined for dynamically added
 };

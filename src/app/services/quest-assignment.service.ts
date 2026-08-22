@@ -23,16 +23,6 @@ export class QuestAssignmentService {
   private readonly _mapGrid = inject(MapGridService);
   private readonly _connectivity = inject(ConnectivityService);
 
-  // Callback to notify map component that hexes were added/removed and bounds may need
-  // recalculating - deliberately no-arg: the map component recomputes bounds itself (via
-  // MapGridService, from the hexes it already holds) so it can pan-compensate for any resize in
-  // the same place every other bounds change goes through, instead of this service computing
-  // bounds and the component blindly applying them with no compensation.
-  private onBoundsChange?: () => void;
-  // Callback to notify map component that the starting island was just restored (the map went
-  // back to zero quests), so it can re-center the camera on it.
-  private onIslandRestored?: () => void;
-
   // Snapshot of the last successfully resolved assignments, so a load triggered while offline
   // (e.g. navigating back to the map, or a full page reload) can still show the map read-only
   // instead of coming up empty just because the backend can't be reached. Persisted to
@@ -59,14 +49,6 @@ export class QuestAssignmentService {
     }
   }
 
-  setOnBoundsChange(callback: () => void): void {
-    this.onBoundsChange = callback;
-  }
-
-  setOnIslandRestored(callback: () => void): void {
-    this.onIslandRestored = callback;
-  }
-
   loadAssignmentsIntoHexes(hexes: Hex[], size: number): Observable<void> {
     const cached = this._connectivity.isOffline() ? this._getResolvedAssignments() : null;
     if (cached) {
@@ -77,10 +59,6 @@ export class QuestAssignmentService {
         }
         hex.quest = a.quest;
         hex.hexAssignmentId = a.hexAssignmentId;
-        this._mapGrid.ensureNeighborsOf(hexes, hex, size);
-      }
-      if (cached.length) {
-        this.onBoundsChange?.();
       }
       return of(void 0);
     }
@@ -102,8 +80,6 @@ export class QuestAssignmentService {
                 hex!.quest = q;
                 hex!.hexAssignmentId = a.id;
                 resolved.push({ q: a.q, r: a.r, s: a.s, quest: q, hexAssignmentId: a.id });
-                // Expand around assigned hexes on load to ensure edges are filled
-                this._mapGrid.ensureNeighborsOf(hexes, hex!, size);
               })
             )
           );
@@ -113,7 +89,6 @@ export class QuestAssignmentService {
           return forkJoin(tasks).pipe(
             map(() => {
               this._saveResolvedAssignments(resolved);
-              this.onBoundsChange?.();
               return void 0;
             })
           );
@@ -128,7 +103,7 @@ export class QuestAssignmentService {
     return this._hexService.getAssignmentByCoordinates(q, r, s);
   }
 
-  assignQuestToHex(selectedHex: Hex, selectedQuest: QuestUpdateDTO, hexes: Hex[], size: number): Observable<void> {
+  assignQuestToHex(selectedHex: Hex, selectedQuest: QuestUpdateDTO): Observable<void> {
     const hexAssignment = {
       q: selectedHex.q,
       r: selectedHex.r,
@@ -141,20 +116,12 @@ export class QuestAssignmentService {
         selectedHex.quest = selectedQuest;
         selectedHex.hexAssignmentId = created.id;
         this._questService.getAllUnassignedPendingQuests().subscribe();
-
-        // Expand the map by adding neighbors around the assigned hex
-        this._mapGrid.ensureNeighborsOf(hexes, selectedHex, size);
-        // Once a first quest is on the map, the starting island's leftover empty hexes are
-        // no longer needed and get pruned like any other empty hex.
-        this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
-
-        this.onBoundsChange?.();
       }),
       map(() => void 0)
     );
   }
 
-  deleteQuestFromHex(hex: Hex, hexes: Hex[], size: number): Observable<void> {
+  deleteQuestFromHex(hex: Hex): Observable<void> {
     if (!hex.quest) {
       return new Observable<void>(subscriber => {
         subscriber.next();
@@ -172,15 +139,6 @@ export class QuestAssignmentService {
         hex.quest = undefined;
         hex.hexAssignmentId = undefined;
         this._questService.getAllUnassignedPendingQuests().subscribe();
-
-        // Clean up orphaned dynamic hexes
-        const { removedCount, islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
-        console.log(`Removed ${removedCount} orphaned dynamic hexes`);
-        if (islandRestored) {
-          this.onIslandRestored?.();
-        }
-
-        this.onBoundsChange?.();
       }),
       map(() => void 0)
     );
@@ -191,7 +149,7 @@ export class QuestAssignmentService {
   // rather than delete+recreate, so the quest never transiently disappears from the map.
   // Note: the backend has no active DB constraint on (q, r, s) uniqueness, so occupancy
   // is only checked client-side against the currently loaded hexes.
-  moveQuestToHex(fromHex: Hex, toHex: Hex, hexes: Hex[], size: number): Observable<void> {
+  moveQuestToHex(fromHex: Hex, toHex: Hex): Observable<void> {
     if (!fromHex.quest || !fromHex.hexAssignmentId || fromHex === toHex) {
       return new Observable<void>(subscriber => {
         subscriber.next();
@@ -215,11 +173,6 @@ export class QuestAssignmentService {
           toHex.hexAssignmentId = fromHex.hexAssignmentId;
           fromHex.quest = undefined;
           fromHex.hexAssignmentId = undefined;
-
-          this._mapGrid.ensureNeighborsOf(hexes, toHex, size);
-          this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
-
-          this.onBoundsChange?.();
         }),
         map(() => void 0)
       );
