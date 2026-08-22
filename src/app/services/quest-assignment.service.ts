@@ -6,24 +6,89 @@ import { Hex } from '../models/hex.model';
 import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { QuestUpdateDTO } from '../models/quest.model';
 import { HexAssignment } from '../models/hexAssignment.model';
+import { ConnectivityService } from './connectivity.service';
+
+interface ResolvedAssignment {
+  q: number;
+  r: number;
+  s: number;
+  quest: QuestUpdateDTO;
+  hexAssignmentId: string | undefined;
+}
 
 @Injectable({ providedIn: 'root' })
 export class QuestAssignmentService {
   private readonly _hexService = inject(HexService);
   private readonly _questService = inject(QuestService);
   private readonly _mapGrid = inject(MapGridService);
+  private readonly _connectivity = inject(ConnectivityService);
 
-  // Callback to notify map component of bounds changes
-  private onBoundsChange?: (bounds: { width: number; height: number }) => void;
+  // Callback to notify map component that hexes were added/removed and bounds may need
+  // recalculating - deliberately no-arg: the map component recomputes bounds itself (via
+  // MapGridService, from the hexes it already holds) so it can pan-compensate for any resize in
+  // the same place every other bounds change goes through, instead of this service computing
+  // bounds and the component blindly applying them with no compensation.
+  private onBoundsChange?: () => void;
+  // Callback to notify map component that the starting island was just restored (the map went
+  // back to zero quests), so it can re-center the camera on it.
+  private onIslandRestored?: () => void;
 
-  setOnBoundsChange(callback: (bounds: { width: number; height: number }) => void): void {
+  // Snapshot of the last successfully resolved assignments, so a load triggered while offline
+  // (e.g. navigating back to the map, or a full page reload) can still show the map read-only
+  // instead of coming up empty just because the backend can't be reached. Persisted to
+  // localStorage (not just kept in memory) since a reload wipes the service instance too.
+  private _lastResolvedAssignments: ResolvedAssignment[] | null = null;
+  private readonly _STORAGE_KEY = 'hexaplanning.hexAssignments.v1';
+
+  private _saveResolvedAssignments(resolved: ResolvedAssignment[]): void {
+    this._lastResolvedAssignments = resolved;
+    try {
+      localStorage.setItem(this._STORAGE_KEY, JSON.stringify(resolved));
+    } catch {}
+  }
+
+  private _getResolvedAssignments(): ResolvedAssignment[] | null {
+    if (this._lastResolvedAssignments) return this._lastResolvedAssignments;
+    try {
+      const raw = localStorage.getItem(this._STORAGE_KEY);
+      if (!raw) return null;
+      this._lastResolvedAssignments = JSON.parse(raw) as ResolvedAssignment[];
+      return this._lastResolvedAssignments;
+    } catch {
+      return null;
+    }
+  }
+
+  setOnBoundsChange(callback: () => void): void {
     this.onBoundsChange = callback;
   }
 
+  setOnIslandRestored(callback: () => void): void {
+    this.onIslandRestored = callback;
+  }
+
   loadAssignmentsIntoHexes(hexes: Hex[], size: number): Observable<void> {
+    const cached = this._connectivity.isOffline() ? this._getResolvedAssignments() : null;
+    if (cached) {
+      for (const a of cached) {
+        let hex = hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
+        if (!hex) {
+          hex = this._mapGrid.addHex(hexes, a.q, a.r, a.s, size);
+        }
+        hex.quest = a.quest;
+        hex.hexAssignmentId = a.hexAssignmentId;
+        this._mapGrid.ensureNeighborsOf(hexes, hex, size);
+      }
+      if (cached.length) {
+        this.onBoundsChange?.();
+      }
+      return of(void 0);
+    }
+
     return this._hexService.getAllAssignments().pipe(
       switchMap(assignments => {
         const tasks: Observable<QuestUpdateDTO>[] = [];
+        const resolved: ResolvedAssignment[] = [];
         for (const a of assignments) {
           // Ensure a hex exists at the assignment coordinates; create if missing
           let hex = hexes.find(h => h.q === a.q && h.r === a.r && h.s === a.s);
@@ -36,6 +101,7 @@ export class QuestAssignmentService {
               tap(q => {
                 hex!.quest = q;
                 hex!.hexAssignmentId = a.id;
+                resolved.push({ q: a.q, r: a.r, s: a.s, quest: q, hexAssignmentId: a.id });
                 // Expand around assigned hexes on load to ensure edges are filled
                 this._mapGrid.ensureNeighborsOf(hexes, hex!, size);
               })
@@ -46,15 +112,13 @@ export class QuestAssignmentService {
         if (tasks.length) {
           return forkJoin(tasks).pipe(
             map(() => {
-              // After loading all assignments, adjust bounds
-              const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-              if (this.onBoundsChange) {
-                this.onBoundsChange(bounds);
-              }
+              this._saveResolvedAssignments(resolved);
+              this.onBoundsChange?.();
               return void 0;
             })
           );
         }
+        this._saveResolvedAssignments([]);
         return of(void 0);
       })
     );
@@ -80,12 +144,11 @@ export class QuestAssignmentService {
 
         // Expand the map by adding neighbors around the assigned hex
         this._mapGrid.ensureNeighborsOf(hexes, selectedHex, size);
+        // Once a first quest is on the map, the starting island's leftover empty hexes are
+        // no longer needed and get pruned like any other empty hex.
+        this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
 
-        // Recalculate and notify map bounds
-        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-        if (this.onBoundsChange) {
-          this.onBoundsChange(bounds);
-        }
+        this.onBoundsChange?.();
       }),
       map(() => void 0)
     );
@@ -98,23 +161,26 @@ export class QuestAssignmentService {
         subscriber.complete();
       });
     }
-    const questToUpdate = { ...hex.quest } as QuestUpdateDTO;
+    // Deleting the HexAssignment row (below) is enough to unassign the quest - the relationship
+    // is owned entirely by that table (FK on HexAssignment.QuestId), so there's nothing on the
+    // Quest entity itself that needs saving. An earlier version of this also PUT the quest back
+    // unchanged, which was both unnecessary and risky: the backend's quest-update endpoint sets
+    // the quest's HexAssignment navigation from whatever the request body carries, so echoing
+    // back a stale/cached quest object here could resurrect the assignment that was just deleted.
     return this._hexService.deleteAssignment(hex.q, hex.r, hex.s).pipe(
-      switchMap(() => this._questService.updateQuest(questToUpdate)),
       tap(() => {
         hex.quest = undefined;
         hex.hexAssignmentId = undefined;
         this._questService.getAllUnassignedPendingQuests().subscribe();
 
         // Clean up orphaned dynamic hexes
-        const removed = this._mapGrid.removeOrphanedDynamicHexes(hexes);
-        console.log(`Removed ${removed} orphaned dynamic hexes`);
-
-        // Recalculate and notify map bounds
-        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-        if (this.onBoundsChange) {
-          this.onBoundsChange(bounds);
+        const { removedCount, islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
+        console.log(`Removed ${removedCount} orphaned dynamic hexes`);
+        if (islandRestored) {
+          this.onIslandRestored?.();
         }
+
+        this.onBoundsChange?.();
       }),
       map(() => void 0)
     );
@@ -151,12 +217,9 @@ export class QuestAssignmentService {
           fromHex.hexAssignmentId = undefined;
 
           this._mapGrid.ensureNeighborsOf(hexes, toHex, size);
-          this._mapGrid.removeOrphanedDynamicHexes(hexes);
+          this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
 
-          const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-          if (this.onBoundsChange) {
-            this.onBoundsChange(bounds);
-          }
+          this.onBoundsChange?.();
         }),
         map(() => void 0)
       );

@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -64,11 +65,14 @@ export class LoginComponent {
           this.isLoading = false;
           this._router.navigate(['/']);
         },
-        error: (error: any) => {
+        error: (error: HttpErrorResponse) => {
+          const isNetworkFailure = error.status === 0;
           this._messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Email ou mot de passe incorrect. Veuillez réessayer.',
+            detail: isNetworkFailure
+              ? 'Impossible de contacter le serveur. Vérifiez votre connexion internet ou réessayez plus tard.'
+              : 'Email ou mot de passe incorrect. Veuillez réessayer.',
           });
           this.isLoading = false;
           console.error('Login error:', error);

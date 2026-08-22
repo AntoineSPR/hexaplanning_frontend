@@ -141,13 +141,13 @@
   <div class="button-group">
     <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour"><i class="pi pi-chevron-left"></i></button>
     <button type="button" (click)="onCancel()" class="icon-button" aria-label="Annuler" title="Annuler"><i class="pi pi-times"></i></button>
-    <button type="submit" class="icon-button" aria-label="Valider" title="Valider"><i class="pi pi-check"></i></button>
+    <button type="submit" class="icon-button" [disabled]="_connectivity.isOffline()" aria-label="Valider" title="Valider"><i class="pi pi-check"></i></button>
   </div>
   } @else {
   <div class="button-group">
     <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour"><i class="pi pi-chevron-left"></i></button>
-    <button type="button" (click)="onDelete()" class="icon-button" aria-label="Supprimer" title="Supprimer"><i class="pi pi-trash"></i></button>
-    <button type="button" (click)="onEdit()" class="icon-button" aria-label="Éditer" title="Éditer"><i class="pi pi-pencil"></i></button>
+    <button type="button" (click)="onDelete()" class="icon-button" [disabled]="_connectivity.isOffline()" aria-label="Supprimer" title="Supprimer"><i class="pi pi-trash"></i></button>
+    <button type="button" (click)="onEdit()" class="icon-button" [disabled]="_connectivity.isOffline()" aria-label="Éditer" title="Éditer"><i class="pi pi-pencil"></i></button>
   </div>
   }
 </form>

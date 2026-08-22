@@ -6,6 +6,12 @@
   height: 100%;
   margin: 0;
   padding: 0;
+  // Reserves space for the bottom nav (which is position:fixed, so it wouldn't otherwise take
+  // up any layout space of its own) - --menu-height is set from its actual measured height in
+  // map.component.ts, so the map's own rendered box genuinely stops above it instead of the SVG
+  // extending underneath and only being patched up in specific camera calculations.
+  padding-bottom: var(--menu-height, 0px);
+  box-sizing: border-box;
   position: relative;
   overflow: hidden;
 }
@@ -170,9 +176,17 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
   opacity: 0.35;
 }
 
+// Shown once a long-press has been held long enough to pick the hex up, before any movement
+// has actually started - tells the user it's now safe to drag.
+.hex-armed {
+  filter: drop-shadow(0 0 8px var(--light-theme-color));
+  stroke: var(--light-theme-color) !important;
+  stroke-width: 3 !important;
+}
+
 .hex-drop-move {
-  filter: drop-shadow(0 0 6px var(--focus-color));
-  stroke: var(--focus-color) !important;
+  filter: drop-shadow(0 0 6px var(--ultra-light-theme-color));
+  stroke: var(--ultra-light-theme-color) !important;
   stroke-width: 3 !important;
 }
 
@@ -180,6 +194,21 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
   filter: drop-shadow(0 0 6px var(--light-theme-color));
   stroke: var(--light-theme-color) !important;
   stroke-width: 3 !important;
+}
+
+// Shown when dropping here would push some other quest further than MAX_QUEST_SPREAD away.
+.hex-drop-invalid {
+  filter: drop-shadow(0 0 6px #e24c4c);
+  stroke: #e24c4c !important;
+  stroke-width: 3 !important;
+}
+
+// Persistent boundary indicator on empty hexes outside the currently reachable drag area (past
+// MAX_QUEST_SPREAD) - unlike hex-drop-invalid, which only flags the one hex directly under the
+// cursor, this tints every hex past the edge so the boundary itself is clear.
+.hex-out-of-bounds {
+  fill: #e24c4c !important;
+  opacity: 0.5;
 }
 
 .hex-landed {
@@ -215,6 +244,11 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
   pointer-events: auto;
   padding: 0;
   padding-bottom: 1px;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 #no-quest {

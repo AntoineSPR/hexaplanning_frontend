@@ -32,6 +32,8 @@
         role="button"
         [attr.aria-label]="getHexAriaLabel(h)"
         [class.hex-drag-origin]="draggingHex === h"
+        [class.hex-armed]="armedHex === h"
+        [class.hex-out-of-bounds]="!h.quest && isOutOfDragBounds(h)"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
       <!-- Progress overlay (if quest has advancement and is in progress) -->
@@ -72,7 +74,7 @@
         </xhtml:div>
         @if (h.quest) {
           <!-- Unassign button: sits after the drag surface in DOM order so it stays clickable on top -->
-          <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
+          <button class="quest-delete" [disabled]="_connectivity.isOffline()" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
         }
       </foreignObject>
     }
@@ -115,7 +117,7 @@
 
 <!-- Camera controls -->
 <div class="camera-controls">
-  <button class="camera-reset-btn" (click)="resetCamera()" title="Réinitialiser la vue">
+  <button class="camera-reset-btn" (click)="fitAllQuests()" title="Voir toutes les quêtes">
     <i class="pi pi-refresh"></i>
   </button>
   <div class="zoom-indicator">{{ (zoom * 100).toFixed(0) }}%</div>
@@ -149,7 +151,7 @@
   </div>
   <ng-template #footer>
     <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
-    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
+    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest || _connectivity.isOffline()"> </p-button>
   </ng-template>
 </p-dialog>
 

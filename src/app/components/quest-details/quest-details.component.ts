@@ -28,6 +28,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { Router } from '@angular/router';
+import { ConnectivityService } from '../../services/connectivity.service';
 
 @Component({
   selector: 'app-quest-details',
@@ -65,6 +66,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
   private readonly _router = inject(Router);
+  readonly _connectivity = inject(ConnectivityService);
 
   questForm!: FormGroup;
   priorityOptions = this._questService.priorities();
@@ -115,6 +117,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
 
   //#region Buttons
   onSubmit(): void {
+    if (this._connectivity.isOffline()) return;
+
     this.questForm.markAllAsTouched();
 
     if (this.questForm.invalid) return;
@@ -244,6 +248,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   }
 
   onDelete(): void {
+    if (this._connectivity.isOffline()) return;
+
     this._confirmationService.confirm({
       message: 'Confimer la suppression ?',
       acceptLabel: 'Supprimer',
@@ -286,6 +292,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   }
 
   onEdit(): void {
+    if (this._connectivity.isOffline()) return;
+
     this.isEdit = true;
     // Focus on title when entering edit mode
     this.setTitleFocus();

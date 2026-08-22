@@ -13,6 +13,7 @@ export interface SvgZoomOptions {
 export interface SvgZoomHandle {
   reset(): void;
   setTransform(x: number, y: number, k: number): void;
+  setScaleExtent(min: number, max: number): void;
   destroy(): void;
 }
 
@@ -56,6 +57,9 @@ export class SvgZoomService {
       setTransform(x: number, y: number, k: number) {
         const t = zoomIdentity.translate(x, y).scale(k);
         svgSel.call(behavior.transform, t);
+      },
+      setScaleExtent(min: number, max: number) {
+        behavior.scaleExtent([min, max]);
       },
       destroy() {
         // d3-zoom provides on handlers; to teardown, remove listeners by setting null handlers

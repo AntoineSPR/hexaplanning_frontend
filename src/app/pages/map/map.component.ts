@@ -14,11 +14,16 @@ import { QuestAssignmentService } from 'src/app/services/quest-assignment.servic
 import { CameraStateService } from 'src/app/services/camera-state.service';
 import { Hex } from 'src/app/models/hex.model';
 import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service';
+import { ConnectivityService } from 'src/app/services/connectivity.service';
+import { HexDragController, HexDragHost } from './hex-drag.controller';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
-const MAX_EXPANSION = 3;
+// Matches the scaleMin/scaleMax passed to SvgZoomService.attach() below - shared so
+// fitAllQuests() clamps to the same range the zoom gesture itself is limited to.
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 3;
 
 @Component({
   selector: 'app-map',
@@ -28,9 +33,13 @@ const MAX_EXPANSION = 3;
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
-export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHost {
   @ViewChild('svgRoot', { static: false }) svgRoot?: ElementRef<SVGSVGElement>;
   @ViewChild('cameraGroup', { static: false }) cameraGroup?: ElementRef<SVGGElement>;
+  // The map's SVG fills the whole viewport behind the fixed bottom nav (it's position:fixed, so
+  // it doesn't take up its own layout space) - camera centering needs this to avoid framing
+  // content underneath it.
+  @ViewChild(MenuComponent, { read: ElementRef, static: false }) menuEl?: ElementRef<HTMLElement>;
   _questService = inject(QuestService);
   _questModalService = inject(QuestModalService);
   _mapGrid = inject(MapGridService);
@@ -38,25 +47,81 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   _cameraState = inject(CameraStateService);
   _el = inject(ElementRef<HTMLElement>);
   _svgZoom = inject(SvgZoomService);
+  _connectivity = inject(ConnectivityService);
 
   // zoom handle
-  private zoomHandle?: SvgZoomHandle;
+  zoomHandle?: SvgZoomHandle;
 
   private readonly _confirmationService = inject(ConfirmationService);
 
+  // Drives the whole quest drag-and-drop gesture (long-press-to-arm, edge auto-pan, live grid
+  // growth, drop) - this component implements HexDragHost so the controller can read/drive
+  // camera and map state without duplicating it. See hex-drag.controller.ts.
+  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity);
+
   hexes: Hex[] = [];
   size = HEX_SIZE;
-  maxExpansion = MAX_EXPANSION;
-  mapWidth = MAP_WIDTH;
-  mapHeight = MAP_HEIGHT;
+
+  // mapWidth/mapHeight drive the SVG viewBox size, which shrinks fitScale as the map grows
+  // (drag-time growth, quests spreading out). Since zoom is a multiplier on top of fitScale, a
+  // fixed zoom cap would mean "fully zoomed in" keeps rendering smaller the more the map grows -
+  // these setters keep the zoom behavior's max in sync (see computeMaxZoom) so the maximum
+  // zoomed-in scale stays constant regardless of how large the viewBox has gotten.
+  private _mapWidth = MAP_WIDTH;
+  get mapWidth(): number {
+    return this._mapWidth;
+  }
+  set mapWidth(value: number) {
+    this._mapWidth = value;
+    this.updateZoomExtent();
+  }
+
+  private _mapHeight = MAP_HEIGHT;
+  get mapHeight(): number {
+    return this._mapHeight;
+  }
+  set mapHeight(value: number) {
+    this._mapHeight = value;
+    this.updateZoomExtent();
+  }
+
+  // Recomputes the viewBox from the hexes' actual current extent and pan-compensates for any
+  // change - the single source of truth for "the hex set changed, resync bounds", used by every
+  // source of a bounds change (QuestAssignmentService's assign/unassign/move notifications, and
+  // HexDragController's own drag-time growth/shrink) instead of each writing mapWidth/mapHeight
+  // directly - see _lastOverflow above for why that matters.
+  syncMapBounds(): void {
+    const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
+    const overflow = this._mapGrid.computeOverflow(this.hexes, this.size);
+    this.mapWidth = bounds.width;
+    this.mapHeight = bounds.height;
+    const deltaX = (overflow.left - this._lastOverflow.left) * this.zoom;
+    const deltaY = (overflow.top - this._lastOverflow.top) * this.zoom;
+    if (deltaX !== 0 || deltaY !== 0) {
+      this.panX += deltaX;
+      this.panY += deltaY;
+      this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
+    }
+    this._lastOverflow = overflow;
+  }
 
   // Camera state for panning and zoom
   panX = 0;
   panY = 0;
   zoom = 1;
   isPanning = false;
-  private suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
+  suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
   private hadCameraMove = false; // track if any pan/zoom occurred during a gesture
+
+  // How far the hex set currently overflows past the viewBox's fixed [0,0] origin, as of the
+  // last time bounds/pan were synced - see syncMapBounds below. Centralized
+  // here (rather than tracked separately by HexDragController, or not tracked at all by
+  // QuestAssignmentService's bounds-change notifications) because *any* source of a resize needs
+  // to agree on what pan has already compensated for, or they end up fighting: a resize applied
+  // without knowing what the last one already accounted for either double-compensates or skips
+  // compensating entirely, which showed up as the camera getting wrenched around during drags
+  // even after the drag logic itself was made internally consistent.
+  private _lastOverflow = { left: 0, top: 0 };
 
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
@@ -66,6 +131,18 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     if (document.visibilityState === 'hidden') {
       this._persistCamera();
     }
+  };
+  // Measures the bottom nav's actual rendered height and exposes it as --menu-height, which
+  // :host's padding-bottom (map.component.scss) reserves - makes the SVG's own rendered box
+  // genuinely stop above the menu instead of extending underneath it, so every screen<->map
+  // coordinate conversion (fit-scale, letterboxing, camera centering) is correct everywhere
+  // automatically rather than needing menu-awareness patched in one by one.
+  private readonly _updateMenuHeightVar = () => {
+    // <app-menu> itself has no intrinsic size - the actual fixed-position, sized element is the
+    // <nav class="menubar"> inside its template, so that's what needs measuring.
+    const menuBar = this.menuEl?.nativeElement.querySelector('.menubar');
+    const menuHeightPx = menuBar?.getBoundingClientRect().height ?? 0;
+    this._el.nativeElement.style.setProperty('--menu-height', `${menuHeightPx}px`);
   };
 
   get unassignedPendingQuests(): QuestUpdateDTO[] {
@@ -78,36 +155,30 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoading = true;
   isFadingOut = false;
 
-  // Quest drag-and-drop state
-  draggingHex: Hex | null = null;
-  dragOverHex: Hex | null = null;
-  // A floating replica of the dragged hex (see the mini <svg> in the template) that follows
-  // the pointer at these fixed-position coordinates.
-  dragPreviewX = 0;
-  dragPreviewY = 0;
-  // The <svg viewBox> makes on-map hexes render larger than their raw `size` units once the
-  // browser scales the viewBox to fit the container (times the camera zoom on top of that).
-  // The overlay lives outside the SVG as a plain fixed-position div, so it needs this same
-  // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
-  dragOverlayScale = 1;
-  private lastLandedHex: Hex | null = null;
+  // Template-facing drag state delegates straight through to the controller.
+  get draggingHex(): Hex | null {
+    return this._drag.draggingHex;
+  }
+  get dragOverHex(): Hex | null {
+    return this._drag.dragOverHex;
+  }
+  get dragPreviewX(): number {
+    return this._drag.dragPreviewX;
+  }
+  get dragPreviewY(): number {
+    return this._drag.dragPreviewY;
+  }
+  get dragOverlayScale(): number {
+    return this._drag.dragOverlayScale;
+  }
+  get armedHex(): Hex | null {
+    return this._drag.armedHex;
+  }
 
-  // Hand-rolled long-press-then-drag gesture, using native Pointer Events directly rather than
-  // @angular/cdk's DragRef: CDK's non-touch drag detection is gated behind a lazily-attached
-  // `mousemove` document listener that in practice doesn't reliably fire for this gesture across
-  // browsers/input devices, so real mouse dragging silently never started. `pointermove` fires
-  // consistently for every pointer type, and `setPointerCapture` guarantees this element keeps
-  // receiving move/up events for the gesture regardless of where the pointer physically travels.
-  private static readonly DRAG_START_DELAY_MS = 150;
-  private static readonly DRAG_START_THRESHOLD_PX = 5;
-  private pointerDrag: {
-    hex: Hex;
-    pointerId: number;
-    startX: number;
-    startY: number;
-    startTime: number;
-    cancelled: boolean;
-  } | null = null;
+  // Set when the initial assignment load had to fall back to the offline snapshot; tells the
+  // reconnect effect below to quietly re-fetch the authoritative state once back online, so the
+  // map self-heals instead of requiring a manual page reload.
+  private needsRefreshOnReconnect = false;
 
   constructor() {
     effect(() => {
@@ -133,8 +204,30 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
         if (changed) {
-          this._mapGrid.removeOrphanedDynamicHexes(this.hexes);
+          const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+          this.syncMapBounds();
+          if (islandRestored) {
+            this.resetCamera();
+          }
         }
+      }
+    });
+
+    effect(() => {
+      if (this._connectivity.isOnline() && this.needsRefreshOnReconnect) {
+        this.needsRefreshOnReconnect = false;
+        // Silent background refresh: no wipe/spinner, since the offline snapshot is already
+        // showing something reasonable - just reconcile it with the server now that we can.
+        this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
+          next: () => {
+            const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+            this.syncMapBounds();
+            if (islandRestored) {
+              this.resetCamera();
+            }
+          },
+          error: err => console.error('Failed to refresh assignments after reconnect:', err),
+        });
       }
     });
   }
@@ -155,10 +248,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Register callback for bounds changes
-    this._questAssignment.setOnBoundsChange(bounds => {
-      this.mapWidth = bounds.width;
-      this.mapHeight = bounds.height;
-    });
+    this._questAssignment.setOnBoundsChange(() => this.syncMapBounds());
+
+    // Register callback for when the starting island gets restored (map back to zero quests)
+    this._questAssignment.setOnIslandRestored(() => this.resetCamera());
 
     // Persist camera on refresh/navigation and when tab/app is backgrounded
     window.addEventListener('beforeunload', this._persistCamera);
@@ -169,10 +262,17 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     // Clear any quest references first, then hydrate from server
     this.hexes.forEach(h => (h.quest = undefined));
     this.isLoading = true;
+    if (this._connectivity.isOffline()) {
+      this.needsRefreshOnReconnect = true;
+    }
     this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
       next: () => {
         // After assignments load, trim any orphaned dynamic hexes and update bounds
-        this._mapGrid.removeOrphanedDynamicHexes(this.hexes);
+        const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+        this.syncMapBounds();
+        if (islandRestored) {
+          this.resetCamera();
+        }
       },
       complete: () => {
         // Trigger fade-out animation first
@@ -196,10 +296,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async ngAfterViewInit(): Promise<void> {
     if (!this.svgRoot || !this.cameraGroup) return;
+    this._updateMenuHeightVar();
+    window.addEventListener('resize', this._updateMenuHeightVar);
     const saved = this._cameraState.getState();
     this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
-      scaleMin: 0.5,
-      scaleMax: 3,
+      scaleMin: ZOOM_MIN,
+      scaleMax: this.computeMaxZoom(),
       onStart: () => {
         this.hadCameraMove = false;
         this.togglePanning(true);
@@ -237,11 +339,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     window.removeEventListener('beforeunload', this._persistCamera);
     window.removeEventListener('pagehide', this._persistCamera);
     document.removeEventListener('visibilitychange', this._onVisibilityChange);
+    window.removeEventListener('resize', this._updateMenuHeightVar);
   }
 
   //#region Generate Map
   generateHexes(): void {
-    this.hexes = this._mapGrid.generateHexes(this.maxExpansion, this.size, this.mapHeight);
+    this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight);
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {
@@ -259,6 +362,18 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     if (Date.now() < this.suppressClicksUntil) {
       return;
     }
+
+    if (this._connectivity.isOffline()) {
+      // No network round-trip while offline: fall back to whatever is already loaded locally
+      // so hexes stay browsable read-only without a connection.
+      if (hex.quest) {
+        this._questModalService.openQuestDetails(hex.quest);
+      } else {
+        this.openQuestToHexModal(hex);
+      }
+      return;
+    }
+
     this._questAssignment.getAssignmentForHex(hex.q, hex.r, hex.s).subscribe({
       next: assignment => {
         if (assignment) {
@@ -302,6 +417,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   assignQuestToHex(): void {
+    if (this._connectivity.isOffline()) return;
+
     if (this.selectedHex && this.selectedQuest) {
       this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest, this.hexes, this.size).subscribe({
         next: () => {
@@ -319,6 +436,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   deleteQuestFromHex(hex: Hex, event: MouseEvent | TouchEvent): void {
     event.stopPropagation();
     event.preventDefault();
+
+    if (this._connectivity.isOffline()) return;
 
     if (hex.quest) {
       this._confirmationService.confirm({
@@ -344,148 +463,34 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // The drag gesture itself (long-press-to-arm, edge auto-pan, live grid growth, drop) is all
+  // handled by HexDragController - see hex-drag.controller.ts.
   onHexPointerDown(hex: Hex, event: PointerEvent): void {
-    if (!hex.quest || event.button !== 0) {
-      return;
-    }
-    this.pointerDrag = {
-      hex,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startTime: Date.now(),
-      cancelled: false,
-    };
-    // Guarantees this element keeps receiving pointermove/pointerup for this gesture
-    // even if the cursor moves off it mid-drag; doesn't prevent a plain click from firing.
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this._drag.onPointerDown(hex, event);
   }
 
   onHexPointerMove(event: PointerEvent): void {
-    const drag = this.pointerDrag;
-    if (!drag || drag.pointerId !== event.pointerId || drag.cancelled) {
-      return;
-    }
-
-    if (this.draggingHex) {
-      this.dragPreviewX = event.clientX;
-      this.dragPreviewY = event.clientY;
-      this.dragOverHex = this.findHexAtPoint(event.clientX, event.clientY);
-      return;
-    }
-
-    const distance = Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY);
-    if (distance < MapComponent.DRAG_START_THRESHOLD_PX) {
-      return;
-    }
-    if (Date.now() - drag.startTime < MapComponent.DRAG_START_DELAY_MS) {
-      // Moved before the hold delay elapsed: treat as a failed long-press, not a drag.
-      drag.cancelled = true;
-      return;
-    }
-
-    event.preventDefault();
-    this.draggingHex = drag.hex;
-    this.dragOverHex = null;
-    this.dragPreviewX = event.clientX;
-    this.dragPreviewY = event.clientY;
-    this.dragOverlayScale = this.computeMapScale();
-  }
-
-  private computeMapScale(): number {
-    if (!this.svgRoot) return 1;
-    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
-    if (!rect.width || !rect.height) return 1;
-    // preserveAspectRatio="xMidYMid meet": the viewBox is scaled uniformly by the smaller of
-    // the two ratios so it fits entirely within the rendered element.
-    const fitScale = Math.min(rect.width / this.mapWidth, rect.height / this.mapHeight);
-    return fitScale * this.zoom;
+    this._drag.onPointerMove(event);
   }
 
   onHexPointerUp(event: PointerEvent): void {
-    const drag = this.pointerDrag;
-    if (!drag || drag.pointerId !== event.pointerId) {
-      return;
-    }
-    (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
-    this.pointerDrag = null;
-
-    if (!this.draggingHex) {
-      return; // was a plain tap (or a cancelled early-movement); let the native click fire
-    }
-
-    const hex = this.draggingHex;
-    const target = this.dragOverHex;
-    // A real drag just occurred: ignore the click that follows pointerup
-    this.suppressClicksUntil = Date.now() + 250;
-
-    if (target && target !== hex) {
-      // Keep the origin hex dimmed and the preview visible until the move actually resolves,
-      // instead of clearing draggingHex immediately - otherwise the origin hex snaps back to
-      // full opacity (still showing its old quest) for the length of the request, then fades
-      // out again once the response arrives, which reads as a flash.
-      this._questAssignment.moveQuestToHex(hex, target, this.hexes, this.size).subscribe({
-        next: () => {
-          this.markLandedHex(target);
-          this.draggingHex = null;
-          this.dragOverHex = null;
-        },
-        error: err => {
-          console.error('Failed to move quest:', err);
-          this.draggingHex = null;
-          this.dragOverHex = null;
-        },
-      });
-    } else {
-      this.draggingHex = null;
-      this.dragOverHex = null;
-    }
+    this._drag.onPointerUp(event);
   }
 
   onHexPointerCancel(event: PointerEvent): void {
-    const drag = this.pointerDrag;
-    if (!drag || drag.pointerId !== event.pointerId) {
-      return;
-    }
-    this.pointerDrag = null;
-    this.draggingHex = null;
-    this.dragOverHex = null;
-  }
-
-  private findHexAtPoint(x: number, y: number): Hex | null {
-    // Use the full element stack (not just the topmost hit) since a drop point over an
-    // occupied hex often lands on that hex's own quest chip, which sits above the polygon.
-    const stack = document.elementsFromPoint(x, y);
-    for (const el of stack) {
-      const hexEl = el.closest('[data-hex-q]') as HTMLElement | null;
-      if (hexEl) {
-        const q = Number(hexEl.dataset['hexQ']);
-        const r = Number(hexEl.dataset['hexR']);
-        const s = Number(hexEl.dataset['hexS']);
-        return this.hexes.find(h => h.q === q && h.r === r && h.s === s) ?? null;
-      }
-    }
-    return null;
-  }
-
-  private markLandedHex(hex: Hex): void {
-    this.lastLandedHex = hex;
-    setTimeout(() => {
-      if (this.lastLandedHex === hex) {
-        this.lastLandedHex = null;
-      }
-    }, 500);
+    this._drag.onPointerCancel(event);
   }
 
   isLandedHex(hex: Hex): boolean {
-    return this.lastLandedHex === hex;
+    return this._drag.isLandedHex(hex);
   }
 
   getDropHighlightClass(hex: Hex): string {
-    if (!this.draggingHex || this.dragOverHex !== hex || hex === this.draggingHex) {
-      return '';
-    }
-    return hex.quest ? 'hex-drop-swap' : 'hex-drop-move';
+    return this._drag.getDropHighlightClass(hex);
+  }
+
+  isOutOfDragBounds(hex: Hex): boolean {
+    return this._drag.isOutOfDragBounds(hex);
   }
 
   getHexColor(hex: Hex): string {
@@ -581,6 +586,56 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       this.panY = 0;
     }
     this.zoom = 1;
+  }
+
+  // Re-centers the camera on a hex, keeping the current zoom level (unlike
+  // centerCameraOnCenterHex/resetCamera, which reset zoom to 1). Used after dropping a quest
+  // onto a new hex (called by HexDragController via the HexDragHost interface), so the camera
+  // follows it there instead of leaving the view where it was.
+  centerCameraOnHex(hex: Hex): void {
+    this.panX = this.mapWidth / 2 - hex.cx * this.zoom;
+    this.panY = this.mapHeight / 2 - hex.cy * this.zoom;
+    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
+  }
+
+  // Zooms/pans to frame every currently assigned quest at once - an escape hatch back to an
+  // overview when quests end up spread across a large map. Falls back to the default centered
+  // view when there's nothing assigned yet.
+  fitAllQuests(): void {
+    const assignedHexes = this.hexes.filter(h => h.quest);
+    if (assignedHexes.length === 0) {
+      this.resetCamera();
+      return;
+    }
+
+    const pad = this.size + 10;
+    const xs = assignedHexes.map(h => h.cx);
+    const ys = assignedHexes.map(h => h.cy);
+    const minX = Math.min(...xs) - pad;
+    const maxX = Math.max(...xs) + pad;
+    const minY = Math.min(...ys) - pad;
+    const maxY = Math.max(...ys) + pad;
+    const boxWidth = Math.max(maxX - minX, 1);
+    const boxHeight = Math.max(maxY - minY, 1);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), ZOOM_MIN), this.computeMaxZoom());
+
+    this.zoom = newZoom;
+    this.panX = this.mapWidth / 2 - centerX * newZoom;
+    this.panY = this.mapHeight / 2 - centerY * newZoom;
+    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
+  }
+
+  // The maximum zoom-in level, scaled up as the map's viewBox grows so the zoomed-in render
+  // scale stays constant instead of shrinking - see the mapWidth/mapHeight setters above.
+  private computeMaxZoom(): number {
+    return ZOOM_MAX * Math.max(this.mapWidth / MAP_WIDTH, this.mapHeight / MAP_HEIGHT);
+  }
+
+  private updateZoomExtent(): void {
+    this.zoomHandle?.setScaleExtent(ZOOM_MIN, this.computeMaxZoom());
   }
 
   private togglePanning(active: boolean) {

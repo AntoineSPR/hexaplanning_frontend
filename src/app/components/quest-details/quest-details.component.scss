@@ -99,6 +99,17 @@ input {
     outline-color: var(--theme-color) !important;
     box-shadow: 0 0 0 2px var(--focus-color) !important;
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+
+    &:hover {
+      background-color: var(--theme-color);
+      transform: none;
+    }
+  }
 }
 
 .p-error {

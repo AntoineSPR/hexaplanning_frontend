@@ -1,3 +1,9 @@
+@if (_connectivity.isOffline()) {
+<div class="offline-badge" role="status" aria-live="polite" title="Hors ligne">
+  <i class="material-icons">wifi_off</i>
+</div>
+}
+
 <nav class="menubar" role="navigation" aria-label="Navigation principale">
   <div
     [routerLink]="['/']"
@@ -21,11 +27,13 @@
 
   <div
     class="losange menu-item"
+    [class.disabled]="_connectivity.isOffline()"
     (click)="showNewQuestDialog()"
     (keydown.enter)="showNewQuestDialog()"
     (keydown.space)="showNewQuestDialog()"
     tabindex="0"
     role="menuitem"
+    [attr.aria-disabled]="_connectivity.isOffline()"
     aria-label="Ajouter une nouvelle quête">
     <i class="pi pi-plus icon" [ngClass]="{ active: activeIcon === 'plus' }"></i>
   </div>
