@@ -11,12 +11,12 @@ To properly understand the structure of this project, open the `package.json` fi
 - You need to manually add your protection rules from your repository instance settings :
   - Lock pushes on production, staging & development ;
   - Make PR mandatory towards production, staging & development
-  - PR, any branch ➡️ development :
+  - PR, any branch -> development :
      - All contributors must add their review.
-  - PR, development ➡️ staging :
+  - PR, development -> staging :
      - Only the `development` branch can make a PR to the `staging` branch ;
      - All contributors must add their review.
-  - PR, staging ➡️ production :
+  - PR, staging -> production :
     - Only the `staging` branch can make a PR to the `production` branch ;
     - All contributors must add their review ;
     - The owner of the repository must approve the PR.
