@@ -73,9 +73,9 @@ input {
   height: 2.75rem;
   background-color: var(--theme-color);
   color: var(--text-color);
-  box-shadow: var(--theme-color) 0px 0px 5px 5px;
+  box-shadow: var(--theme-color) 0px 0px 5px 5px inset;
   border: none;
-  border-radius: 50%;
+  border-radius: 18%;
   display: flex;
   align-items: center;
   justify-content: center;
