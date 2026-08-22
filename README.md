@@ -1,4 +1,4 @@
-# Frontend project template : Angular 🛡️
+# Frontend project template : Angular
 
 This repository is a Angular project template shipped with a base configuration in order to have a clean base to work with, for you and your teammates. 
 
