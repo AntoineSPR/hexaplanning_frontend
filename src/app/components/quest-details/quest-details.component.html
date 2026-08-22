@@ -12,143 +12,151 @@
         [readonly]="!isEdit"
         [ngClass]="{
           'quest-readonly': !isEdit,
-          'p-invalid': questForm.get('title')?.invalid && questForm.get('title')?.touched
+          'p-invalid': questForm.get('title')?.invalid && questForm.get('title')?.touched,
         }"
         maxlength="100"></textarea>
       @if (isEdit || isNew) {
-      <small>{{ questForm.get('title')?.value?.length || 0 }}/100</small>
-      } @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
-      <small class="p-error block mt-1"> Le titre est obligatoire </small>
+        <small>{{ questForm.get('title')?.value?.length || 0 }}/100</small>
+      }
+      @if (questForm.get('title')?.invalid && questForm.get('title')?.touched) {
+        <small class="p-error block mt-1"> Le titre est obligatoire </small>
       }
     </div>
 
-  <!-- STATUT -->
-  <div class="flex flex-column align-content-center mt-2">
-    <label for="status" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Statut :</label>
-    @if (isEdit) {
-    <p-select
-      id="status"
-      formControlName="statusId"
-      [options]="statusOptions ?? []"
-      [disabled]="!isEdit"
-      optionLabel="name"
-      optionValue="id"
-      [styleClass]="'custom-select'">
-      <ng-template let-option pTemplate="item">
-        <span>
-          {{ option.name }}
+    <!-- STATUT -->
+    <div class="flex flex-column align-content-center mt-2">
+      <label for="status" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Statut :</label>
+      @if (isEdit) {
+        <p-select
+          id="status"
+          formControlName="statusId"
+          [options]="statusOptions ?? []"
+          [disabled]="!isEdit"
+          optionLabel="name"
+          optionValue="id"
+          [styleClass]="'custom-select'">
+          <ng-template let-option pTemplate="item">
+            <span>
+              {{ option.name }}
+            </span>
+          </ng-template></p-select
+        >
+      } @else {
+        <span class="flex align-items-center gap-2">
+          <span class="status-dot" [style.background]="statusColor" [style.box-shadow]="'0 0 4px ' + statusColor"></span>
+          <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
         </span>
-      </ng-template></p-select
-    >} @else { <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
-    }
-  </div>
-
-  @if (isInProgress) {
-  <div class="quest-field">
-    <label for="advancement" class="font-bold">Progression : </label>
-    <p>{{ questForm.get('advancement')?.value }}%</p>
-  </div>
-  @if (isEdit) {
-  <div class="w-full">
-    <p-slider id="advancement" formControlName="advancement" (onChange)="onAdvancementChange($event)" [min]="0" [max]="100" [step]="5" />
-  </div>
-  } @else {
-  <div class="w-full">
-    <p-progressBar [value]="questForm.get('advancement')?.value" />
-  </div>
-  } }
-
-  <div class="flex flex-column align-content-center">
-    <!-- PRIORITE -->
-    <label for="priority" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Priorité :</label>
-    @if (isEdit) {
-    <p-select
-      id="priority"
-      formControlName="priorityId"
-      [options]="priorityOptions ?? []"
-      [readonly]="!isEdit"
-      optionLabel="name"
-      optionValue="id"
-      [styleClass]="'custom-select'">
-      <ng-template let-option pTemplate="selectedItem">
-        <div class="flex align-items-center gap-2">
-          <img class="priority-icon" [src]="'/icons/' + option.icon + '.png'" [alt]="option.name" [class]="'priority-' + option.icon" />
-          <span [class]="'priority-' + option.icon">
-            {{ option.name }}
-          </span>
-        </div>
-      </ng-template>
-      <ng-template let-option pTemplate="item">
-        <span [class]="'priority-' + option.icon">
-          {{ option.name }}
-        </span>
-      </ng-template></p-select
-    >
-    } @else {
-    <div class="flex align-items-center gap-2">
-      <img
-        class="priority-icon"
-        [src]="'/icons/' + getPriorityIcon(quest.priorityId) + '.png'"
-        [alt]="getPriorityName(quest.priorityId)"
-        [class]="'priority-' + getPriorityIcon(quest.priorityId)" />
-      <span class="italic">{{ getPriorityName(quest.priorityId) }}</span>
+      }
     </div>
-    }
-  </div>
 
-  <!-- TEMPS ESTIME -->
-  @if (isEdit || hasEstimatedTime) {
-  <div class="quest-field py-2">
-    <label for="estimatedTime">Temps estimé <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
-    @if (isEdit) {
-    <p-calendar
-      id="estimatedTime"
-      formControlName="estimatedTime"
-      [timeOnly]="true"
-      hourFormat="24"
-      [inputStyle]="{ width: '4.4rem' }"
-      [stepMinute]="5"
-      [showIcon]="false"
-      [appendTo]="'body'"
-      [baseZIndex]="1000"
-      [showButtonBar]="false">
-    </p-calendar>
-    } @else {
-    <span class="pr-4">
-      {{ this.questForm.get('estimatedTime')?.value | time }}
-    </span>
+    @if (isInProgress) {
+      <div class="quest-field">
+        <label for="advancement" class="font-bold">Progression : </label>
+        <p>{{ questForm.get('advancement')?.value }}%</p>
+      </div>
+      @if (isEdit) {
+        <div class="w-full">
+          <p-slider id="advancement" formControlName="advancement" (onChange)="onAdvancementChange($event)" [min]="0" [max]="100" [step]="5" />
+        </div>
+      } @else {
+        <div class="w-full">
+          <p-progressBar [value]="questForm.get('advancement')?.value" />
+        </div>
+      }
     }
-  </div>
-  }
 
-  <!-- DETAILS -->
-  @if (isEdit || hasDescription) {
-  <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
-    <label for="description">Détails <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
-    <textarea
-      id="description"
-      formControlName="description"
-      pTextarea
-      [autoResize]="true"
-      [readonly]="!isEdit"
-      [ngClass]="{ 'quest-readonly': !isEdit }"></textarea>
-  </div>
-  }
+    <div class="flex flex-column align-content-center">
+      <!-- PRIORITE -->
+      <label for="priority" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Priorité :</label>
+      @if (isEdit) {
+        <p-select
+          id="priority"
+          formControlName="priorityId"
+          [options]="priorityOptions ?? []"
+          [readonly]="!isEdit"
+          optionLabel="name"
+          optionValue="id"
+          [styleClass]="'custom-select'">
+          <ng-template let-option pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2">
+              <img class="priority-icon" [src]="'/icons/' + option.icon + '.png'" [alt]="option.name" [class]="'priority-' + option.icon" />
+              <span [class]="'priority-' + option.icon">
+                {{ option.name }}
+              </span>
+            </div>
+          </ng-template>
+          <ng-template let-option pTemplate="item">
+            <span [class]="'priority-' + option.icon">
+              {{ option.name }}
+            </span>
+          </ng-template></p-select
+        >
+      } @else {
+        <div class="flex align-items-center gap-2">
+          <img
+            class="priority-icon"
+            [src]="'/icons/' + getPriorityIcon(quest.priorityId) + '.png'"
+            [alt]="getPriorityName(quest.priorityId)"
+            [class]="'priority-' + getPriorityIcon(quest.priorityId)" />
+          <span class="italic">{{ getPriorityName(quest.priorityId) }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- TEMPS ESTIME -->
+    @if (isEdit || hasEstimatedTime) {
+      <div class="quest-field py-2">
+        <label for="estimatedTime">Temps estimé <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
+        @if (isEdit) {
+          <p-calendar
+            id="estimatedTime"
+            formControlName="estimatedTime"
+            [timeOnly]="true"
+            hourFormat="24"
+            [inputStyle]="{ width: '4.4rem' }"
+            [stepMinute]="5"
+            [showIcon]="false"
+            [appendTo]="'body'"
+            [baseZIndex]="1000"
+            [showButtonBar]="false">
+          </p-calendar>
+        } @else {
+          <span class="pr-4">
+            {{ this.questForm.get('estimatedTime')?.value | time }}
+          </span>
+        }
+      </div>
+    }
+
+    <!-- DETAILS -->
+    @if (isEdit || hasDescription) {
+      <div class="w-full flex flex-column gap-2 align-content-center justify-content-center mt-3">
+        <label for="description">Détails <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          pTextarea
+          [autoResize]="true"
+          [readonly]="!isEdit"
+          [ngClass]="{ 'quest-readonly': !isEdit }"></textarea>
+      </div>
+    }
   </div>
 
   <!-- BOUTONS: pinned to the bottom of the dialog so they stay reachable without scrolling -->
   @if (isEdit) {
-  <div class="button-group">
-    <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour"><i class="pi pi-chevron-left"></i></button>
-    <button type="button" (click)="onCancel()" class="icon-button" aria-label="Annuler" title="Annuler"><i class="pi pi-times"></i></button>
-    <button type="submit" class="icon-button" [disabled]="_connectivity.isOffline()" aria-label="Valider" title="Valider"><i class="pi pi-check"></i></button>
-  </div>
+    <div class="button-group">
+      <button type="button" (click)="onCancel()" class="icon-button" aria-label="Annuler" title="Annuler"><i class="pi pi-times"></i></button>
+      <button type="submit" class="icon-button" aria-label="Valider" title="Valider"><i class="pi pi-check"></i></button>
+    </div>
   } @else {
-  <div class="button-group">
-    <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour"><i class="pi pi-chevron-left"></i></button>
-    <button type="button" (click)="onDelete()" class="icon-button" [disabled]="_connectivity.isOffline()" aria-label="Supprimer" title="Supprimer"><i class="pi pi-trash"></i></button>
-    <button type="button" (click)="onEdit()" class="icon-button" [disabled]="_connectivity.isOffline()" aria-label="Éditer" title="Éditer"><i class="pi pi-pencil"></i></button>
-  </div>
+    <div class="button-group">
+      <button type="button" (click)="confirmClose()" class="icon-button" aria-label="Retour" title="Retour">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <button type="button" (click)="onDelete()" class="icon-button" aria-label="Supprimer" title="Supprimer"><i class="pi pi-trash"></i></button>
+      <button type="button" (click)="onEdit()" class="icon-button" aria-label="Éditer" title="Éditer"><i class="pi pi-pencil"></i></button>
+    </div>
   }
 </form>
 

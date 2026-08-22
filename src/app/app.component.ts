@@ -21,18 +21,15 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly _connectivity = inject(ConnectivityService);
 
   // Ctrl+scroll and trackpad pinch-zoom both surface as `wheel` events with `ctrlKey: true`.
-  // Block that everywhere except over the map's own SVG, which handles zooming itself
-  // (d3-zoom already calls preventDefault for the wheel events it recognizes there).
+  // Blocked everywhere, including over the map's SVG: this doesn't stop d3-zoom's own listener
+  // there from also handling the event for the map's own zoom.
   private readonly _blockPageZoom = (event: WheelEvent) => {
     if (!event.ctrlKey) return;
-    if ((event.target as Element | null)?.closest('#hexmap')) return;
     event.preventDefault();
   };
-  // Safari fires its own non-standard gesture events for trackpad/touch pinch, separate from
-  // `wheel`; #hexmap already opts out via touch-action: none, so this only needs to cover
-  // everywhere else.
+  // Safari's non-standard gesture events for trackpad/touch pinch, separate from `wheel` - d3-zoom
+  // never listens for these, so blocking them everywhere doesn't affect the map's own zoom.
   private readonly _blockSafariGesture = (event: Event) => {
-    if ((event.target as Element | null)?.closest('#hexmap')) return;
     event.preventDefault();
   };
 

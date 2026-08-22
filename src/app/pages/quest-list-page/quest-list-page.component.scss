@@ -28,7 +28,8 @@
       align-items: stretch;
 
       .p-tabmenuitem {
-        box-shadow: var(--theme-color) 0 0 5px 2px;
+        border: 1px solid var(--light-theme-color);
+        box-shadow: 0 0 5px var(--light-theme-color);
         border-radius: 8px;
         border-bottom: none;
         flex: 1 1 auto;

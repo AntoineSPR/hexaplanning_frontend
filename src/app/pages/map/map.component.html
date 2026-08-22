@@ -4,13 +4,36 @@
   [attr.viewBox]="'0 0 ' + mapWidth + ' ' + mapHeight"
   preserveAspectRatio="xMidYMid meet"
   [style.cursor]="isPanning ? 'grabbing' : 'grab'"
-  style="user-select: none; touch-action: none">
-  <!-- Define clipping paths for each hexagon -->
+  style="user-select: none; touch-action: none"
+  (pointermove)="onMapPointerMove($event)"
+  (pointerleave)="onMapPointerLeave()">
   <defs>
+    <!-- Cursor-following highlight (desktop only, see onMapPointerMove) -->
+    @for (n of cursorLightNeighbors; track $index) {
+      <linearGradient
+        [attr.id]="'cursor-light-dir-' + $index"
+        gradientUnits="userSpaceOnUse"
+        [attr.x1]="n.x1"
+        [attr.y1]="n.y1"
+        [attr.x2]="n.x2"
+        [attr.y2]="n.y2">
+        <stop offset="0%" stop-color="var(--light-theme-color)" stop-opacity="0.8" />
+        <stop offset="40%" stop-color="var(--light-theme-color)" stop-opacity="0.2" />
+        <stop offset="100%" stop-color="var(--light-theme-color)" stop-opacity="0" />
+      </linearGradient>
+    }
+    <!-- Only occupied hexes need a clip path (for the progress arc below). -->
     @for (h of hexes; track getHexClipId(h)) {
-      <clipPath [attr.id]="getHexClipId(h)">
-        <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
-      </clipPath>
+      @if (h.quest) {
+        <clipPath [attr.id]="getHexClipId(h)">
+          <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
+        </clipPath>
+        @if (isInProgress(h) && getQuestAdvancement(h) > 0) {
+          <clipPath [attr.id]="getProgressClipId(h)">
+            <path [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))" />
+          </clipPath>
+        }
+      }
     }
   </defs>
 
@@ -23,7 +46,7 @@
         [attr.data-hex-q]="h.q"
         [attr.data-hex-r]="h.r"
         [attr.data-hex-s]="h.s"
-        stroke="black"
+        [attr.stroke]="getHexStrokeColor(h)"
         stroke-width="1"
         [attr.fill]="getHexColor(h)"
         (click)="handleHexClick(h)"
@@ -33,18 +56,51 @@
         [attr.aria-label]="getHexAriaLabel(h)"
         [class.hex-drag-origin]="draggingHex === h"
         [class.hex-armed]="armedHex === h"
-        [class.hex-out-of-bounds]="!h.quest && isOutOfDragBounds(h)"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
+      @if (showsInnerOutline(h)) {
+        <polygon class="hex-inner-outline" [attr.points]="getHexPoints(h.cx, h.cy, -8)" fill="none" />
+      }
+
+      <!-- Corner marker: a short line + dot from each corner, for on-hold and done quests. -->
+      @if (showsCornerMarker(h)) {
+        @let marker = getHexOnHoldMarker(h.cx, h.cy);
+        <g class="hex-onhold-marker">
+          @for (trace of marker.traces; track $index) {
+            <path [attr.d]="trace" fill="none" />
+          }
+          @for (pad of marker.pads; track $index) {
+            <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+          }
+          @if (isDone(h)) {
+            <polygon [attr.points]="getInnerRingPoints(marker.pads)" fill="none" />
+          }
+        </g>
+      }
+
       <!-- Progress overlay (if quest has advancement and is in progress) -->
-      @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
+      @if (isInProgress(h) && getQuestAdvancement(h) > 0) {
         <path
           [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
-          [attr.fill]="'var(--dark-theme-color)'"
+          fill="var(--dark-theme-color)"
           [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
           stroke="none"
+          style="filter: drop-shadow(0 0 3px var(--light-theme-color))"
           tabindex="-1"
           role="presentation" />
+
+        <!-- Same done-quest marker (corner lines + connecting ring), but only revealed within the
+           progress arc - as the quest advances, more of it shows, like it's slowly becoming done. -->
+        @let progressMarker = getHexOnHoldMarker(h.cx, h.cy);
+        <g class="hex-onhold-marker" [attr.clip-path]="'url(#' + getProgressClipId(h) + ')'">
+          @for (trace of progressMarker.traces; track $index) {
+            <path [attr.d]="trace" fill="none" />
+          }
+          @for (pad of progressMarker.pads; track $index) {
+            <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+          }
+          <polygon [attr.points]="getInnerRingPoints(progressMarker.pads)" fill="none" />
+        </g>
       }
 
       <!-- Border -->
@@ -52,6 +108,7 @@
         [attr.points]="getHexPoints(h.cx, h.cy, -2)"
         [attr.stroke]="getHexBorderColor(h)"
         [attr.stroke-width]="2"
+        [style.filter]="getHexBorderGlow(h)"
         fill="none"
         tabindex="-1"
         role="presentation"
@@ -74,18 +131,39 @@
         </xhtml:div>
         @if (h.quest) {
           <!-- Unassign button: sits after the drag surface in DOM order so it stays clickable on top -->
-          <button class="quest-delete" [disabled]="_connectivity.isOffline()" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
+          <button
+            class="quest-delete"
+            [disabled]="_connectivity.isOffline()"
+            (click)="deleteQuestFromHex(h, $event)"
+            (touchend)="deleteQuestFromHex(h, $event)">
+            X
+          </button>
         }
       </foreignObject>
+    }
+
+    @if (cursorLightVisible) {
+      <polygon
+        class="cursor-light"
+        [attr.points]="getHexPoints(cursorLightX, cursorLightY)"
+        fill="none"
+        stroke="var(--light-theme-color)"
+        stroke-width="1" />
+      @for (n of cursorLightNeighbors; track $index) {
+        <polygon
+          class="cursor-light"
+          [attr.points]="getHexPoints(n.cx, n.cy)"
+          fill="none"
+          [attr.stroke]="'url(#cursor-light-dir-' + $index + ')'"
+          stroke-width="1" />
+      }
     }
   </g>
 </svg>
 
 @if (draggingHex && draggingHex.quest) {
-  <!-- Floating preview that follows the pointer while dragging a quest between hexes: an exact
-     replica of the real hex, built from the same polygon/border/title markup and the same
-     getHexPoints/getHexColor/getHexBorderColor helpers, just scaled to a standalone mini-SVG so
-     it renders identically (including how its foreignObject text scales). -->
+  <!-- Floating preview that follows the pointer while dragging: a standalone mini-SVG replica
+     of the real hex, using the same getHexPoints/getHexColor/getHexBorderColor helpers. -->
   <svg
     class="quest-drag-overlay"
     [style.left.px]="dragPreviewX"
@@ -97,16 +175,55 @@
       <clipPath id="drag-preview-clip">
         <polygon [attr.points]="getHexPoints(size, size)" />
       </clipPath>
+      @if (isInProgress(draggingHex) && getQuestAdvancement(draggingHex) > 0) {
+        <clipPath id="drag-preview-progress-clip">
+          <path [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))" />
+        </clipPath>
+      }
     </defs>
     <polygon [attr.points]="getHexPoints(size, size)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(draggingHex)" />
-    @if (getQuestAdvancement(draggingHex) > 0 && draggingHex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
+    @if (showsInnerOutline(draggingHex)) {
+      <polygon class="hex-inner-outline" [attr.points]="getHexPoints(size, size, -8)" fill="none" />
+    }
+    @if (showsCornerMarker(draggingHex)) {
+      @let marker = getHexOnHoldMarker(size, size);
+      <g class="hex-onhold-marker">
+        @for (trace of marker.traces; track $index) {
+          <path [attr.d]="trace" fill="none" />
+        }
+        @for (pad of marker.pads; track $index) {
+          <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+        }
+        @if (isDone(draggingHex)) {
+          <polygon [attr.points]="getInnerRingPoints(marker.pads)" fill="none" />
+        }
+      </g>
+    }
+    @if (isInProgress(draggingHex) && getQuestAdvancement(draggingHex) > 0) {
       <path
         [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))"
-        [attr.fill]="'var(--dark-theme-color)'"
+        fill="var(--dark-theme-color)"
         clip-path="url(#drag-preview-clip)"
-        stroke="none" />
+        stroke="none"
+        style="filter: drop-shadow(0 0 3px var(--light-theme-color))" />
+
+      @let dragProgressMarker = getHexOnHoldMarker(size, size);
+      <g class="hex-onhold-marker" clip-path="url(#drag-preview-progress-clip)">
+        @for (trace of dragProgressMarker.traces; track $index) {
+          <path [attr.d]="trace" fill="none" />
+        }
+        @for (pad of dragProgressMarker.pads; track $index) {
+          <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+        }
+        <polygon [attr.points]="getInnerRingPoints(dragProgressMarker.pads)" fill="none" />
+      </g>
     }
-    <polygon [attr.points]="getHexPoints(size, size, -2)" [attr.stroke]="getHexBorderColor(draggingHex)" stroke-width="2" fill="none" />
+    <polygon
+      [attr.points]="getHexPoints(size, size, -2)"
+      [attr.stroke]="getHexBorderColor(draggingHex)"
+      stroke-width="2"
+      [style.filter]="getHexBorderGlow(draggingHex)"
+      fill="none" />
     <foreignObject [attr.width]="size * 2" [attr.height]="size * 2">
       <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
         <div class="hex_quest_title">{{ draggingHex.quest.title }}</div>
@@ -150,8 +267,27 @@
     </div>
   </div>
   <ng-template #footer>
-    <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
-    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest || _connectivity.isOffline()"> </p-button>
+    <button type="button" class="icon-button" (click)="dialogVisible = false" aria-label="Annuler" title="Annuler">
+      <i class="pi pi-times"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="createAndAssignQuest()"
+      [disabled]="_connectivity.isOffline()"
+      aria-label="Créer une quête"
+      title="Créer une quête">
+      <i class="pi pi-plus"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="assignQuestToHex()"
+      [disabled]="!selectedQuest || _connectivity.isOffline()"
+      aria-label="Assigner"
+      title="Assigner">
+      <i class="pi pi-check"></i>
+    </button>
   </ng-template>
 </p-dialog>
 

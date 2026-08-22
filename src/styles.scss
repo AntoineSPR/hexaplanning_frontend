@@ -5,6 +5,7 @@
   --text-color: #ffffff;
   --theme-color: #37007f;
   --light-theme-color: #b87fed;
+  --ligher-theme-color: #d3c2f5;
   --ultra-light-theme-color: #b2abf2;
   --dark-theme-color: #250054;
   --primary-priority-bg-color: #e28a2b;
@@ -13,6 +14,8 @@
   --progress-bar-color: #39008474;
   --focus-color: #667eea;
   --base-hex-color: #1d1e1e;
+  --shadow-gradient: rgba(184, 127, 237, 0.25);
+  --shadow-gradient-light: rgba(184, 127, 237, 0.15);
   font-family: 'Inter', sans-serif;
 }
 
@@ -75,9 +78,11 @@ app-root {
   .p-dialog-content {
     background-color: var(--background-color) !important;
     color: var(--text-color) !important;
-    border: none !important;
+    border: 1px solid var(--light-theme-color) !important;
     padding: 0.5rem !important;
-    box-shadow: var(--theme-color) 0px 0px 5px 5px;
+    box-shadow:
+      0 0 6px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
     border-radius: 0.5rem;
   }
 
@@ -96,24 +101,48 @@ app-root {
   padding: 1.5rem;
   border-radius: 4px;
   background-color: var(--background-color);
-  box-shadow: var(--theme-color) 0px 0px 5px 5px inset;
+  border: 1px solid var(--light-theme-color);
+  box-shadow:
+    0 0 6px var(--light-theme-color),
+    0 0 16px var(--shadow-gradientS);
   color: var(--text-color);
 
   .cancel-confirmation-button,
   .accept-confirmation-button {
-    border: 1px solid var(--theme-color);
+    border: 1px solid var(--light-theme-color);
+    box-shadow: 0 0 6px var(--light-theme-color);
     padding: 0.5rem 1rem;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    color: var(--text-color);
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
   }
 
   .cancel-confirmation-button {
-    background-color: var(--background-color);
+    background: transparent;
+    color: var(--light-theme-color);
+
+    &:hover {
+      background-color: var(--shadow-gradient-light);
+      box-shadow:
+        0 0 8px var(--light-theme-color),
+        0 0 16px var(--shadow-gradient);
+    }
   }
 
   .accept-confirmation-button {
-    background-color: var(--theme-color);
+    background: var(--light-theme-color);
+    color: var(--dark-theme-color);
+
+    &:hover {
+      background: var(--ligher-theme-color);
+      box-shadow:
+        0 0 8px var(--light-theme-color),
+        0 0 16px var(--shadow-gradient);
+    }
   }
 }
 
@@ -209,8 +238,8 @@ input.quest-checkbox[type='checkbox'] {
   -moz-appearance: none;
   width: 20px;
   height: 20px;
-  border: 1px solid var(--theme-color);
-  box-shadow: var(--theme-color) 0 0 5px;
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 5px var(--light-theme-color);
   border-radius: 2px;
   cursor: pointer;
   position: relative;
@@ -234,6 +263,54 @@ input.quest-checkbox[type='checkbox'] {
   }
 }
 
+// Shared icon-only button (outline + glow)
+.icon-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  background: transparent;
+  color: var(--light-theme-color);
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 6px var(--light-theme-color);
+  border-radius: 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 1.2rem;
+  }
+
+  &:hover {
+    background-color: var(--shadow-gradient-light);
+    box-shadow:
+      0 0 8px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline-color: var(--light-theme-color) !important;
+    box-shadow: 0 0 0 2px var(--focus-color) !important;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+
+    &:hover {
+      background: transparent;
+      transform: none;
+    }
+  }
+}
+
 .quest-card {
   // Reset all default button styling
   appearance: none;
@@ -250,11 +327,18 @@ input.quest-checkbox[type='checkbox'] {
   display: flex;
   align-items: center;
   padding: 10px;
-  box-shadow: var(--theme-color) 0 0 5px 2px;
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 5px var(--light-theme-color);
   border-radius: 8px;
   background-color: var(--background-color);
   cursor: pointer;
   transition: 0.2s;
+
+  &:hover {
+    box-shadow:
+      0 0 8px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
+  }
 
   .priority-icon {
     width: 32px;

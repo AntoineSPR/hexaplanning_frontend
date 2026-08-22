@@ -1,6 +1,5 @@
 import { Component, effect, inject, OnDestroy, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -20,15 +19,14 @@ import { HexDragController, HexDragHost } from './hex-drag.controller';
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
-// Matches the scaleMin/scaleMax passed to SvgZoomService.attach() below - shared so
-// fitAllQuests() clamps to the same range the zoom gesture itself is limited to.
-const ZOOM_MIN = 0.5;
-const ZOOM_MAX = 3;
+const MAP_RADIUS = 18;
+const ZOOM_MIN = 1;
+const MAX_ZOOM_HEXES_VISIBLE = 3;
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
+  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
   providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -36,9 +34,7 @@ const ZOOM_MAX = 3;
 export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHost {
   @ViewChild('svgRoot', { static: false }) svgRoot?: ElementRef<SVGSVGElement>;
   @ViewChild('cameraGroup', { static: false }) cameraGroup?: ElementRef<SVGGElement>;
-  // The map's SVG fills the whole viewport behind the fixed bottom nav (it's position:fixed, so
-  // it doesn't take up its own layout space) - camera centering needs this to avoid framing
-  // content underneath it.
+  // Used to measure the fixed bottom nav's actual height (see _updateMenuHeightVar).
   @ViewChild(MenuComponent, { read: ElementRef, static: false }) menuEl?: ElementRef<HTMLElement>;
   _questService = inject(QuestService);
   _questModalService = inject(QuestModalService);
@@ -49,61 +45,25 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   _svgZoom = inject(SvgZoomService);
   _connectivity = inject(ConnectivityService);
 
-  // zoom handle
   zoomHandle?: SvgZoomHandle;
 
   private readonly _confirmationService = inject(ConfirmationService);
 
-  // Drives the whole quest drag-and-drop gesture (long-press-to-arm, edge auto-pan, live grid
-  // growth, drop) - this component implements HexDragHost so the controller can read/drive
-  // camera and map state without duplicating it. See hex-drag.controller.ts.
-  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity);
+  // Drives the drag-and-drop gesture; this component implements HexDragHost so it can read/
+  // drive camera and hex state. See hex-drag.controller.ts.
+  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity, MAP_RADIUS);
 
   hexes: Hex[] = [];
   size = HEX_SIZE;
 
-  // mapWidth/mapHeight drive the SVG viewBox size, which shrinks fitScale as the map grows
-  // (drag-time growth, quests spreading out). Since zoom is a multiplier on top of fitScale, a
-  // fixed zoom cap would mean "fully zoomed in" keeps rendering smaller the more the map grows -
-  // these setters keep the zoom behavior's max in sync (see computeMaxZoom) so the maximum
-  // zoomed-in scale stays constant regardless of how large the viewBox has gotten.
-  private _mapWidth = MAP_WIDTH;
-  get mapWidth(): number {
-    return this._mapWidth;
-  }
-  set mapWidth(value: number) {
-    this._mapWidth = value;
-    this.updateZoomExtent();
-  }
+  // viewBox size, fixed once matchMapDimensionsToContainer sizes it to fit the whole grid.
+  mapWidth = MAP_WIDTH;
+  mapHeight = MAP_HEIGHT;
 
-  private _mapHeight = MAP_HEIGHT;
-  get mapHeight(): number {
-    return this._mapHeight;
-  }
-  set mapHeight(value: number) {
-    this._mapHeight = value;
-    this.updateZoomExtent();
-  }
-
-  // Recomputes the viewBox from the hexes' actual current extent and pan-compensates for any
-  // change - the single source of truth for "the hex set changed, resync bounds", used by every
-  // source of a bounds change (QuestAssignmentService's assign/unassign/move notifications, and
-  // HexDragController's own drag-time growth/shrink) instead of each writing mapWidth/mapHeight
-  // directly - see _lastOverflow above for why that matters.
-  syncMapBounds(): void {
-    const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
-    const overflow = this._mapGrid.computeOverflow(this.hexes, this.size);
-    this.mapWidth = bounds.width;
-    this.mapHeight = bounds.height;
-    const deltaX = (overflow.left - this._lastOverflow.left) * this.zoom;
-    const deltaY = (overflow.top - this._lastOverflow.top) * this.zoom;
-    if (deltaX !== 0 || deltaY !== 0) {
-      this.panX += deltaX;
-      this.panY += deltaY;
-      this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
-    }
-    this._lastOverflow = overflow;
-  }
+  // Max zoom-in level, derived from mapWidth/mapHeight in matchMapDimensionsToContainer so
+  // "fully zoomed in" always shows about MAX_ZOOM_HEXES_VISIBLE hexes. This value is just the
+  // fallback used before that runs.
+  private _zoomMax = 3;
 
   // Camera state for panning and zoom
   panX = 0;
@@ -113,15 +73,56 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
   private hadCameraMove = false; // track if any pan/zoom occurred during a gesture
 
-  // How far the hex set currently overflows past the viewBox's fixed [0,0] origin, as of the
-  // last time bounds/pan were synced - see syncMapBounds below. Centralized
-  // here (rather than tracked separately by HexDragController, or not tracked at all by
-  // QuestAssignmentService's bounds-change notifications) because *any* source of a resize needs
-  // to agree on what pan has already compensated for, or they end up fighting: a resize applied
-  // without knowing what the last one already accounted for either double-compensates or skips
-  // compensating entirely, which showed up as the camera getting wrenched around during drags
-  // even after the drag logic itself was made internally consistent.
-  private _lastOverflow = { left: 0, top: 0 };
+  // Cursor-following hex highlight, mouse only (see onMapPointerMove)
+  cursorLightVisible = false;
+  cursorLightX = 0;
+  cursorLightY = 0;
+  // The 6 neighbor hexes, each with its own linear-gradient endpoints: x1/y1 near the edge
+  // shared with the hovered hex (bright), x2/y2 at its own far tip (dim).
+  cursorLightNeighbors: { cx: number; cy: number; x1: number; y1: number; x2: number; y2: number }[] = [];
+
+  onMapPointerMove(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse' || !this.svgRoot) return;
+    const rect = this.svgRoot.nativeElement.getBoundingClientRect();
+    const local = this._mapGrid.screenToHexLocal(event.clientX, event.clientY, rect, this.mapWidth, this.mapHeight, this.panX, this.panY, this.zoom);
+    if (!local) return;
+    const hovered = this._mapGrid.pixelToAxial(local.x, local.y, this.size);
+    if (!this.isWithinMapRadius(hovered)) {
+      this.cursorLightVisible = false;
+      return;
+    }
+
+    const center = this._mapGrid.hexToPixel(hovered.q, hovered.r, this.size);
+    this.cursorLightX = center.cx;
+    this.cursorLightY = center.cy;
+    this.cursorLightNeighbors = this._mapGrid
+      .neighborsOf(hovered, this.size)
+      .filter(n => this.isWithinMapRadius(n))
+      .map(n => {
+        const dx = n.cx - center.cx;
+        const dy = n.cy - center.cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const ux = dx / dist;
+        const uy = dy / dist;
+        return {
+          cx: n.cx,
+          cy: n.cy,
+          x1: n.cx - ux * this.size,
+          y1: n.cy - uy * this.size,
+          x2: n.cx + ux * this.size,
+          y2: n.cy + uy * this.size,
+        };
+      });
+    this.cursorLightVisible = true;
+  }
+
+  private isWithinMapRadius(c: { q: number; r: number; s: number }): boolean {
+    return Math.max(Math.abs(c.q), Math.abs(c.r), Math.abs(c.s)) <= MAP_RADIUS;
+  }
+
+  onMapPointerLeave(): void {
+    this.cursorLightVisible = false;
+  }
 
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
@@ -133,13 +134,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
   };
   // Measures the bottom nav's actual rendered height and exposes it as --menu-height, which
-  // :host's padding-bottom (map.component.scss) reserves - makes the SVG's own rendered box
-  // genuinely stop above the menu instead of extending underneath it, so every screen<->map
-  // coordinate conversion (fit-scale, letterboxing, camera centering) is correct everywhere
-  // automatically rather than needing menu-awareness patched in one by one.
+  // :host's padding-bottom (map.component.scss) uses to keep the SVG's own box above the menu.
   private readonly _updateMenuHeightVar = () => {
-    // <app-menu> itself has no intrinsic size - the actual fixed-position, sized element is the
-    // <nav class="menubar"> inside its template, so that's what needs measuring.
+    // <app-menu> itself has no intrinsic size - measure its inner <nav class="menubar"> instead.
     const menuBar = this.menuEl?.nativeElement.querySelector('.menubar');
     const menuHeightPx = menuBar?.getBoundingClientRect().height ?? 0;
     this._el.nativeElement.style.setProperty('--menu-height', `${menuHeightPx}px`);
@@ -196,20 +193,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     effect(() => {
       const deletedQuestId = this._questService.deletedQuestId();
       if (deletedQuestId) {
-        let changed = false;
         this.hexes.forEach(hex => {
           if (hex.quest?.id === deletedQuestId) {
             hex.quest = undefined;
-            changed = true;
           }
         });
-        if (changed) {
-          const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
-          this.syncMapBounds();
-          if (islandRestored) {
-            this.resetCamera();
-          }
-        }
       }
     });
 
@@ -219,13 +207,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         // Silent background refresh: no wipe/spinner, since the offline snapshot is already
         // showing something reasonable - just reconcile it with the server now that we can.
         this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
-          next: () => {
-            const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
-            this.syncMapBounds();
-            if (islandRestored) {
-              this.resetCamera();
-            }
-          },
           error: err => console.error('Failed to refresh assignments after reconnect:', err),
         });
       }
@@ -247,12 +228,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       this.centerCameraOnCenterHex();
     }
 
-    // Register callback for bounds changes
-    this._questAssignment.setOnBoundsChange(() => this.syncMapBounds());
-
-    // Register callback for when the starting island gets restored (map back to zero quests)
-    this._questAssignment.setOnIslandRestored(() => this.resetCamera());
-
     // Persist camera on refresh/navigation and when tab/app is backgrounded
     window.addEventListener('beforeunload', this._persistCamera);
     window.addEventListener('pagehide', this._persistCamera); // iOS Safari friendly
@@ -266,14 +241,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       this.needsRefreshOnReconnect = true;
     }
     this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
-      next: () => {
-        // After assignments load, trim any orphaned dynamic hexes and update bounds
-        const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
-        this.syncMapBounds();
-        if (islandRestored) {
-          this.resetCamera();
-        }
-      },
       complete: () => {
         // Trigger fade-out animation first
         this.isFadingOut = true;
@@ -298,10 +265,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     if (!this.svgRoot || !this.cameraGroup) return;
     this._updateMenuHeightVar();
     window.addEventListener('resize', this._updateMenuHeightVar);
+    this.matchMapDimensionsToContainer();
     const saved = this._cameraState.getState();
     this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
       scaleMin: ZOOM_MIN,
-      scaleMax: this.computeMaxZoom(),
+      scaleMax: this._zoomMax,
       onStart: () => {
         this.hadCameraMove = false;
         this.togglePanning(true);
@@ -344,11 +312,47 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   //#region Generate Map
   generateHexes(): void {
-    this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight);
+    this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight, MAP_RADIUS);
+  }
+
+  // Resizes the viewBox to fit the whole grid and match the container's aspect ratio (avoiding
+  // pillarboxing under preserveAspectRatio="xMidYMid meet"), then re-centers the origin. Called
+  // once from ngAfterViewInit, once the container is measurable. Rewrites this.hexes in place
+  // rather than reassigning it - ngOnInit already handed this array's reference to
+  // loadAssignmentsIntoHexes, whose response resolves later and writes into whatever array it
+  // was given.
+  private matchMapDimensionsToContainer(): void {
+    const rect = this.svgRoot?.nativeElement.getBoundingClientRect();
+    if (!rect || !rect.width || !rect.height) return;
+
+    // The grid's span is independent of the placeholder origin it was generated with.
+    const bounds = this._mapGrid.computeContentBounds(this.hexes, this.size);
+    const naturalWidth = bounds.maxX - bounds.minX;
+    const naturalHeight = bounds.maxY - bounds.minY;
+
+    // Never shrink below the grid's natural size; expand whichever dimension matches the
+    // container's aspect ratio.
+    const aspect = rect.width / rect.height;
+    const width = Math.round(Math.max(naturalWidth, naturalHeight * aspect));
+    const height = Math.round(Math.max(naturalHeight, naturalWidth / aspect));
+
+    this.mapWidth = width;
+    this.mapHeight = height;
+    this._zoomMax = Math.min(width, height) / (this.size * 2 * MAX_ZOOM_HEXES_VISIBLE);
+    const freshHexes = this._mapGrid.generateHexes(this.size, width, height, MAP_RADIUS);
+    this.hexes.length = 0;
+    this.hexes.push(...freshHexes);
+    if (!this._cameraState.getState()) {
+      this.centerCameraOnCenterHex();
+    }
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {
     return this._mapGrid.getHexPoints(cx, cy, this.size, offset);
+  }
+
+  getHexOnHoldMarker(cx: number, cy: number): { traces: string[]; pads: { x: number; y: number; r: number }[] } {
+    return this._mapGrid.getHexOnHoldMarker(cx, cy, this.size);
   }
 
   getProgressPath(cx: number, cy: number, advancement: number): string {
@@ -420,7 +424,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     if (this._connectivity.isOffline()) return;
 
     if (this.selectedHex && this.selectedQuest) {
-      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest, this.hexes, this.size).subscribe({
+      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest).subscribe({
         next: () => {
           this.dialogVisible = false;
           this.selectedHex = null;
@@ -431,6 +435,21 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         },
       });
     }
+  }
+
+  // Opens the quest-creation modal and assigns whatever gets created straight to selectedHex
+  createAndAssignQuest(): void {
+    if (this._connectivity.isOffline() || !this.selectedHex) return;
+
+    const hex = this.selectedHex;
+    this.dialogVisible = false;
+    this.selectedHex = null;
+
+    this._questModalService.openNewQuest(createdQuest => {
+      this._questAssignment.assignQuestToHex(hex, createdQuest).subscribe({
+        error: err => console.error('Failed to assign newly created quest:', err),
+      });
+    });
   }
 
   deleteQuestFromHex(hex: Hex, event: MouseEvent | TouchEvent): void {
@@ -445,7 +464,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         closable: true,
         closeOnEscape: true,
         accept: () => {
-          this._questAssignment.deleteQuestFromHex(hex, this.hexes, this.size).subscribe({
+          this._questAssignment.deleteQuestFromHex(hex).subscribe({
             error: err => {
               console.error('Failed to delete quest from hex:', err);
             },
@@ -463,8 +482,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
   }
 
-  // The drag gesture itself (long-press-to-arm, edge auto-pan, live grid growth, drop) is all
-  // handled by HexDragController - see hex-drag.controller.ts.
+  // Drag gesture handling lives in HexDragController - see hex-drag.controller.ts.
   onHexPointerDown(hex: Hex, event: PointerEvent): void {
     this._drag.onPointerDown(hex, event);
   }
@@ -489,28 +507,59 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return this._drag.getDropHighlightClass(hex);
   }
 
-  isOutOfDragBounds(hex: Hex): boolean {
-    return this._drag.isOutOfDragBounds(hex);
+  getHexColor(hex: Hex): string {
+    // Empty hexes are transparent (the map's own black background shows through) rather than a
+    // solid grey fill - getHexStrokeColor below gives them a thin colored perimeter instead.
+    if (!hex.quest) return 'transparent';
+    if (hex.quest.statusId === this._questService.statusDoneId) {
+      return 'var(--dark-theme-color)';
+    }
+    return 'var(--theme-color)';
   }
 
-  getHexColor(hex: Hex): string {
-    let color = 'var(--base-hex-color)';
-    if (!hex.quest) return color;
-    if (hex.quest.statusId === this._questService.statusDoneId) {
-      color = 'var(--dark-theme-color)';
-    } else {
-      color = 'var(--theme-color)';
-    }
-    return color;
+  // Thin perimeter color for the base hex polygon: a subtle theme color on empty hexes,
+  // plain black on occupied ones so it doesn't compete with the quest's own fill/priority border.
+  getHexStrokeColor(hex: Hex): string {
+    return hex.quest ? 'black' : 'var(--base-hex-color)';
+  }
+
+  isOnHold(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId === this._questService.statusOnHoldId;
+  }
+
+  isDone(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId === this._questService.statusDoneId;
+  }
+
+  // The corner lines + dots originally built for on-hold quests, reused for done ones too.
+  showsCornerMarker(hex: Hex | null): boolean {
+    return this.isOnHold(hex) || this.isDone(hex);
+  }
+
+  // Connects the corner marker's own dots into a smaller inner hex, done quests only.
+  getInnerRingPoints(pads: { x: number; y: number; r: number }[]): string {
+    return pads.map(p => `${p.x},${p.y}`).join(' ');
+  }
+
+  // Every quest gets the inner-hex outline except done ones.
+  showsInnerOutline(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId !== this._questService.statusDoneId;
   }
 
   getHexBorderColor(hex: Hex): string {
     if (!hex.quest) return '';
     if (hex.quest.statusId === this._questService.statusDoneId) return '';
+    if (hex.quest.statusId === this._questService.statusOnHoldId) return '';
 
     const priorityQuest = this._questService?.priorities()?.find(x => x.id == hex?.quest?.priorityId);
 
     return priorityQuest?.borderColor ?? '';
+  }
+
+  // Glow matching the priority border's own color.
+  getHexBorderGlow(hex: Hex): string {
+    const color = this.getHexBorderColor(hex);
+    return color ? `drop-shadow(0 0 4px ${color})` : 'none';
   }
 
   getPriorityKey(priorityValue: string): string {
@@ -552,6 +601,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return `hex-clip-${hex.q}-${hex.r}-${hex.s}`;
   }
 
+  getProgressClipId(hex: Hex): string {
+    return `progress-clip-${hex.q}-${hex.r}-${hex.s}`;
+  }
+
+  isInProgress(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3';
+  }
+
   //#region Camera & Panning
   /**
    * Camera pan and zoom controls:
@@ -572,26 +629,19 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
 
   centerCameraOnCenterHex(): void {
-    // Find the center hex (0, 0, 0)
     const centerHex = this.hexes.find(h => h.q === 0 && h.r === 0 && h.s === 0);
     if (centerHex) {
-      // Center the camera on this hex
-      // We want the hex to be in the center of the viewport
-      // The viewport dimensions are mapWidth x mapHeight
       this.panX = this.mapWidth / 2 - centerHex.cx;
       this.panY = this.mapHeight / 2 - centerHex.cy;
     } else {
-      // Fallback to default
       this.panX = 0;
       this.panY = 0;
     }
     this.zoom = 1;
   }
 
-  // Re-centers the camera on a hex, keeping the current zoom level (unlike
-  // centerCameraOnCenterHex/resetCamera, which reset zoom to 1). Used after dropping a quest
-  // onto a new hex (called by HexDragController via the HexDragHost interface), so the camera
-  // follows it there instead of leaving the view where it was.
+  // Re-centers on a hex, keeping the current zoom (unlike centerCameraOnCenterHex/resetCamera).
+  // Called by HexDragController after a successful drop.
   centerCameraOnHex(hex: Hex): void {
     this.panX = this.mapWidth / 2 - hex.cx * this.zoom;
     this.panY = this.mapHeight / 2 - hex.cy * this.zoom;
@@ -620,22 +670,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
 
-    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), ZOOM_MIN), this.computeMaxZoom());
+    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), ZOOM_MIN), this._zoomMax);
 
     this.zoom = newZoom;
     this.panX = this.mapWidth / 2 - centerX * newZoom;
     this.panY = this.mapHeight / 2 - centerY * newZoom;
     this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
-  }
-
-  // The maximum zoom-in level, scaled up as the map's viewBox grows so the zoomed-in render
-  // scale stays constant instead of shrinking - see the mapWidth/mapHeight setters above.
-  private computeMaxZoom(): number {
-    return ZOOM_MAX * Math.max(this.mapWidth / MAP_WIDTH, this.mapHeight / MAP_HEIGHT);
-  }
-
-  private updateZoomExtent(): void {
-    this.zoomHandle?.setScaleExtent(ZOOM_MIN, this.computeMaxZoom());
   }
 
   private togglePanning(active: boolean) {

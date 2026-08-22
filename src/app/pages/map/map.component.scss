@@ -6,10 +6,8 @@
   height: 100%;
   margin: 0;
   padding: 0;
-  // Reserves space for the bottom nav (which is position:fixed, so it wouldn't otherwise take
-  // up any layout space of its own) - --menu-height is set from its actual measured height in
-  // map.component.ts, so the map's own rendered box genuinely stops above it instead of the SVG
-  // extending underneath and only being patched up in specific camera calculations.
+  // Reserves space for the fixed-position bottom nav, whose height map.component.ts measures
+  // into --menu-height (it has no layout space of its own otherwise).
   padding-bottom: var(--menu-height, 0px);
   box-sizing: border-box;
   position: relative;
@@ -20,6 +18,33 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: var(--background-color);
+}
+
+.cursor-light {
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px var(--light-theme-color));
+}
+
+.hex-onhold-marker {
+  pointer-events: none;
+  stroke: var(--dark-theme-color);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 3px var(--light-theme-color));
+
+  circle {
+    fill: var(--dark-theme-color);
+    stroke: none;
+  }
+}
+
+// Shown on every quest except done ones (see showsInnerOutline).
+.hex-inner-outline {
+  pointer-events: none;
+  stroke: var(--dark-theme-color);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 3px var(--light-theme-color));
 }
 
 .loading-overlay {
@@ -43,8 +68,9 @@
   width: 8rem;
   height: 8rem;
   border: 1rem solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--theme-color);
+  border-top-color: var(--light-theme-color);
   border-radius: 50%;
+  filter: drop-shadow(0 0 6px var(--light-theme-color));
   animation: spin 0.8s linear infinite;
 }
 
@@ -196,21 +222,6 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
   stroke-width: 3 !important;
 }
 
-// Shown when dropping here would push some other quest further than MAX_QUEST_SPREAD away.
-.hex-drop-invalid {
-  filter: drop-shadow(0 0 6px #e24c4c);
-  stroke: #e24c4c !important;
-  stroke-width: 3 !important;
-}
-
-// Persistent boundary indicator on empty hexes outside the currently reachable drag area (past
-// MAX_QUEST_SPREAD) - unlike hex-drop-invalid, which only flags the one hex directly under the
-// cursor, this tints every hex past the edge so the boundary itself is clear.
-.hex-out-of-bounds {
-  fill: #e24c4c !important;
-  opacity: 0.5;
-}
-
 .hex-landed {
   animation: hex-land-pulse 0.5s ease-out;
 }
@@ -253,6 +264,7 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
 
 #no-quest {
   text-align: center;
+  padding: 2rem 1rem;
 }
 
 polygon {
@@ -290,7 +302,13 @@ path {
     display: block !important;
     padding-top: 0;
     padding-bottom: 0;
-    margin-top: 0.5rem;
+    margin-top: 0;
+    background-color: var(--background-color);
+    border: 1px solid var(--light-theme-color);
+    border-radius: 0.5rem 0.5rem 0 0;
+    box-shadow:
+      0 0 6px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
   }
   .p-dialog-header-actions {
     display: none;
@@ -307,15 +325,31 @@ path {
     padding-bottom: 0 !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
+    border: none !important;
     box-shadow: none;
     border-radius: 0;
   }
   .quest-item {
-    margin-top: 0.7rem;
-    margin-bottom: 0.7rem;
-    padding: 1rem;
+    margin: 0;
+    padding: 0.85rem 0.25rem 0.85rem 0.6rem;
     justify-content: space-between;
     cursor: pointer;
+    border: none !important;
+    border-left: 3px solid transparent !important;
+    border-bottom: 1px solid var(--shadow-gradient) !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s ease;
+
+    &:hover,
+    &.selected {
+      border-left-color: var(--light-theme-color) !important;
+    }
+
+    &:last-of-type {
+      border-bottom: none !important;
+    }
   }
   .priority-icon {
     cursor: pointer;
@@ -324,8 +358,15 @@ path {
     cursor: pointer;
   }
   .p-dialog-footer {
-    padding-top: 1rem;
+    padding: 1rem;
+    margin-top: 0;
     display: flex;
     justify-content: space-between;
+    background-color: var(--background-color);
+    border: 1px solid var(--light-theme-color);
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow:
+      0 0 6px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
   }
 }

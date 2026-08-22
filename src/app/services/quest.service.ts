@@ -52,6 +52,7 @@ export class QuestService {
   priorities = signal<Priority[] | null>(this._loadCached('hexaplanning.priorities.v1', null));
   statusDoneId = '6662dfc1-9c40-4d78-806f-34cd22e07023';
   statusPendingId = '17c07323-d5b4-4568-b773-de3487ff30b1';
+  statusOnHoldId = 'b34563d0-1ae5-42f9-950a-beffa4e27dce';
 
   refreshAllQuestLists(): void {
     this.getAllQuests().subscribe();

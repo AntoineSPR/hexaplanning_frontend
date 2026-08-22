@@ -23,6 +23,10 @@ export class QuestModalService {
     quest: this._DEFAULT_QUEST,
     isNew: false,
   });
+  // Fired once, right after a brand-new quest is successfully created through this modal - lets
+  // a caller like MapComponent's "create & assign" button react without quest-details needing to
+  // know anything about hexes or assignment.
+  private _onQuestCreated: ((quest: QuestUpdateDTO) => void) | null = null;
 
   public questModalVisible = this._questModalVisible.asReadonly();
   public questModalData = this._questModalData.asReadonly();
@@ -32,11 +36,21 @@ export class QuestModalService {
     this._questModalVisible.set(true);
   }
 
-  openNewQuest(): void {
+  openNewQuest(onCreated?: (quest: QuestUpdateDTO) => void): void {
+    this._onQuestCreated = onCreated ?? null;
     this.openQuestDetails(this._DEFAULT_QUEST as QuestUpdateDTO, true);
   }
 
+  notifyQuestCreated(quest: QuestUpdateDTO): void {
+    this._onQuestCreated?.(quest);
+    this._onQuestCreated = null;
+  }
+
   closeQuestModal(): void {
+    // Deliberately doesn't touch _onQuestCreated: quest-details closes the dialog optimistically,
+    // right after firing the create request but before its response arrives, so clearing the
+    // callback here would drop it before notifyQuestCreated ever gets to use it. openNewQuest
+    // already resets it on open, and notifyQuestCreated clears it once it's actually used.
     this._questModalVisible.set(false);
     this._questModalData.set({ quest: this._DEFAULT_QUEST, isNew: false });
   }
