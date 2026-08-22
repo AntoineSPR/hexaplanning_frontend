@@ -3,15 +3,12 @@ import { Hex } from '../models/hex.model';
 
 @Injectable({ providedIn: 'root' })
 export class MapGridService {
-  // Stable origin for coordinate calculations - overwritten with the actual centered position by
-  // generateHexes; this default just matches the initial MAP_WIDTH/MAP_HEIGHT in case anything
-  // reads it before generateHexes runs.
+  // Origin for coordinate calculations; overwritten with the real centered position by
+  // generateHexes. Defaults match the initial MAP_WIDTH/MAP_HEIGHT.
   private originX = 145;
   private originY = 245;
 
-  // Create every hex within `radius` hex-steps of the origin, once - the map is a fixed-size
-  // grid generated up front rather than grown live as quests get dragged around (see
-  // hex-drag.controller.ts's clampToDistance call, which keeps drags within this same radius).
+  // Creates every hex within `radius` steps of the origin - the whole grid, generated up front.
   generateHexes(size: number, mapWidth: number, mapHeight: number, radius: number): Hex[] {
     this.originX = mapWidth / 2;
     this.originY = mapHeight / 2;
@@ -72,9 +69,8 @@ export class MapGridService {
     }
   }
 
-  // Add a new hex at the given coordinates - used as a fallback for a quest assignment whose
-  // coordinates fall outside the pre-generated grid (e.g. legacy data from before the grid's
-  // radius was fixed), so it still renders instead of silently vanishing.
+  // Adds a hex at the given coordinates - a fallback for a quest assignment outside the
+  // pre-generated grid's radius, so it still renders instead of vanishing.
   addHex(hexes: Hex[], q: number, r: number, s: number, size: number): Hex {
     const { cx, cy } = this.hexToPixel(q, r, size);
     const level = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
@@ -129,11 +125,9 @@ export class MapGridService {
     return this.cubeRound(qFrac, rFrac, sFrac);
   }
 
-  // Clamps `target` to lie within `maxDistance` hex-steps of `center` - the map's fixed
-  // boundary, a single regular hexagon (unlike an earlier design where this had to intersect
-  // several quest-centered disks at once, which needed a much more involved computation).
-  // Hex-distance disks are equivalent to axis-aligned bounding boxes in cube coordinates
-  // (distance = max(|dq|,|dr|,|ds|) for any two hexes, since q+r+s is always 0).
+  // Clamps `target` to lie within `maxDistance` hex-steps of `center`. Hex-distance disks are
+  // equivalent to axis-aligned boxes in cube coordinates (distance = max(|dq|,|dr|,|ds|), since
+  // q+r+s is always 0).
   clampToDistance(
     target: { q: number; r: number; s: number },
     center: { q: number; r: number; s: number },
@@ -146,12 +140,9 @@ export class MapGridService {
     const sMin = center.s - maxDistance;
     const sMax = center.s + maxDistance;
 
-    // Project target onto {q+r+s=0} intersected with the box [qMin,qMax]x[rMin,rMax]x[sMin,sMax],
-    // via iterative even redistribution (a standard technique for projecting onto a box cut by a
-    // hyperplane): clamp whichever axes are still "free" (not yet pinned to a bound), then spread
-    // whatever sum-to-zero deficit that leaves across the still-free axes equally, and repeat.
-    // Each pass either finishes or permanently pins at least one more axis, so this always
-    // converges within 3 passes for 3 axes.
+    // Project onto {q+r+s=0} intersected with the box, via iterative even redistribution: clamp
+    // whichever axes are still "free" (not yet pinned to a bound), spread the resulting sum-to-
+    // zero deficit across the free axes equally, and repeat. Converges within 3 passes.
     let q = target.q;
     let r = target.r;
     let s = target.s;

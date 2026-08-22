@@ -32,15 +32,12 @@ export interface HexDragHost {
 }
 
 // Drives the whole quest drag-and-drop gesture: long-press-to-arm, the drag itself, and the
-// drop. Extracted out of MapComponent since this is a large, mostly self-contained chunk of
-// behavior - the component still owns camera/hexes state (see HexDragHost above) and
-// template-facing methods delegate straight through to this controller.
+// drop. Extracted out of MapComponent, which owns camera/hexes state (see HexDragHost above)
+// and delegates its template-facing drag methods straight through to this controller.
 //
-// The map is a fixed-size, fully pre-generated grid (see MapGridService.generateHexes) rather
-// than one grown live as a quest gets dragged near unexplored territory - so unlike an earlier
-// version of this controller, there's no grid growth, no viewBox resizing, and no camera
-// auto-panning happening here. Dragging just clamps the target to the map's fixed radius (see
-// mapRadius below) and follows the cursor within whatever's already on screen.
+// The map is a fixed-size, fully pre-generated grid (see MapGridService.generateHexes), so
+// dragging just clamps the target to the map's fixed radius (mapRadius) and follows the cursor -
+// no grid growth or camera auto-panning to worry about.
 export class HexDragController {
   constructor(
     private readonly host: HexDragHost,

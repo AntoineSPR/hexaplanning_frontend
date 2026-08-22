@@ -128,12 +128,11 @@ export class QuestAssignmentService {
         subscriber.complete();
       });
     }
-    // Deleting the HexAssignment row (below) is enough to unassign the quest - the relationship
-    // is owned entirely by that table (FK on HexAssignment.QuestId), so there's nothing on the
-    // Quest entity itself that needs saving. An earlier version of this also PUT the quest back
-    // unchanged, which was both unnecessary and risky: the backend's quest-update endpoint sets
-    // the quest's HexAssignment navigation from whatever the request body carries, so echoing
-    // back a stale/cached quest object here could resurrect the assignment that was just deleted.
+    // Deleting the HexAssignment row is enough to unassign the quest - the relationship is owned
+    // entirely by that table (FK on HexAssignment.QuestId), so there's nothing to save on the
+    // Quest entity itself. Don't PUT the quest back unchanged: the update endpoint sets the
+    // quest's HexAssignment navigation from the request body, so a stale quest object here could
+    // resurrect the assignment just deleted.
     return this._hexService.deleteAssignment(hex.q, hex.r, hex.s).pipe(
       tap(() => {
         hex.quest = undefined;

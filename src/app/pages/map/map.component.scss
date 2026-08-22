@@ -6,10 +6,8 @@
   height: 100%;
   margin: 0;
   padding: 0;
-  // Reserves space for the bottom nav (which is position:fixed, so it wouldn't otherwise take
-  // up any layout space of its own) - --menu-height is set from its actual measured height in
-  // map.component.ts, so the map's own rendered box genuinely stops above it instead of the SVG
-  // extending underneath and only being patched up in specific camera calculations.
+  // Reserves space for the fixed-position bottom nav, whose height map.component.ts measures
+  // into --menu-height (it has no layout space of its own otherwise).
   padding-bottom: var(--menu-height, 0px);
   box-sizing: border-box;
   position: relative;

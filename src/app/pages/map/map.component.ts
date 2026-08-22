@@ -35,9 +35,7 @@ const MAX_ZOOM_HEXES_VISIBLE = 3;
 export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHost {
   @ViewChild('svgRoot', { static: false }) svgRoot?: ElementRef<SVGSVGElement>;
   @ViewChild('cameraGroup', { static: false }) cameraGroup?: ElementRef<SVGGElement>;
-  // The map's SVG fills the whole viewport behind the fixed bottom nav (it's position:fixed, so
-  // it doesn't take up its own layout space) - camera centering needs this to avoid framing
-  // content underneath it.
+  // Used to measure the fixed bottom nav's actual height (see _updateMenuHeightVar).
   @ViewChild(MenuComponent, { read: ElementRef, static: false }) menuEl?: ElementRef<HTMLElement>;
   _questService = inject(QuestService);
   _questModalService = inject(QuestModalService);
@@ -48,30 +46,24 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   _svgZoom = inject(SvgZoomService);
   _connectivity = inject(ConnectivityService);
 
-  // zoom handle
   zoomHandle?: SvgZoomHandle;
 
   private readonly _confirmationService = inject(ConfirmationService);
 
-  // Drives the whole quest drag-and-drop gesture (long-press-to-arm, drop) - this component
-  // implements HexDragHost so the controller can read/drive camera and hex state without
-  // duplicating it. See hex-drag.controller.ts.
+  // Drives the drag-and-drop gesture; this component implements HexDragHost so it can read/
+  // drive camera and hex state. See hex-drag.controller.ts.
   private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity, MAP_RADIUS);
 
   hexes: Hex[] = [];
   size = HEX_SIZE;
 
-  // The viewBox size - defaults to MAP_WIDTH/MAP_HEIGHT but gets replaced once the real
-  // container is measurable (see matchMapDimensionsToContainer) to fit the whole pre-generated
-  // grid and match the container's aspect ratio. Fixed after that single startup calculation:
-  // since the grid never grows or shrinks, there's nothing to resync bounds for afterwards.
+  // viewBox size, fixed once matchMapDimensionsToContainer sizes it to fit the whole grid.
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
 
-  // The max zoom-in level - derived from mapWidth/mapHeight once they're known (see
-  // matchMapDimensionsToContainer) so "fully zoomed in" always shows about
-  // MAX_ZOOM_HEXES_VISIBLE hexes regardless of the map's actual size. This fallback (matching
-  // the old flat ZOOM_MAX) is only used for the brief window before that runs.
+  // Max zoom-in level, derived from mapWidth/mapHeight in matchMapDimensionsToContainer so
+  // "fully zoomed in" always shows about MAX_ZOOM_HEXES_VISIBLE hexes. This value is just the
+  // fallback used before that runs.
   private _zoomMax = 3;
 
   // Camera state for panning and zoom
@@ -92,13 +84,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
   };
   // Measures the bottom nav's actual rendered height and exposes it as --menu-height, which
-  // :host's padding-bottom (map.component.scss) reserves - makes the SVG's own rendered box
-  // genuinely stop above the menu instead of extending underneath it, so every screen<->map
-  // coordinate conversion (fit-scale, letterboxing, camera centering) is correct everywhere
-  // automatically rather than needing menu-awareness patched in one by one.
+  // :host's padding-bottom (map.component.scss) uses to keep the SVG's own box above the menu.
   private readonly _updateMenuHeightVar = () => {
-    // <app-menu> itself has no intrinsic size - the actual fixed-position, sized element is the
-    // <nav class="menubar"> inside its template, so that's what needs measuring.
+    // <app-menu> itself has no intrinsic size - measure its inner <nav class="menubar"> instead.
     const menuBar = this.menuEl?.nativeElement.querySelector('.menubar');
     const menuHeightPx = menuBar?.getBoundingClientRect().height ?? 0;
     this._el.nativeElement.style.setProperty('--menu-height', `${menuHeightPx}px`);
@@ -277,39 +265,29 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight, MAP_RADIUS);
   }
 
-  // Sizes the viewBox to fit the whole pre-generated grid and match the container's actual
-  // aspect ratio, instead of the fixed MAP_WIDTH/MAP_HEIGHT (290x490, tall/portrait) placeholder
-  // ngOnInit generated the grid with. With preserveAspectRatio="xMidYMid meet", a mismatched
-  // viewBox aspect leaves whichever dimension is "looser" pillarboxed (rendered smaller than the
-  // container, with unused slack on the sides) - this avoids that for the map's one-time,
-  // fixed-forever viewBox. Only called once, from ngAfterViewInit - rewrites the hexes array in
-  // place (via generateHexes' own array, not `this.hexes = ...`) rather than reassigning
-  // `this.hexes` to a new array object: ngOnInit already handed the *original* array reference
-  // to loadAssignmentsIntoHexes, whose async response resolves later and mutates whatever array
-  // it was given - reassigning `this.hexes` here would leave that response writing into an
-  // orphaned array the template no longer points to, silently discarding every loaded quest
-  // assignment.
+  // Resizes the viewBox to fit the whole grid and match the container's aspect ratio (avoiding
+  // pillarboxing under preserveAspectRatio="xMidYMid meet"), then re-centers the origin. Called
+  // once from ngAfterViewInit, once the container is measurable. Rewrites this.hexes in place
+  // rather than reassigning it - ngOnInit already handed this array's reference to
+  // loadAssignmentsIntoHexes, whose response resolves later and writes into whatever array it
+  // was given.
   private matchMapDimensionsToContainer(): void {
     const rect = this.svgRoot?.nativeElement.getBoundingClientRect();
     if (!rect || !rect.width || !rect.height) return;
 
-    // this.hexes was generated (in ngOnInit) with a placeholder origin, but its *span* is
-    // already the grid's true, final size - translating the origin later doesn't change how far
-    // apart the hexes are from each other.
+    // The grid's span is independent of the placeholder origin it was generated with.
     const bounds = this._mapGrid.computeContentBounds(this.hexes, this.size);
     const naturalWidth = bounds.maxX - bounds.minX;
     const naturalHeight = bounds.maxY - bounds.minY;
 
-    // Never shrink below the grid's natural size, but expand whichever dimension is needed to
-    // match the container's aspect ratio, so neither ends up pillarboxed.
+    // Never shrink below the grid's natural size; expand whichever dimension matches the
+    // container's aspect ratio.
     const aspect = rect.width / rect.height;
     const width = Math.round(Math.max(naturalWidth, naturalHeight * aspect));
     const height = Math.round(Math.max(naturalHeight, naturalWidth / aspect));
 
     this.mapWidth = width;
     this.mapHeight = height;
-    // See MAX_ZOOM_HEXES_VISIBLE above - derived from the smaller dimension so both axes are
-    // guaranteed to show at least that many hexes once fully zoomed in.
     this._zoomMax = Math.min(width, height) / (this.size * 2 * MAX_ZOOM_HEXES_VISIBLE);
     const freshHexes = this._mapGrid.generateHexes(this.size, width, height, MAP_RADIUS);
     this.hexes.length = 0;
@@ -435,8 +413,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
   }
 
-  // The drag gesture itself (long-press-to-arm, drop) is all handled by HexDragController - see
-  // hex-drag.controller.ts.
+  // Drag gesture handling lives in HexDragController - see hex-drag.controller.ts.
   onHexPointerDown(hex: Hex, event: PointerEvent): void {
     this._drag.onPointerDown(hex, event);
   }
@@ -545,26 +522,19 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
 
   centerCameraOnCenterHex(): void {
-    // Find the center hex (0, 0, 0)
     const centerHex = this.hexes.find(h => h.q === 0 && h.r === 0 && h.s === 0);
     if (centerHex) {
-      // Center the camera on this hex
-      // We want the hex to be in the center of the viewport
-      // The viewport dimensions are mapWidth x mapHeight
       this.panX = this.mapWidth / 2 - centerHex.cx;
       this.panY = this.mapHeight / 2 - centerHex.cy;
     } else {
-      // Fallback to default
       this.panX = 0;
       this.panY = 0;
     }
     this.zoom = 1;
   }
 
-  // Re-centers the camera on a hex, keeping the current zoom level (unlike
-  // centerCameraOnCenterHex/resetCamera, which reset zoom to 1). Used after dropping a quest
-  // onto a new hex (called by HexDragController via the HexDragHost interface), so the camera
-  // follows it there instead of leaving the view where it was.
+  // Re-centers on a hex, keeping the current zoom (unlike centerCameraOnCenterHex/resetCamera).
+  // Called by HexDragController after a successful drop.
   centerCameraOnHex(hex: Hex): void {
     this.panX = this.mapWidth / 2 - hex.cx * this.zoom;
     this.panY = this.mapHeight / 2 - hex.cy * this.zoom;

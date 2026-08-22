@@ -5,8 +5,7 @@
   preserveAspectRatio="xMidYMid meet"
   [style.cursor]="isPanning ? 'grabbing' : 'grab'"
   style="user-select: none; touch-action: none">
-  <!-- Define clipping paths - only occupied hexes ever need one (for the progress-arc clip
-     below), so skip generating one for every empty hex in this large, fully pre-generated grid. -->
+  <!-- Only occupied hexes need a clip path (for the progress arc below). -->
   <defs>
     @for (h of hexes; track getHexClipId(h)) {
       @if (h.quest) {
@@ -84,10 +83,8 @@
 </svg>
 
 @if (draggingHex && draggingHex.quest) {
-  <!-- Floating preview that follows the pointer while dragging a quest between hexes: an exact
-     replica of the real hex, built from the same polygon/border/title markup and the same
-     getHexPoints/getHexColor/getHexBorderColor helpers, just scaled to a standalone mini-SVG so
-     it renders identically (including how its foreignObject text scales). -->
+  <!-- Floating preview that follows the pointer while dragging: a standalone mini-SVG replica
+     of the real hex, using the same getHexPoints/getHexColor/getHexBorderColor helpers. -->
   <svg
     class="quest-drag-overlay"
     [style.left.px]="dragPreviewX"
