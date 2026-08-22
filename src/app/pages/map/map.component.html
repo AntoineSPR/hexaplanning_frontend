@@ -57,6 +57,7 @@
       @if (isOnHold(h)) {
         @let marker = getHexOnHoldMarker(h.cx, h.cy);
         <g class="hex-onhold-marker">
+          <polygon [attr.points]="getHexPoints(h.cx, h.cy, -8)" fill="none" />
           @for (trace of marker.traces; track $index) {
             <path [attr.d]="trace" fill="none" />
           }
@@ -155,6 +156,7 @@
     @if (isOnHold(draggingHex)) {
       @let marker = getHexOnHoldMarker(size, size);
       <g class="hex-onhold-marker">
+        <polygon [attr.points]="getHexPoints(size, size, -8)" fill="none" />
         @for (trace of marker.traces; track $index) {
           <path [attr.d]="trace" fill="none" />
         }
