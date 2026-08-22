@@ -66,6 +66,25 @@ export class MapGridService {
     return points.join(' ');
   }
 
+  // On-hold marker
+  getHexOnHoldMarker(cx: number, cy: number, size: number): { traces: string[]; pads: { x: number; y: number; r: number }[] } {
+    const lineLength = size * 0.45;
+
+    const traces: string[] = [];
+    const pads: { x: number; y: number; r: number }[] = [];
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 180) * (60 * i - 30);
+      const corner = { x: cx + size * Math.cos(angle), y: cy + size * Math.sin(angle) };
+      const end = { x: corner.x - lineLength * Math.cos(angle), y: corner.y - lineLength * Math.sin(angle) };
+
+      traces.push(`M ${corner.x},${corner.y} L ${end.x},${end.y}`);
+      pads.push({ x: end.x, y: end.y, r: size * 0.05 });
+    }
+
+    return { traces, pads };
+  }
+
   // Path for a radial progress arc clipped by the hex
   getProgressPath(cx: number, cy: number, size: number, advancement: number): string {
     if (advancement <= 0) return '';

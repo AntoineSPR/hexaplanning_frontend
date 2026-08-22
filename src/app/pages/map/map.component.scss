@@ -27,6 +27,18 @@
   filter: drop-shadow(0 0 6px var(--light-theme-color));
 }
 
+.hex-onhold-marker {
+  pointer-events: none;
+  stroke: var(--dark-theme-color);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 3px var(--light-theme-color));
+
+  circle {
+    fill: var(--dark-theme-color);
+    stroke: none;
+  }
+}
+
 .loading-overlay {
   position: absolute;
   inset: 0;

@@ -53,6 +53,19 @@
         [class.hex-armed]="armedHex === h"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
+      <!-- On-hold marker: a short line + dot from each corner. -->
+      @if (isOnHold(h)) {
+        @let marker = getHexOnHoldMarker(h.cx, h.cy);
+        <g class="hex-onhold-marker">
+          @for (trace of marker.traces; track $index) {
+            <path [attr.d]="trace" fill="none" />
+          }
+          @for (pad of marker.pads; track $index) {
+            <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+          }
+        </g>
+      }
+
       <!-- Progress overlay (if quest has advancement and is in progress) -->
       @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
         <path
@@ -138,6 +151,17 @@
       </clipPath>
     </defs>
     <polygon [attr.points]="getHexPoints(size, size)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(draggingHex)" />
+    @if (isOnHold(draggingHex)) {
+      @let marker = getHexOnHoldMarker(size, size);
+      <g class="hex-onhold-marker">
+        @for (trace of marker.traces; track $index) {
+          <path [attr.d]="trace" fill="none" />
+        }
+        @for (pad of marker.pads; track $index) {
+          <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+        }
+      </g>
+    }
     @if (getQuestAdvancement(draggingHex) > 0 && draggingHex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
       <path
         [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))"

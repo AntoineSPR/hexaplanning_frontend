@@ -21,6 +21,8 @@
   overflow-y: auto;
   flex: 1 1 auto;
   min-height: 0;
+  // Pushes the scrollbar track off the field content
+  padding-right: 0.75rem;
 }
 
 .done_checkbox {

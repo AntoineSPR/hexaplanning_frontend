@@ -352,6 +352,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return this._mapGrid.getHexPoints(cx, cy, this.size, offset);
   }
 
+  getHexOnHoldMarker(cx: number, cy: number): { traces: string[]; pads: { x: number; y: number; r: number }[] } {
+    return this._mapGrid.getHexOnHoldMarker(cx, cy, this.size);
+  }
+
   getProgressPath(cx: number, cy: number, advancement: number): string {
     return this._mapGrid.getProgressPath(cx, cy, this.size, advancement);
   }
@@ -505,9 +509,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return hex.quest ? 'black' : 'var(--base-hex-color)';
   }
 
+  isOnHold(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId === this._questService.statusOnHoldId;
+  }
+
   getHexBorderColor(hex: Hex): string {
     if (!hex.quest) return '';
     if (hex.quest.statusId === this._questService.statusDoneId) return '';
+    if (hex.quest.statusId === this._questService.statusOnHoldId) return '';
 
     const priorityQuest = this._questService?.priorities()?.find(x => x.id == hex?.quest?.priorityId);
 
