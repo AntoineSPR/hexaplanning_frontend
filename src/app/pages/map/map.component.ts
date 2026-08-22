@@ -182,6 +182,15 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
           this.isLoading = false;
         }, 400);
       },
+      error: err => {
+        // Without this, a failed request (e.g. an expired session) left isLoading stuck true
+        // forever, since `complete` never fires after `error`.
+        console.error('Failed to load assignments:', err);
+        this.isFadingOut = true;
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 400);
+      },
     });
   }
 
