@@ -170,9 +170,17 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
   opacity: 0.35;
 }
 
+// Shown once a long-press has been held long enough to pick the hex up, before any movement
+// has actually started - tells the user it's now safe to drag.
+.hex-armed {
+  filter: drop-shadow(0 0 8px var(--light-theme-color));
+  stroke: var(--light-theme-color) !important;
+  stroke-width: 3 !important;
+}
+
 .hex-drop-move {
-  filter: drop-shadow(0 0 6px var(--focus-color));
-  stroke: var(--focus-color) !important;
+  filter: drop-shadow(0 0 6px var(--ultra-light-theme-color));
+  stroke: var(--ultra-light-theme-color) !important;
   stroke-width: 3 !important;
 }
 

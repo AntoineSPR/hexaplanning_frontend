@@ -112,8 +112,19 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     startX: number;
     startY: number;
     startTime: number;
-    cancelled: boolean;
+    // True once the hold delay has elapsed without the pointer having moved away - only then
+    // does further movement start an actual quest drag (see armedHex below for the visual cue).
+    armed: boolean;
+    // True once the pointer moved away before being armed: the gesture is a camera pan instead,
+    // driven manually below (see onHexPointerMove), exactly as it would be from an empty hex.
+    panning: boolean;
+    panStartX: number;
+    panStartY: number;
   } | null = null;
+
+  // The hex currently primed for pickup (held past the hold delay, not yet moved): drives the
+  // "ready to drag" color cue in the template.
+  armedHex: Hex | null = null;
 
   constructor() {
     effect(() => {
@@ -385,22 +396,35 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!hex.quest || event.button !== 0 || this._connectivity.isOffline()) {
       return;
     }
-    this.pointerDrag = {
+    const drag = {
       hex,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
       startTime: Date.now(),
-      cancelled: false,
+      armed: false,
+      panning: false,
+      panStartX: 0,
+      panStartY: 0,
     };
+    this.pointerDrag = drag;
     // Guarantees this element keeps receiving pointermove/pointerup for this gesture
     // even if the cursor moves off it mid-drag; doesn't prevent a plain click from firing.
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+
+    // Arms the hex (visual cue) once held long enough without moving away. If the pointer
+    // moves before this fires, onHexPointerMove below falls back to panning instead.
+    setTimeout(() => {
+      if (this.pointerDrag === drag && !drag.panning) {
+        drag.armed = true;
+        this.armedHex = drag.hex;
+      }
+    }, MapComponent.DRAG_START_DELAY_MS);
   }
 
   onHexPointerMove(event: PointerEvent): void {
     const drag = this.pointerDrag;
-    if (!drag || drag.pointerId !== event.pointerId || drag.cancelled) {
+    if (!drag || drag.pointerId !== event.pointerId) {
       return;
     }
 
@@ -411,32 +435,51 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    if (drag.panning) {
+      // Not held long enough to become a quest drag: pan the camera by the same amount the
+      // pointer has moved since the gesture started, same as dragging from an empty hex.
+      const fitScale = this.computeFitScale() || 1;
+      const newPanX = drag.panStartX + (event.clientX - drag.startX) / fitScale;
+      const newPanY = drag.panStartY + (event.clientY - drag.startY) / fitScale;
+      this.zoomHandle?.setTransform(newPanX, newPanY, this.zoom);
+      return;
+    }
+
     const distance = Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY);
     if (distance < MapComponent.DRAG_START_THRESHOLD_PX) {
       return;
     }
-    if (Date.now() - drag.startTime < MapComponent.DRAG_START_DELAY_MS) {
-      // Moved before the hold delay elapsed: treat as a failed long-press, not a drag.
-      drag.cancelled = true;
+    if (!drag.armed) {
+      // Moved before the hold delay elapsed: not a long-press-drag - fall back to panning the
+      // map, exactly as starting a drag from an empty hex would.
+      event.preventDefault();
+      drag.panning = true;
+      drag.panStartX = this.panX;
+      drag.panStartY = this.panY;
+      this.armedHex = null;
       return;
     }
 
     event.preventDefault();
     this.draggingHex = drag.hex;
+    this.armedHex = null;
     this.dragOverHex = null;
     this.dragPreviewX = event.clientX;
     this.dragPreviewY = event.clientY;
     this.dragOverlayScale = this.computeMapScale();
   }
 
-  private computeMapScale(): number {
+  private computeFitScale(): number {
     if (!this.svgRoot) return 1;
     const rect = this.svgRoot.nativeElement.getBoundingClientRect();
     if (!rect.width || !rect.height) return 1;
     // preserveAspectRatio="xMidYMid meet": the viewBox is scaled uniformly by the smaller of
     // the two ratios so it fits entirely within the rendered element.
-    const fitScale = Math.min(rect.width / this.mapWidth, rect.height / this.mapHeight);
-    return fitScale * this.zoom;
+    return Math.min(rect.width / this.mapWidth, rect.height / this.mapHeight);
+  }
+
+  private computeMapScale(): number {
+    return this.computeFitScale() * this.zoom;
   }
 
   onHexPointerUp(event: PointerEvent): void {
@@ -446,9 +489,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
     this.pointerDrag = null;
+    this.armedHex = null;
 
     if (!this.draggingHex) {
-      return; // was a plain tap (or a cancelled early-movement); let the native click fire
+      return; // was a plain tap, or resolved into a camera pan; let the native click fire if applicable
     }
 
     const hex = this.draggingHex;
@@ -485,6 +529,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
     this.pointerDrag = null;
+    this.armedHex = null;
     this.draggingHex = null;
     this.dragOverHex = null;
   }
