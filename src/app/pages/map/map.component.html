@@ -72,7 +72,7 @@
         </xhtml:div>
         @if (h.quest) {
           <!-- Unassign button: sits after the drag surface in DOM order so it stays clickable on top -->
-          <button class="quest-delete" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
+          <button class="quest-delete" [disabled]="_connectivity.isOffline()" (click)="deleteQuestFromHex(h, $event)" (touchend)="deleteQuestFromHex(h, $event)">X</button>
         }
       </foreignObject>
     }
@@ -149,7 +149,7 @@
   </div>
   <ng-template #footer>
     <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
-    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest"> </p-button>
+    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest || _connectivity.isOffline()"> </p-button>
   </ng-template>
 </p-dialog>
 

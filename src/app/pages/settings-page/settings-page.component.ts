@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { ChangePasswordDTO } from 'src/app/models/changePasswordDTO.model';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from 'src/app/validators/password.validators';
+import { ConnectivityService } from 'src/app/services/connectivity.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -40,6 +41,7 @@ export class SettingsPageComponent {
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _messageService = inject(MessageService);
   private readonly _confirmationService = inject(ConfirmationService);
+  readonly _connectivity = inject(ConnectivityService);
 
   user = this._userService.user;
 
@@ -59,6 +61,7 @@ export class SettingsPageComponent {
   }
 
   openPasswordModal(): void {
+    if (this._connectivity.isOffline()) return;
     this.passwordModalVisible = true;
     this.passwordForm.reset();
   }
@@ -70,6 +73,8 @@ export class SettingsPageComponent {
   }
 
   onSubmitPasswordChange(): void {
+    if (this._connectivity.isOffline()) return;
+
     if (this.passwordForm.valid) {
       this.isLoading = true;
 

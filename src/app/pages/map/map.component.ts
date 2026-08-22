@@ -14,6 +14,7 @@ import { QuestAssignmentService } from 'src/app/services/quest-assignment.servic
 import { CameraStateService } from 'src/app/services/camera-state.service';
 import { Hex } from 'src/app/models/hex.model';
 import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service';
+import { ConnectivityService } from 'src/app/services/connectivity.service';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
@@ -38,6 +39,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   _cameraState = inject(CameraStateService);
   _el = inject(ElementRef<HTMLElement>);
   _svgZoom = inject(SvgZoomService);
+  _connectivity = inject(ConnectivityService);
 
   // zoom handle
   private zoomHandle?: SvgZoomHandle;
@@ -91,6 +93,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
   dragOverlayScale = 1;
   private lastLandedHex: Hex | null = null;
+  // Set when the initial assignment load had to fall back to the offline snapshot; tells the
+  // reconnect effect below to quietly re-fetch the authoritative state once back online, so the
+  // map self-heals instead of requiring a manual page reload.
+  private needsRefreshOnReconnect = false;
 
   // Hand-rolled long-press-then-drag gesture, using native Pointer Events directly rather than
   // @angular/cdk's DragRef: CDK's non-touch drag detection is gated behind a lazily-attached
@@ -137,6 +143,18 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }
     });
+
+    effect(() => {
+      if (this._connectivity.isOnline() && this.needsRefreshOnReconnect) {
+        this.needsRefreshOnReconnect = false;
+        // Silent background refresh: no wipe/spinner, since the offline snapshot is already
+        // showing something reasonable - just reconcile it with the server now that we can.
+        this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
+          next: () => this._mapGrid.removeOrphanedDynamicHexes(this.hexes),
+          error: err => console.error('Failed to refresh assignments after reconnect:', err),
+        });
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -169,6 +187,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     // Clear any quest references first, then hydrate from server
     this.hexes.forEach(h => (h.quest = undefined));
     this.isLoading = true;
+    if (this._connectivity.isOffline()) {
+      this.needsRefreshOnReconnect = true;
+    }
     this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
       next: () => {
         // After assignments load, trim any orphaned dynamic hexes and update bounds
@@ -259,6 +280,18 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     if (Date.now() < this.suppressClicksUntil) {
       return;
     }
+
+    if (this._connectivity.isOffline()) {
+      // No network round-trip while offline: fall back to whatever is already loaded locally
+      // so hexes stay browsable read-only without a connection.
+      if (hex.quest) {
+        this._questModalService.openQuestDetails(hex.quest);
+      } else {
+        this.openQuestToHexModal(hex);
+      }
+      return;
+    }
+
     this._questAssignment.getAssignmentForHex(hex.q, hex.r, hex.s).subscribe({
       next: assignment => {
         if (assignment) {
@@ -302,6 +335,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   assignQuestToHex(): void {
+    if (this._connectivity.isOffline()) return;
+
     if (this.selectedHex && this.selectedQuest) {
       this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest, this.hexes, this.size).subscribe({
         next: () => {
@@ -319,6 +354,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   deleteQuestFromHex(hex: Hex, event: MouseEvent | TouchEvent): void {
     event.stopPropagation();
     event.preventDefault();
+
+    if (this._connectivity.isOffline()) return;
 
     if (hex.quest) {
       this._confirmationService.confirm({
@@ -345,7 +382,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onHexPointerDown(hex: Hex, event: PointerEvent): void {
-    if (!hex.quest || event.button !== 0) {
+    if (!hex.quest || event.button !== 0 || this._connectivity.isOffline()) {
       return;
     }
     this.pointerDrag = {

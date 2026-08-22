@@ -5,6 +5,7 @@ import { UserService } from './services/user.service';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { QuestService } from './services/quest.service';
+import { ConnectivityService } from './services/connectivity.service';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,7 @@ import { QuestService } from './services/quest.service';
 export class AppComponent implements OnInit, OnDestroy {
   private readonly _userService = inject(UserService);
   private readonly _questService = inject(QuestService);
+  private readonly _connectivity = inject(ConnectivityService);
 
   // Ctrl+scroll and trackpad pinch-zoom both surface as `wheel` events with `ctrlKey: true`.
   // Block that everywhere except over the map's own SVG, which handles zooming itself

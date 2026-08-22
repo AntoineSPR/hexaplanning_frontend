@@ -5,6 +5,7 @@
       label="Modifier le mot de passe"
       (click)="openPasswordModal()"
       variant="outlined"
+      [disabled]="_connectivity.isOffline()"
       aria-label="Ouvrir le formulaire de modification de mot de passe" />
     <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" aria-label="Se déconnecter de l'application" />
   </div>
@@ -108,7 +109,7 @@
       label="Modifier"
       icon="pi pi-check"
       (click)="onSubmitPasswordChange()"
-      [disabled]="isLoading"
+      [disabled]="isLoading || _connectivity.isOffline()"
       [loading]="isLoading"
       type="button"
       [attr.aria-label]="isLoading ? 'Modification en cours...' : 'Confirmer la modification du mot de passe'">

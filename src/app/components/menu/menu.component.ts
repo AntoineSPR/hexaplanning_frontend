@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { filter, Subscription } from 'rxjs';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
+import { ConnectivityService } from 'src/app/services/connectivity.service';
 
 @Component({
   selector: 'app-menu',
@@ -15,6 +16,7 @@ import { QuestModalService } from 'src/app/services/quest-modal.service';
 export class MenuComponent implements OnInit, OnDestroy {
   _questModalService = inject(QuestModalService);
   _router = inject(Router);
+  _connectivity = inject(ConnectivityService);
 
   private _routerSubscription!: Subscription;
   activeIcon: string = '';
@@ -47,6 +49,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   showNewQuestDialog(): void {
+    if (this._connectivity.isOffline()) return;
     this._questModalService.openNewQuest();
   }
 
