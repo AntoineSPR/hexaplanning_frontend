@@ -28,6 +28,11 @@
         <clipPath [attr.id]="getHexClipId(h)">
           <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
         </clipPath>
+        @if (isInProgress(h) && getQuestAdvancement(h) > 0) {
+          <clipPath [attr.id]="getProgressClipId(h)">
+            <path [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))" />
+          </clipPath>
+        }
       }
     }
   </defs>
@@ -53,22 +58,28 @@
         [class.hex-armed]="armedHex === h"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
-      <!-- On-hold marker: a short line + dot from each corner. -->
-      @if (isOnHold(h)) {
+      @if (showsInnerOutline(h)) {
+        <polygon class="hex-inner-outline" [attr.points]="getHexPoints(h.cx, h.cy, -8)" fill="none" />
+      }
+
+      <!-- Corner marker: a short line + dot from each corner, for on-hold and done quests. -->
+      @if (showsCornerMarker(h)) {
         @let marker = getHexOnHoldMarker(h.cx, h.cy);
         <g class="hex-onhold-marker">
-          <polygon [attr.points]="getHexPoints(h.cx, h.cy, -8)" fill="none" />
           @for (trace of marker.traces; track $index) {
             <path [attr.d]="trace" fill="none" />
           }
           @for (pad of marker.pads; track $index) {
             <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
           }
+          @if (isDone(h)) {
+            <polygon [attr.points]="getInnerRingPoints(marker.pads)" fill="none" />
+          }
         </g>
       }
 
       <!-- Progress overlay (if quest has advancement and is in progress) -->
-      @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
+      @if (isInProgress(h) && getQuestAdvancement(h) > 0) {
         <path
           [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
           fill="var(--dark-theme-color)"
@@ -77,6 +88,19 @@
           style="filter: drop-shadow(0 0 3px var(--light-theme-color))"
           tabindex="-1"
           role="presentation" />
+
+        <!-- Same done-quest marker (corner lines + connecting ring), but only revealed within the
+           progress arc - as the quest advances, more of it shows, like it's slowly becoming done. -->
+        @let progressMarker = getHexOnHoldMarker(h.cx, h.cy);
+        <g class="hex-onhold-marker" [attr.clip-path]="'url(#' + getProgressClipId(h) + ')'">
+          @for (trace of progressMarker.traces; track $index) {
+            <path [attr.d]="trace" fill="none" />
+          }
+          @for (pad of progressMarker.pads; track $index) {
+            <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+          }
+          <polygon [attr.points]="getInnerRingPoints(progressMarker.pads)" fill="none" />
+        </g>
       }
 
       <!-- Border -->
@@ -151,27 +175,48 @@
       <clipPath id="drag-preview-clip">
         <polygon [attr.points]="getHexPoints(size, size)" />
       </clipPath>
+      @if (isInProgress(draggingHex) && getQuestAdvancement(draggingHex) > 0) {
+        <clipPath id="drag-preview-progress-clip">
+          <path [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))" />
+        </clipPath>
+      }
     </defs>
     <polygon [attr.points]="getHexPoints(size, size)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(draggingHex)" />
-    @if (isOnHold(draggingHex)) {
+    @if (showsInnerOutline(draggingHex)) {
+      <polygon class="hex-inner-outline" [attr.points]="getHexPoints(size, size, -8)" fill="none" />
+    }
+    @if (showsCornerMarker(draggingHex)) {
       @let marker = getHexOnHoldMarker(size, size);
       <g class="hex-onhold-marker">
-        <polygon [attr.points]="getHexPoints(size, size, -8)" fill="none" />
         @for (trace of marker.traces; track $index) {
           <path [attr.d]="trace" fill="none" />
         }
         @for (pad of marker.pads; track $index) {
           <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
         }
+        @if (isDone(draggingHex)) {
+          <polygon [attr.points]="getInnerRingPoints(marker.pads)" fill="none" />
+        }
       </g>
     }
-    @if (getQuestAdvancement(draggingHex) > 0 && draggingHex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
+    @if (isInProgress(draggingHex) && getQuestAdvancement(draggingHex) > 0) {
       <path
         [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))"
         fill="var(--dark-theme-color)"
         clip-path="url(#drag-preview-clip)"
         stroke="none"
         style="filter: drop-shadow(0 0 3px var(--light-theme-color))" />
+
+      @let dragProgressMarker = getHexOnHoldMarker(size, size);
+      <g class="hex-onhold-marker" clip-path="url(#drag-preview-progress-clip)">
+        @for (trace of dragProgressMarker.traces; track $index) {
+          <path [attr.d]="trace" fill="none" />
+        }
+        @for (pad of dragProgressMarker.pads; track $index) {
+          <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
+        }
+        <polygon [attr.points]="getInnerRingPoints(dragProgressMarker.pads)" fill="none" />
+      </g>
     }
     <polygon
       [attr.points]="getHexPoints(size, size, -2)"

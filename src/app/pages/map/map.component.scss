@@ -39,6 +39,14 @@
   }
 }
 
+// Shown on every quest except done ones (see showsInnerOutline).
+.hex-inner-outline {
+  pointer-events: none;
+  stroke: var(--dark-theme-color);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 3px var(--light-theme-color));
+}
+
 .loading-overlay {
   position: absolute;
   inset: 0;

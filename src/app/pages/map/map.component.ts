@@ -527,6 +527,25 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return !!hex?.quest && hex.quest.statusId === this._questService.statusOnHoldId;
   }
 
+  isDone(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId === this._questService.statusDoneId;
+  }
+
+  // The corner lines + dots originally built for on-hold quests, reused for done ones too.
+  showsCornerMarker(hex: Hex | null): boolean {
+    return this.isOnHold(hex) || this.isDone(hex);
+  }
+
+  // Connects the corner marker's own dots into a smaller inner hex, done quests only.
+  getInnerRingPoints(pads: { x: number; y: number; r: number }[]): string {
+    return pads.map(p => `${p.x},${p.y}`).join(' ');
+  }
+
+  // Every quest gets the inner-hex outline except done ones.
+  showsInnerOutline(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId !== this._questService.statusDoneId;
+  }
+
   getHexBorderColor(hex: Hex): string {
     if (!hex.quest) return '';
     if (hex.quest.statusId === this._questService.statusDoneId) return '';
@@ -580,6 +599,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   getHexClipId(hex: Hex): string {
     return `hex-clip-${hex.q}-${hex.r}-${hex.s}`;
+  }
+
+  getProgressClipId(hex: Hex): string {
+    return `progress-clip-${hex.q}-${hex.r}-${hex.s}`;
+  }
+
+  isInProgress(hex: Hex | null): boolean {
+    return !!hex?.quest && hex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3';
   }
 
   //#region Camera & Panning
