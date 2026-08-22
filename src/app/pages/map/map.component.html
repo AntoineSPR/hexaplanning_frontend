@@ -70,9 +70,10 @@
       @if (h.quest && getQuestAdvancement(h) > 0 && h.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
         <path
           [attr.d]="getProgressPath(h.cx, h.cy, getQuestAdvancement(h))"
-          [attr.fill]="'var(--dark-theme-color)'"
+          fill="var(--dark-theme-color)"
           [attr.clip-path]="'url(#' + getHexClipId(h) + ')'"
           stroke="none"
+          style="filter: drop-shadow(0 0 3px var(--light-theme-color))"
           tabindex="-1"
           role="presentation" />
       }
@@ -165,9 +166,10 @@
     @if (getQuestAdvancement(draggingHex) > 0 && draggingHex.quest.statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') {
       <path
         [attr.d]="getProgressPath(size, size, getQuestAdvancement(draggingHex))"
-        [attr.fill]="'var(--dark-theme-color)'"
+        fill="var(--dark-theme-color)"
         clip-path="url(#drag-preview-clip)"
-        stroke="none" />
+        stroke="none"
+        style="filter: drop-shadow(0 0 3px var(--light-theme-color))" />
     }
     <polygon
       [attr.points]="getHexPoints(size, size, -2)"
