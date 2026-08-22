@@ -1,6 +1,5 @@
 import { Component, effect, inject, OnDestroy, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -27,7 +26,7 @@ const MAX_ZOOM_HEXES_VISIBLE = 3;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, ButtonModule, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
+  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
   providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -436,6 +435,21 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         },
       });
     }
+  }
+
+  // Opens the quest-creation modal and assigns whatever gets created straight to selectedHex
+  createAndAssignQuest(): void {
+    if (this._connectivity.isOffline() || !this.selectedHex) return;
+
+    const hex = this.selectedHex;
+    this.dialogVisible = false;
+    this.selectedHex = null;
+
+    this._questModalService.openNewQuest(createdQuest => {
+      this._questAssignment.assignQuestToHex(hex, createdQuest).subscribe({
+        error: err => console.error('Failed to assign newly created quest:', err),
+      });
+    });
   }
 
   deleteQuestFromHex(hex: Hex, event: MouseEvent | TouchEvent): void {

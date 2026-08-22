@@ -255,7 +255,7 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
 
 #no-quest {
   text-align: center;
-  padding: 1rem;
+  padding: 2rem 1rem;
 }
 
 polygon {
@@ -293,7 +293,13 @@ path {
     display: block !important;
     padding-top: 0;
     padding-bottom: 0;
-    margin-top: 0.5rem;
+    margin-top: 0;
+    background-color: var(--background-color);
+    border: 1px solid var(--light-theme-color);
+    border-radius: 0.5rem 0.5rem 0 0;
+    box-shadow:
+      0 0 6px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
   }
   .p-dialog-header-actions {
     display: none;
@@ -310,15 +316,31 @@ path {
     padding-bottom: 0 !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
+    border: none !important;
     box-shadow: none;
     border-radius: 0;
   }
   .quest-item {
-    margin-top: 0.7rem;
-    margin-bottom: 0.7rem;
-    padding: 1rem;
+    margin: 0;
+    padding: 0.85rem 0.25rem 0.85rem 0.6rem;
     justify-content: space-between;
     cursor: pointer;
+    border: none !important;
+    border-left: 3px solid transparent !important;
+    border-bottom: 1px solid var(--shadow-gradient) !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s ease;
+
+    &:hover,
+    &.selected {
+      border-left-color: var(--light-theme-color) !important;
+    }
+
+    &:last-of-type {
+      border-bottom: none !important;
+    }
   }
   .priority-icon {
     cursor: pointer;
@@ -327,8 +349,15 @@ path {
     cursor: pointer;
   }
   .p-dialog-footer {
-    padding-top: 1rem;
+    padding: 1rem;
+    margin-top: 0;
     display: flex;
     justify-content: space-between;
+    background-color: var(--background-color);
+    border: 1px solid var(--light-theme-color);
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow:
+      0 0 6px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
   }
 }

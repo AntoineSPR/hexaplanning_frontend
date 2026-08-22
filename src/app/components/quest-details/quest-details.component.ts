@@ -24,6 +24,7 @@ import { DEFAULT_ESTIMATED_TIME, QuestUpdateDTO, QuestCreateDTO } from '../../mo
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
+import { QuestModalService } from '../../services/quest-modal.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -63,6 +64,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
+  private readonly _questModalService = inject(QuestModalService);
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
   private readonly _router = inject(Router);
@@ -132,8 +134,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       const newQuest: QuestCreateDTO = formValues;
 
       this._questService.createQuest(newQuest).subscribe({
-        next: () => {
-          console.log('Quest created successfully');
+        next: createdQuest => {
+          this._questModalService.notifyQuestCreated(createdQuest);
           this._messageService.add({
             severity: 'success',
             summary: 'Quête créée',

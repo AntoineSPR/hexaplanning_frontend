@@ -218,8 +218,27 @@
     </div>
   </div>
   <ng-template #footer>
-    <p-button label="Annuler" icon="pi pi-times" (click)="dialogVisible = false" styleClass="p-button-text"> </p-button>
-    <p-button label="Assigner" icon="pi pi-check" (click)="assignQuestToHex()" [disabled]="!selectedQuest || _connectivity.isOffline()"> </p-button>
+    <button type="button" class="icon-button" (click)="dialogVisible = false" aria-label="Annuler" title="Annuler">
+      <i class="pi pi-times"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="createAndAssignQuest()"
+      [disabled]="_connectivity.isOffline()"
+      aria-label="Créer une quête"
+      title="Créer une quête">
+      <i class="pi pi-plus"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="assignQuestToHex()"
+      [disabled]="!selectedQuest || _connectivity.isOffline()"
+      aria-label="Assigner"
+      title="Assigner">
+      <i class="pi pi-check"></i>
+    </button>
   </ng-template>
 </p-dialog>
 

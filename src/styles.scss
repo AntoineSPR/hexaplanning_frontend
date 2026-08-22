@@ -5,6 +5,7 @@
   --text-color: #ffffff;
   --theme-color: #37007f;
   --light-theme-color: #b87fed;
+  --ligher-theme-color: #d3c2f5;
   --ultra-light-theme-color: #b2abf2;
   --dark-theme-color: #250054;
   --primary-priority-bg-color: #e28a2b;
@@ -108,19 +109,40 @@ app-root {
 
   .cancel-confirmation-button,
   .accept-confirmation-button {
-    border: 1px solid var(--theme-color);
+    border: 1px solid var(--light-theme-color);
+    box-shadow: 0 0 6px var(--light-theme-color);
     padding: 0.5rem 1rem;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    color: var(--text-color);
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
   }
 
   .cancel-confirmation-button {
-    background-color: var(--background-color);
+    background: transparent;
+    color: var(--light-theme-color);
+
+    &:hover {
+      background-color: var(--shadow-gradient-light);
+      box-shadow:
+        0 0 8px var(--light-theme-color),
+        0 0 16px var(--shadow-gradient);
+    }
   }
 
   .accept-confirmation-button {
-    background-color: var(--theme-color);
+    background: var(--light-theme-color);
+    color: var(--dark-theme-color);
+
+    &:hover {
+      background: var(--ligher-theme-color);
+      box-shadow:
+        0 0 8px var(--light-theme-color),
+        0 0 16px var(--shadow-gradient);
+    }
   }
 }
 
@@ -237,6 +259,54 @@ input.quest-checkbox[type='checkbox'] {
       border: solid black;
       border-width: 0 3px 3px 0;
       transform: rotate(45deg);
+    }
+  }
+}
+
+// Shared icon-only button (outline + glow)
+.icon-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  background: transparent;
+  color: var(--light-theme-color);
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 6px var(--light-theme-color);
+  border-radius: 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 1.2rem;
+  }
+
+  &:hover {
+    background-color: var(--shadow-gradient-light);
+    box-shadow:
+      0 0 8px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline-color: var(--light-theme-color) !important;
+    box-shadow: 0 0 0 2px var(--focus-color) !important;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+
+    &:hover {
+      background: transparent;
+      transform: none;
     }
   }
 }
