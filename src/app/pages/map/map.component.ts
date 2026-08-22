@@ -62,6 +62,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   hexes: Hex[] = [];
   size = HEX_SIZE;
 
+  // The starting viewBox size, before any drag-time growth - defaults to MAP_WIDTH/MAP_HEIGHT
+  // but gets replaced once the real container is measurable (see matchMapDimensionsToContainer)
+  // to match its actual aspect ratio. Used as adjustMapBounds' floor (so bounds never shrink
+  // below the true starting size) and as computeMaxZoom's baseline (so "how much has the map
+  // grown" is measured against the real starting size, not the fixed constants).
+  private _baselineMapWidth = MAP_WIDTH;
+  private _baselineMapHeight = MAP_HEIGHT;
+
   // mapWidth/mapHeight drive the SVG viewBox size, which shrinks fitScale as the map grows
   // (drag-time growth, quests spreading out). Since zoom is a multiplier on top of fitScale, a
   // fixed zoom cap would mean "fully zoomed in" keeps rendering smaller the more the map grows -
@@ -91,7 +99,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   // HexDragController's own drag-time growth/shrink) instead of each writing mapWidth/mapHeight
   // directly - see _lastOverflow above for why that matters.
   syncMapBounds(): void {
-    const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
+    const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size, this._baselineMapWidth, this._baselineMapHeight);
     const overflow = this._mapGrid.computeOverflow(this.hexes, this.size);
     this.mapWidth = bounds.width;
     this.mapHeight = bounds.height;
@@ -298,6 +306,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     if (!this.svgRoot || !this.cameraGroup) return;
     this._updateMenuHeightVar();
     window.addEventListener('resize', this._updateMenuHeightVar);
+    this.matchMapDimensionsToContainer();
     const saved = this._cameraState.getState();
     this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
       scaleMin: ZOOM_MIN,
@@ -345,6 +354,45 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   //#region Generate Map
   generateHexes(): void {
     this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight);
+  }
+
+  // Sizes the starting viewBox to match the container's actual aspect ratio instead of the fixed
+  // MAP_WIDTH/MAP_HEIGHT (290x490, tall/portrait) - with preserveAspectRatio="xMidYMid meet",
+  // a mismatched viewBox aspect leaves whichever dimension is "looser" pillarboxed (rendered
+  // smaller than the container, with unused slack on the sides): growing that dimension via
+  // drag-time grid growth doesn't visibly dezoom until it grows enough to become the *binding*
+  // dimension, while growing the other one dezooms immediately. On a typical wide desktop
+  // window that made dragging right (the one grid direction that only grows width, never
+  // height) get stuck at the screen edge while every other direction dezoomed to let the drag
+  // continue. Preserves the same MAP_WIDTH*MAP_HEIGHT area as before, just reshaped to the
+  // container's ratio, so the starting zoom level feels about the same as it did previously.
+  // Only called once, from ngAfterViewInit, while the map is still just the starting island -
+  // rewrites it in place (via generateHexes' own array, not `this.hexes = ...`) rather than
+  // reassigning `this.hexes` to a new array object: ngOnInit already handed the *original* array
+  // reference to loadAssignmentsIntoHexes, whose async response resolves later and mutates
+  // whatever array it was given - reassigning `this.hexes` here would leave that response
+  // writing into an orphaned array the template no longer points to, silently discarding every
+  // loaded quest assignment.
+  private matchMapDimensionsToContainer(): void {
+    const rect = this.svgRoot?.nativeElement.getBoundingClientRect();
+    if (!rect || !rect.width || !rect.height) return;
+
+    const aspect = rect.width / rect.height;
+    const area = MAP_WIDTH * MAP_HEIGHT;
+    const width = Math.round(Math.sqrt(area * aspect));
+    const height = Math.round(Math.sqrt(area / aspect));
+    if (width === this.mapWidth && height === this.mapHeight) return;
+
+    this._baselineMapWidth = width;
+    this._baselineMapHeight = height;
+    this.mapWidth = width;
+    this.mapHeight = height;
+    const freshSeed = this._mapGrid.generateHexes(this.size, width, height);
+    this.hexes.length = 0;
+    this.hexes.push(...freshSeed);
+    if (!this._cameraState.getState()) {
+      this.centerCameraOnCenterHex();
+    }
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {
@@ -630,8 +678,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   // The maximum zoom-in level, scaled up as the map's viewBox grows so the zoomed-in render
   // scale stays constant instead of shrinking - see the mapWidth/mapHeight setters above.
+  // Measured against _baselineMapWidth/Height (the real starting size), not the fixed
+  // MAP_WIDTH/MAP_HEIGHT constants, since those are just the fallback before the container is
+  // measurable and are usually not what the map actually started at.
   private computeMaxZoom(): number {
-    return ZOOM_MAX * Math.max(this.mapWidth / MAP_WIDTH, this.mapHeight / MAP_HEIGHT);
+    return ZOOM_MAX * Math.max(this.mapWidth / this._baselineMapWidth, this.mapHeight / this._baselineMapHeight);
   }
 
   private updateZoomExtent(): void {

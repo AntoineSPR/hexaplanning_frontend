@@ -302,10 +302,13 @@ export class MapGridService {
     return { q, r, s };
   }
 
-  // Calculate bounding box and adjust map dimensions
-  adjustMapBounds(hexes: Hex[], size: number): { width: number; height: number } {
+  // Calculate bounding box and adjust map dimensions. floorWidth/floorHeight are the caller's
+  // baseline viewBox size (never shrink below it) - MapComponent computes this once at startup
+  // to match the actual container's aspect ratio, rather than a fixed constant, so growing
+  // either dimension during a drag always dezooms; see matchMapDimensionsToContainer there.
+  adjustMapBounds(hexes: Hex[], size: number, floorWidth: number, floorHeight: number): { width: number; height: number } {
     if (hexes.length === 0) {
-      return { width: 290, height: 490 };
+      return { width: floorWidth, height: floorHeight };
     }
 
     const pad = size + 10;
@@ -316,8 +319,8 @@ export class MapGridService {
     const minY = Math.min(...ys) - pad;
     const maxY = Math.max(...ys) + pad;
 
-    const width = Math.max(290, Math.ceil(maxX - Math.min(0, minX)));
-    const height = Math.max(490, Math.ceil(maxY - Math.min(0, minY)));
+    const width = Math.max(floorWidth, Math.ceil(maxX - Math.min(0, minX)));
+    const height = Math.max(floorHeight, Math.ceil(maxY - Math.min(0, minY)));
 
     return { width, height };
   }
