@@ -13,6 +13,8 @@
   --progress-bar-color: #39008474;
   --focus-color: #667eea;
   --base-hex-color: #1d1e1e;
+  --shadow-gradient: rgba(184, 127, 237, 0.25);
+  --shadow-gradient-light: rgba(184, 127, 237, 0.15);
   font-family: 'Inter', sans-serif;
 }
 
@@ -75,9 +77,11 @@ app-root {
   .p-dialog-content {
     background-color: var(--background-color) !important;
     color: var(--text-color) !important;
-    border: none !important;
+    border: 1px solid var(--light-theme-color) !important;
     padding: 0.5rem !important;
-    box-shadow: var(--theme-color) 0px 0px 5px 5px;
+    box-shadow:
+      0 0 6px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
     border-radius: 0.5rem;
   }
 
@@ -96,7 +100,10 @@ app-root {
   padding: 1.5rem;
   border-radius: 4px;
   background-color: var(--background-color);
-  box-shadow: var(--theme-color) 0px 0px 5px 5px inset;
+  border: 1px solid var(--light-theme-color);
+  box-shadow:
+    0 0 6px var(--light-theme-color),
+    0 0 16px var(--shadow-gradientS);
   color: var(--text-color);
 
   .cancel-confirmation-button,
@@ -209,8 +216,8 @@ input.quest-checkbox[type='checkbox'] {
   -moz-appearance: none;
   width: 20px;
   height: 20px;
-  border: 1px solid var(--theme-color);
-  box-shadow: var(--theme-color) 0 0 5px;
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 5px var(--light-theme-color);
   border-radius: 2px;
   cursor: pointer;
   position: relative;
@@ -250,11 +257,18 @@ input.quest-checkbox[type='checkbox'] {
   display: flex;
   align-items: center;
   padding: 10px;
-  box-shadow: var(--theme-color) 0 0 5px 2px;
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 5px var(--light-theme-color);
   border-radius: 8px;
   background-color: var(--background-color);
   cursor: pointer;
   transition: 0.2s;
+
+  &:hover {
+    box-shadow:
+      0 0 8px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
+  }
 
   .priority-icon {
     width: 32px;

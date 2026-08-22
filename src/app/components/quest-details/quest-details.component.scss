@@ -38,11 +38,21 @@
   align-items: center;
 }
 
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 label {
   font-weight: bold;
   text-align: center;
   margin-bottom: 0.25rem;
-  color: var(--theme-color);
+  color: var(--light-theme-color);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
 }
 
 .invisible {
@@ -71,10 +81,10 @@ input {
 .icon-button {
   width: 2.75rem;
   height: 2.75rem;
-  background-color: var(--theme-color);
-  color: var(--text-color);
-  box-shadow: var(--theme-color) 0px 0px 5px 5px inset;
-  border: none;
+  background: transparent;
+  color: var(--light-theme-color);
+  border: 1px solid var(--light-theme-color);
+  box-shadow: 0 0 6px var(--light-theme-color);
   border-radius: 18%;
   display: flex;
   align-items: center;
@@ -87,7 +97,10 @@ input {
   }
 
   &:hover {
-    background-color: var(--dark-theme-color);
+    background-color: var(--shadow-gradient-light);
+    box-shadow:
+      0 0 8px var(--light-theme-color),
+      0 0 16px var(--shadow-gradient);
     transform: scale(1.1);
   }
 
@@ -96,7 +109,7 @@ input {
   }
 
   &:focus-visible {
-    outline-color: var(--theme-color) !important;
+    outline-color: var(--light-theme-color) !important;
     box-shadow: 0 0 0 2px var(--focus-color) !important;
   }
 
@@ -106,7 +119,7 @@ input {
     box-shadow: none;
 
     &:hover {
-      background-color: var(--theme-color);
+      background: transparent;
       transform: none;
     }
   }
@@ -128,7 +141,8 @@ input {
 
   .p-slider {
     .p-slider-range {
-      background: var(--theme-color) !important;
+      background: linear-gradient(90deg, var(--theme-color), var(--light-theme-color)) !important;
+      box-shadow: 0 0 6px var(--light-theme-color);
     }
   }
 
@@ -141,19 +155,21 @@ input {
     width: 24px;
     height: 24px;
     padding: 2px;
-    box-shadow: inset 0 0 3px black;
     border-radius: 2px;
 
     &.priority-primary {
       background-color: var(--primary-priority-bg-color);
+      box-shadow: 0 0 6px var(--primary-priority-bg-color);
     }
 
     &.priority-secondary {
       background-color: var(--secondary-priority-bg-color);
+      box-shadow: 0 0 6px var(--secondary-priority-bg-color);
     }
 
     &.priority-tertiary {
       background-color: var(--tertiary-priority-bg-color);
+      box-shadow: 0 0 6px var(--tertiary-priority-bg-color);
     }
   }
 
@@ -169,7 +185,8 @@ input {
     }
 
     .p-progressbar-value {
-      background-color: var(--theme-color) !important;
+      background: linear-gradient(90deg, var(--theme-color), var(--light-theme-color)) !important;
+      box-shadow: 0 0 6px var(--light-theme-color);
       height: 100% !important;
       transition: width 0.3s ease !important;
     }

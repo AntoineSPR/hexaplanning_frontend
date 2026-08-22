@@ -42,7 +42,10 @@
           </ng-template></p-select
         >
       } @else {
-        <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
+        <span class="flex align-items-center gap-2">
+          <span class="status-dot" [style.background]="statusColor" [style.box-shadow]="'0 0 4px ' + statusColor"></span>
+          <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
+        </span>
       }
     </div>
 
