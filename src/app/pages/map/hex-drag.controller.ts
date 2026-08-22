@@ -14,11 +14,6 @@ import { SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 const DRAG_START_DELAY_MS = 150;
 const DRAG_START_THRESHOLD_PX = 5;
 
-// Edge auto-pan while dragging: how close (in screen px) to the SVG's edge before panning kicks
-// in, and the fastest the camera moves (in screen px/frame) right at the very edge.
-const EDGE_PAN_ZONE_PX = 48;
-const EDGE_PAN_MAX_SPEED_PX = 14;
-
 // Radius (in hex rings) of the grey halo grown live around the drag target.
 const DRAG_GROWTH_RADIUS = 1;
 
@@ -32,8 +27,8 @@ const MAX_QUEST_SPREAD = 60;
 export interface HexDragHost {
   readonly hexes: Hex[];
   readonly size: number;
-  mapWidth: number;
-  mapHeight: number;
+  readonly mapWidth: number;
+  readonly mapHeight: number;
   panX: number;
   panY: number;
   readonly zoom: number;
@@ -41,10 +36,16 @@ export interface HexDragHost {
   readonly zoomHandle?: SvgZoomHandle;
   suppressClicksUntil: number;
   centerCameraOnHex(hex: Hex): void;
+  // Resizes the viewBox to fit the current hex set and pan-compensates for it, through one
+  // shared, centrally-tracked piece of state (see MapComponent._lastOverflow) - the controller
+  // must never set mapWidth/mapHeight directly, since QuestAssignmentService can also trigger a
+  // resize (on assign/unassign/move) through the same host, and the two need to agree on what
+  // pan already accounts for or they end up fighting each other.
+  syncMapBounds(): void;
 }
 
 // Drives the whole quest drag-and-drop gesture: long-press-to-arm, the drag itself (including
-// edge auto-pan and live grid growth ahead of the cursor), and the drop. Extracted out of
+// live grid growth ahead of the cursor), and the drop. Extracted out of
 // MapComponent since this is a large, mostly self-contained chunk of behavior - the component
 // still owns camera/bounds/hexes state (see HexDragHost above) and template-facing methods
 // delegate straight through to this controller.
@@ -69,20 +70,15 @@ export class HexDragController {
   // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
   dragOverlayScale = 1;
   private lastLandedHex: Hex | null = null;
-  private edgePanDirection: { dx: number; dy: number } | null = null;
   // "q,r,s" keys of hexes added by live grid growth during the current drag, so the halo of
   // grey hexes can move with the held hex (shrinking behind it) instead of leaving a trail.
   private speculativeGrowthCoords = new Set<string>();
   // The pointer's *true* screen position, updated only from real pointer events - never from
-  // the (possibly clamped/pinned) drag preview position. The edge-pan loop re-derives the
-  // target from this every frame; feeding the clamped preview back in as if it were the cursor
-  // created a feedback loop (target kept drifting as pan changed) that showed up as jitter.
+  // the (possibly clamped/pinned) drag preview position, which would create a feedback loop.
   private pointerClientX = 0;
   private pointerClientY = 0;
-  private edgePanFrameId: number | null = null;
-  // True once the drag target has hit the MAX_QUEST_SPREAD boundary - edge-pan stops advancing
-  // the camera further in that case, so the user can't keep panning away from the held hex
-  // without it actually going anywhere, losing track of where they'll end up dropping it.
+  // True once the drag target has hit the MAX_QUEST_SPREAD boundary - drives the "pin the
+  // preview at the edge instead of following the cursor further" behavior below.
   private dragTargetClamped = false;
   // True when dropping on the current target would push some other assigned quest further than
   // MAX_QUEST_SPREAD away - drives a "not allowed here" visual cue and blocks the drop itself.
@@ -151,7 +147,6 @@ export class HexDragController {
       // dragPreviewX/Y get set inside updateDragOverHex - clamped to the edge of the halo
       // instead of the raw pointer position once the drag goes past MAX_QUEST_SPREAD.
       this.updateDragOverHex();
-      this.updateEdgePan(event.clientX, event.clientY);
       return;
     }
 
@@ -199,7 +194,6 @@ export class HexDragController {
     (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
     this.pointerDrag = null;
     this.armedHex = null;
-    this.stopEdgePan();
 
     if (!this.draggingHex) {
       return; // was a plain tap, or resolved into a camera pan; let the native click fire if applicable
@@ -221,6 +215,10 @@ export class HexDragController {
           this.markLandedHex(target);
           this.draggingHex = null;
           this.dragOverHex = null;
+          // Shrink the viewBox back down from whatever reserveBoundsForDrag sized it up to for
+          // the whole reachable area - otherwise a successful move would permanently keep that
+          // reservation even though the actual move likely only used a fraction of it.
+          this.pruneSpeculativeGrowth();
           this.host.centerCameraOnHex(target);
         },
         error: err => {
@@ -244,7 +242,6 @@ export class HexDragController {
     }
     this.pointerDrag = null;
     this.armedHex = null;
-    this.stopEdgePan();
     const wasDragging = this.draggingHex;
     this.draggingHex = null;
     this.dragOverHex = null;
@@ -328,17 +325,14 @@ export class HexDragController {
 
     const rawTarget = this.mapGrid.pixelToAxial(local.x, local.y, this.host.size);
     const origin = drag.hex;
-    let target = rawTarget;
 
     // Rather than only flagging the drop as invalid once released, slide the target back to the
     // edge of the allowed zone so the cursor can't drag it into "red territory" in the first
-    // place - clamped toward whichever other quest is farthest away, the one actually defining
-    // the limit.
-    const farthest = this.findFarthestOtherQuest(origin, target);
-    this.dragTargetClamped = !!farthest && this.hexDistance(farthest, target) > MAX_QUEST_SPREAD;
-    if (this.dragTargetClamped && farthest) {
-      target = this.mapGrid.clampToDistance(farthest, target, MAX_QUEST_SPREAD);
-    }
+    // place - clamped against every other assigned quest at once (not just the current worst
+    // offender), so the boundary is a fixed shape the cursor traces consistently.
+    const otherQuestCenters = this.host.hexes.filter(h => h.quest && h !== origin);
+    const target = this.mapGrid.clampToDistanceOfAll(rawTarget, otherQuestCenters, MAX_QUEST_SPREAD);
+    this.dragTargetClamped = target.q !== rawTarget.q || target.r !== rawTarget.r || target.s !== rawTarget.s;
 
     if (this.dragTargetClamped) {
       // Clamped: pin the visual preview to the edge of the halo instead of following the
@@ -351,6 +345,7 @@ export class HexDragController {
       this.dragPreviewX = clientX;
       this.dragPreviewY = clientY;
     }
+    this.clampPreviewToMapViewport();
 
     const desiredCoords = new Set(this.mapGrid.coordinatesInRadius(target, DRAG_GROWTH_RADIUS).map(c => `${c.q},${c.r},${c.s}`));
     this.shrinkSpeculativeGrowth(desiredCoords);
@@ -360,23 +355,29 @@ export class HexDragController {
       this.speculativeGrowthCoords.add(key);
     }
 
-    // Grow the viewBox only when the hex set actually needs more room than it currently has,
-    // and never shrink mid-drag (shrinking is handled once the drag ends). Reserving the whole
-    // possible drag radius up front instead caused an immediate, disorienting rescale/jump the
-    // moment a drag started - any viewBox size change rescales the whole map, since fitScale is
-    // purely a function of mapWidth/mapHeight vs the fixed container size. Growing lazily like
-    // this means it only happens occasionally, as territory is actually reached, not constantly.
+    // Grow the viewBox only as territory is actually reached, rather than reserving the whole
+    // MAX_QUEST_SPREAD area up front - reserving upfront meant an immediate, large rescale the
+    // moment any drag started (as soon as another quest existed to measure a spread against),
+    // which was far more disorienting than the occasional small resize this causes instead.
     if (added.length) {
-      const needed = this.mapGrid.adjustMapBounds(this.host.hexes, this.host.size);
-      if (needed.width > this.host.mapWidth || needed.height > this.host.mapHeight) {
-        this.host.mapWidth = Math.max(this.host.mapWidth, needed.width);
-        this.host.mapHeight = Math.max(this.host.mapHeight, needed.height);
-        this.dragOverlayScale = this.computeMapScale();
-      }
+      this.host.syncMapBounds();
+      this.dragOverlayScale = this.computeMapScale();
     }
 
     this.dragOverHex = this.host.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
     this.dragTargetTooFar = this.wouldExceedMaxSpread(origin, target);
+  }
+
+  // The floating drag preview (.quest-drag-overlay) is a position:fixed element tracking raw
+  // screen coordinates, entirely separate from the SVG's own viewBox - clamping the logical
+  // target doesn't stop it from visually rendering wherever the cursor physically is, including
+  // over the bottom nav. svgRoot's rect already excludes the menu (see :host's padding-bottom in
+  // map.component.scss), so clamping the preview to it keeps it out of that area too.
+  private clampPreviewToMapViewport(): void {
+    const rect = this.host.svgRoot?.nativeElement.getBoundingClientRect();
+    if (!rect || !rect.width || !rect.height) return;
+    this.dragPreviewX = Math.min(Math.max(this.dragPreviewX, rect.left), rect.right);
+    this.dragPreviewY = Math.min(Math.max(this.dragPreviewY, rect.top), rect.bottom);
   }
 
   private hexDistance(a: { q: number; r: number; s: number }, b: { q: number; r: number; s: number }): number {
@@ -480,80 +481,12 @@ export class HexDragController {
     }
   }
 
-  // While the pointer sits within EDGE_PAN_ZONE_PX of the SVG's edge during an active drag,
-  // continuously pans the camera toward that edge - the map moves under a stationary pointer,
-  // so dragOverHex/grid growth get re-evaluated every frame rather than only on pointermove.
-  private updateEdgePan(clientX: number, clientY: number): void {
-    if (!this.host.svgRoot) {
-      this.stopEdgePan();
-      return;
-    }
-    const rect = this.host.svgRoot.nativeElement.getBoundingClientRect();
-    const zone = EDGE_PAN_ZONE_PX;
-
-    const distLeft = Math.max(clientX - rect.left, 0);
-    const distRight = Math.max(rect.right - clientX, 0);
-    const distTop = Math.max(clientY - rect.top, 0);
-    const distBottom = Math.max(rect.bottom - clientY, 0);
-
-    let dx = 0;
-    let dy = 0;
-    if (distLeft < zone) dx = -(zone - distLeft) / zone;
-    else if (distRight < zone) dx = (zone - distRight) / zone;
-    if (distTop < zone) dy = -(zone - distTop) / zone;
-    else if (distBottom < zone) dy = (zone - distBottom) / zone;
-
-    if (dx === 0 && dy === 0) {
-      this.stopEdgePan();
-      return;
-    }
-
-    this.edgePanDirection = { dx, dy };
-    this.startEdgePanLoop();
-  }
-
-  private startEdgePanLoop(): void {
-    if (this.edgePanFrameId !== null) return;
-    const step = () => {
-      if (!this.edgePanDirection || !this.draggingHex) {
-        this.edgePanFrameId = null;
-        return;
-      }
-      // Once the drag target has hit the MAX_QUEST_SPREAD boundary, panning further wouldn't
-      // reach anything new anyway - stop advancing the camera so the held hex doesn't drift out
-      // of view while the user has no way of telling where they'll actually end up dropping it.
-      if (!this.dragTargetClamped) {
-        const fitScale = this.computeFitScale() || 1;
-        const speed = EDGE_PAN_MAX_SPEED_PX / fitScale;
-        this.host.panX -= this.edgePanDirection.dx * speed;
-        this.host.panY -= this.edgePanDirection.dy * speed;
-        this.host.zoomHandle?.setTransform(this.host.panX, this.host.panY, this.host.zoom);
-      }
-
-      // Re-derive from the true (unchanged) cursor position, not dragPreviewX/Y - the pan just
-      // changed, so the hex under that same screen point is different now too.
-      this.updateDragOverHex();
-
-      this.edgePanFrameId = requestAnimationFrame(step);
-    };
-    this.edgePanFrameId = requestAnimationFrame(step);
-  }
-
-  private stopEdgePan(): void {
-    this.edgePanDirection = null;
-    if (this.edgePanFrameId !== null) {
-      cancelAnimationFrame(this.edgePanFrameId);
-      this.edgePanFrameId = null;
-    }
-  }
-
-  // Drops anything that was speculatively grown while dragging (edge-pan/grid growth) but
-  // didn't end up used for an actual move, same pruning already applied elsewhere.
+  // Drops anything that was speculatively grown while dragging but didn't end up used for an
+  // actual move, same pruning already applied elsewhere, and shrinks the viewBox back down to
+  // fit whatever's actually there.
   private pruneSpeculativeGrowth(): void {
     this.mapGrid.removeOrphanedDynamicHexes(this.host.hexes, this.host.size);
-    const bounds = this.mapGrid.adjustMapBounds(this.host.hexes, this.host.size);
-    this.host.mapWidth = bounds.width;
-    this.host.mapHeight = bounds.height;
+    this.host.syncMapBounds();
   }
 
   private findHexAtPoint(x: number, y: number): Hex | null {

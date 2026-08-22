@@ -23,8 +23,12 @@ export class QuestAssignmentService {
   private readonly _mapGrid = inject(MapGridService);
   private readonly _connectivity = inject(ConnectivityService);
 
-  // Callback to notify map component of bounds changes
-  private onBoundsChange?: (bounds: { width: number; height: number }) => void;
+  // Callback to notify map component that hexes were added/removed and bounds may need
+  // recalculating - deliberately no-arg: the map component recomputes bounds itself (via
+  // MapGridService, from the hexes it already holds) so it can pan-compensate for any resize in
+  // the same place every other bounds change goes through, instead of this service computing
+  // bounds and the component blindly applying them with no compensation.
+  private onBoundsChange?: () => void;
   // Callback to notify map component that the starting island was just restored (the map went
   // back to zero quests), so it can re-center the camera on it.
   private onIslandRestored?: () => void;
@@ -55,7 +59,7 @@ export class QuestAssignmentService {
     }
   }
 
-  setOnBoundsChange(callback: (bounds: { width: number; height: number }) => void): void {
+  setOnBoundsChange(callback: () => void): void {
     this.onBoundsChange = callback;
   }
 
@@ -76,10 +80,7 @@ export class QuestAssignmentService {
         this._mapGrid.ensureNeighborsOf(hexes, hex, size);
       }
       if (cached.length) {
-        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-        if (this.onBoundsChange) {
-          this.onBoundsChange(bounds);
-        }
+        this.onBoundsChange?.();
       }
       return of(void 0);
     }
@@ -112,11 +113,7 @@ export class QuestAssignmentService {
           return forkJoin(tasks).pipe(
             map(() => {
               this._saveResolvedAssignments(resolved);
-              // After loading all assignments, adjust bounds
-              const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-              if (this.onBoundsChange) {
-                this.onBoundsChange(bounds);
-              }
+              this.onBoundsChange?.();
               return void 0;
             })
           );
@@ -151,11 +148,7 @@ export class QuestAssignmentService {
         // no longer needed and get pruned like any other empty hex.
         this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
 
-        // Recalculate and notify map bounds
-        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-        if (this.onBoundsChange) {
-          this.onBoundsChange(bounds);
-        }
+        this.onBoundsChange?.();
       }),
       map(() => void 0)
     );
@@ -187,11 +180,7 @@ export class QuestAssignmentService {
           this.onIslandRestored?.();
         }
 
-        // Recalculate and notify map bounds
-        const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-        if (this.onBoundsChange) {
-          this.onBoundsChange(bounds);
-        }
+        this.onBoundsChange?.();
       }),
       map(() => void 0)
     );
@@ -230,10 +219,7 @@ export class QuestAssignmentService {
           this._mapGrid.ensureNeighborsOf(hexes, toHex, size);
           this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
 
-          const bounds = this._mapGrid.adjustMapBounds(hexes, size);
-          if (this.onBoundsChange) {
-            this.onBoundsChange(bounds);
-          }
+          this.onBoundsChange?.();
         }),
         map(() => void 0)
       );

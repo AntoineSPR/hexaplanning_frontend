@@ -36,6 +36,10 @@ const ZOOM_MAX = 3;
 export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHost {
   @ViewChild('svgRoot', { static: false }) svgRoot?: ElementRef<SVGSVGElement>;
   @ViewChild('cameraGroup', { static: false }) cameraGroup?: ElementRef<SVGGElement>;
+  // The map's SVG fills the whole viewport behind the fixed bottom nav (it's position:fixed, so
+  // it doesn't take up its own layout space) - camera centering needs this to avoid framing
+  // content underneath it.
+  @ViewChild(MenuComponent, { read: ElementRef, static: false }) menuEl?: ElementRef<HTMLElement>;
   _questService = inject(QuestService);
   _questModalService = inject(QuestModalService);
   _mapGrid = inject(MapGridService);
@@ -81,6 +85,26 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     this.updateZoomExtent();
   }
 
+  // Recomputes the viewBox from the hexes' actual current extent and pan-compensates for any
+  // change - the single source of truth for "the hex set changed, resync bounds", used by every
+  // source of a bounds change (QuestAssignmentService's assign/unassign/move notifications, and
+  // HexDragController's own drag-time growth/shrink) instead of each writing mapWidth/mapHeight
+  // directly - see _lastOverflow above for why that matters.
+  syncMapBounds(): void {
+    const bounds = this._mapGrid.adjustMapBounds(this.hexes, this.size);
+    const overflow = this._mapGrid.computeOverflow(this.hexes, this.size);
+    this.mapWidth = bounds.width;
+    this.mapHeight = bounds.height;
+    const deltaX = (overflow.left - this._lastOverflow.left) * this.zoom;
+    const deltaY = (overflow.top - this._lastOverflow.top) * this.zoom;
+    if (deltaX !== 0 || deltaY !== 0) {
+      this.panX += deltaX;
+      this.panY += deltaY;
+      this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
+    }
+    this._lastOverflow = overflow;
+  }
+
   // Camera state for panning and zoom
   panX = 0;
   panY = 0;
@@ -88,6 +112,16 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   isPanning = false;
   suppressClicksUntil = 0; // timestamp to ignore clicks right after a drag
   private hadCameraMove = false; // track if any pan/zoom occurred during a gesture
+
+  // How far the hex set currently overflows past the viewBox's fixed [0,0] origin, as of the
+  // last time bounds/pan were synced - see syncMapBounds below. Centralized
+  // here (rather than tracked separately by HexDragController, or not tracked at all by
+  // QuestAssignmentService's bounds-change notifications) because *any* source of a resize needs
+  // to agree on what pan has already compensated for, or they end up fighting: a resize applied
+  // without knowing what the last one already accounted for either double-compensates or skips
+  // compensating entirely, which showed up as the camera getting wrenched around during drags
+  // even after the drag logic itself was made internally consistent.
+  private _lastOverflow = { left: 0, top: 0 };
 
   // Handlers to persist camera on refresh / tab hide (mobile-safe)
   private readonly _persistCamera = () => {
@@ -97,6 +131,18 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     if (document.visibilityState === 'hidden') {
       this._persistCamera();
     }
+  };
+  // Measures the bottom nav's actual rendered height and exposes it as --menu-height, which
+  // :host's padding-bottom (map.component.scss) reserves - makes the SVG's own rendered box
+  // genuinely stop above the menu instead of extending underneath it, so every screen<->map
+  // coordinate conversion (fit-scale, letterboxing, camera centering) is correct everywhere
+  // automatically rather than needing menu-awareness patched in one by one.
+  private readonly _updateMenuHeightVar = () => {
+    // <app-menu> itself has no intrinsic size - the actual fixed-position, sized element is the
+    // <nav class="menubar"> inside its template, so that's what needs measuring.
+    const menuBar = this.menuEl?.nativeElement.querySelector('.menubar');
+    const menuHeightPx = menuBar?.getBoundingClientRect().height ?? 0;
+    this._el.nativeElement.style.setProperty('--menu-height', `${menuHeightPx}px`);
   };
 
   get unassignedPendingQuests(): QuestUpdateDTO[] {
@@ -159,6 +205,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         });
         if (changed) {
           const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+          this.syncMapBounds();
           if (islandRestored) {
             this.resetCamera();
           }
@@ -174,6 +221,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
           next: () => {
             const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+            this.syncMapBounds();
             if (islandRestored) {
               this.resetCamera();
             }
@@ -200,10 +248,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
 
     // Register callback for bounds changes
-    this._questAssignment.setOnBoundsChange(bounds => {
-      this.mapWidth = bounds.width;
-      this.mapHeight = bounds.height;
-    });
+    this._questAssignment.setOnBoundsChange(() => this.syncMapBounds());
 
     // Register callback for when the starting island gets restored (map back to zero quests)
     this._questAssignment.setOnIslandRestored(() => this.resetCamera());
@@ -224,6 +269,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       next: () => {
         // After assignments load, trim any orphaned dynamic hexes and update bounds
         const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+        this.syncMapBounds();
         if (islandRestored) {
           this.resetCamera();
         }
@@ -250,6 +296,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   async ngAfterViewInit(): Promise<void> {
     if (!this.svgRoot || !this.cameraGroup) return;
+    this._updateMenuHeightVar();
+    window.addEventListener('resize', this._updateMenuHeightVar);
     const saved = this._cameraState.getState();
     this.zoomHandle = await this._svgZoom.attach(this.svgRoot.nativeElement, this.cameraGroup.nativeElement, {
       scaleMin: ZOOM_MIN,
@@ -291,11 +339,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     window.removeEventListener('beforeunload', this._persistCamera);
     window.removeEventListener('pagehide', this._persistCamera);
     document.removeEventListener('visibilitychange', this._onVisibilityChange);
+    window.removeEventListener('resize', this._updateMenuHeightVar);
   }
 
   //#region Generate Map
   generateHexes(): void {
-    this.hexes = this._mapGrid.generateHexes(this.size, this.mapHeight);
+    this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight);
   }
 
   getHexPoints(cx: number, cy: number, offset: number = 0): string {

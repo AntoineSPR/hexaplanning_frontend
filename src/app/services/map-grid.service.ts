@@ -3,9 +3,11 @@ import { Hex } from '../models/hex.model';
 
 @Injectable({ providedIn: 'root' })
 export class MapGridService {
-  // Stable origin for coordinate calculations
-  private originX = 45;
-  private originY = 245; // Default centered position
+  // Stable origin for coordinate calculations - overwritten with the actual centered position by
+  // generateHexes; these defaults just match the initial MAP_WIDTH/MAP_HEIGHT (290/490) in case
+  // anything reads them before generateHexes runs.
+  private originX = 145;
+  private originY = 245;
 
   // Six directions for neighbor calculation (axial coordinates)
   private readonly directions = [
@@ -37,8 +39,14 @@ export class MapGridService {
   }
 
   // Create the starting island's axial hexes
-  generateHexes(size: number, mapHeight: number): Hex[] {
-    // Set stable origin based on initial mapHeight
+  generateHexes(size: number, mapWidth: number, mapHeight: number): Hex[] {
+    // Center the origin hex in the initial viewBox on both axes - originX previously stayed at a
+    // hardcoded 45 regardless of mapWidth, while originY was correctly centered here, leaving the
+    // origin only 45 units from the left edge but 245 from the right (mapWidth=290). That meant
+    // dragging left ran out of room - triggering grid-growth's viewBox resize/rescale - far
+    // sooner than dragging right, right, up, or down, which showed up as auto-dezoom kicking in
+    // inconsistently depending on drag direction.
+    this.originX = mapWidth / 2;
     this.originY = mapHeight / 2;
     const hexes: Hex[] = [];
 
@@ -186,23 +194,112 @@ export class MapGridService {
     return this.cubeRound(qFrac, rFrac, sFrac);
   }
 
-  // If `target` is further than `maxDistance` hex-steps from `origin`, projects it back onto
-  // the boundary of that range instead - so a target that goes out of bounds "slides" along the
-  // edge of the allowed area rather than becoming unreachable.
-  clampToDistance(
-    origin: { q: number; r: number; s: number },
+  // Aggregate per-axis [min,max] bounds used by clampToDistanceOfAll: hex-distance disks are
+  // equivalent to axis-aligned bounding boxes in cube coordinates (distance = max(|dq|,|dr|,|ds|)
+  // for any two hexes, since q+r+s is always 0), so the intersection of several "distance <=
+  // maxDistance" disks is just the intersection of their per-axis intervals.
+  private computeSpreadBounds(
+    centers: { q: number; r: number; s: number }[],
+    maxDistance: number
+  ): { qMin: number; qMax: number; rMin: number; rMax: number; sMin: number; sMax: number } | null {
+    if (centers.length === 0) return null;
+
+    let qMin = -Infinity,
+      qMax = Infinity;
+    let rMin = -Infinity,
+      rMax = Infinity;
+    let sMin = -Infinity,
+      sMax = Infinity;
+    for (const c of centers) {
+      qMin = Math.max(qMin, c.q - maxDistance);
+      qMax = Math.min(qMax, c.q + maxDistance);
+      rMin = Math.max(rMin, c.r - maxDistance);
+      rMax = Math.min(rMax, c.r + maxDistance);
+      sMin = Math.max(sMin, c.s - maxDistance);
+      sMax = Math.min(sMax, c.s + maxDistance);
+    }
+    return { qMin, qMax, rMin, rMax, sMin, sMax };
+  }
+
+  // Clamps `target` to lie within the intersection of several "distance <= maxDistance" disks,
+  // each centered on a different point - computed directly here rather than by iteratively
+  // clamping toward whichever constraint is currently worst, which isn't guaranteed to converge
+  // to the same answer for two very close starting points and could make the boundary jump
+  // around inconsistently as the cursor moves smoothly across it.
+  clampToDistanceOfAll(
     target: { q: number; r: number; s: number },
+    centers: { q: number; r: number; s: number }[],
     maxDistance: number
   ): { q: number; r: number; s: number } {
-    const dq = target.q - origin.q;
-    const dr = target.r - origin.r;
-    const ds = target.s - origin.s;
-    const distance = (Math.abs(dq) + Math.abs(dr) + Math.abs(ds)) / 2;
-    if (distance <= maxDistance || distance === 0) {
-      return target;
+    const bounds = this.computeSpreadBounds(centers, maxDistance);
+    if (!bounds) return target;
+    const { qMin, qMax, rMin, rMax, sMin, sMax } = bounds;
+
+    // Project target onto {q+r+s=0} intersected with the box [qMin,qMax]x[rMin,rMax]x[sMin,sMax],
+    // via iterative even redistribution (a standard technique for projecting onto a box cut by a
+    // hyperplane): clamp whichever axes are still "free" (not yet pinned to a bound), then spread
+    // whatever sum-to-zero deficit that leaves across the still-free axes equally, and repeat.
+    // Each pass either finishes or permanently pins at least one more axis, so this always
+    // converges within 3 passes for 3 axes.
+    //
+    // An earlier version picked a single axis to re-derive from the other two, using clamp error
+    // as a tie-break. That is discontinuous: as the cursor crosses the line where two axes' clamp
+    // errors are equal, the chosen axis flips abruptly, producing a visible jump - reported as the
+    // dragged hex "teleporting" past a fixed point along a straight drag path. Spreading the
+    // deficit evenly instead of picking a single axis has no such tie to flip on.
+    let q = target.q;
+    let r = target.r;
+    let s = target.s;
+    const free = { q: true, r: true, s: true };
+
+    for (let pass = 0; pass < 3; pass++) {
+      let pinnedAny = false;
+      if (free.q) {
+        if (q < qMin) {
+          q = qMin;
+          free.q = false;
+          pinnedAny = true;
+        } else if (q > qMax) {
+          q = qMax;
+          free.q = false;
+          pinnedAny = true;
+        }
+      }
+      if (free.r) {
+        if (r < rMin) {
+          r = rMin;
+          free.r = false;
+          pinnedAny = true;
+        } else if (r > rMax) {
+          r = rMax;
+          free.r = false;
+          pinnedAny = true;
+        }
+      }
+      if (free.s) {
+        if (s < sMin) {
+          s = sMin;
+          free.s = false;
+          pinnedAny = true;
+        } else if (s > sMax) {
+          s = sMax;
+          free.s = false;
+          pinnedAny = true;
+        }
+      }
+
+      if (!pinnedAny) break;
+
+      const freeCount = (free.q ? 1 : 0) + (free.r ? 1 : 0) + (free.s ? 1 : 0);
+      if (freeCount === 0) break; // fully pinned; region is degenerate, accept the residual as-is
+
+      const share = -(q + r + s) / freeCount;
+      if (free.q) q += share;
+      if (free.r) r += share;
+      if (free.s) s += share;
     }
-    const scale = maxDistance / distance;
-    return this.cubeRound(origin.q + dq * scale, origin.r + dr * scale, origin.s + ds * scale);
+
+    return { q, r, s };
   }
 
   // Calculate bounding box and adjust map dimensions
@@ -223,6 +320,22 @@ export class MapGridService {
     const height = Math.max(490, Math.ceil(maxY - Math.min(0, minY)));
 
     return { width, height };
+  }
+
+  // How far (in hex-local units) the current hex set extends past the viewBox's fixed x=0/y=0
+  // origin - i.e. how much of adjustMapBounds' computed width/height is "to the left/above"
+  // that origin. The viewBox itself never moves, so whenever this changes, the camera's pan
+  // needs to shift by the same amount to keep on-screen content in the same place - otherwise a
+  // resize (e.g. the map growing during a drag) can silently push content outside the fixed
+  // [0,width]x[0,height] rectangle, where it gets clipped instead of just rescaled.
+  computeOverflow(hexes: Hex[], size: number): { left: number; top: number } {
+    if (hexes.length === 0) {
+      return { left: 0, top: 0 };
+    }
+    const pad = size + 10;
+    const minX = Math.min(...hexes.map(h => h.cx)) - pad;
+    const minY = Math.min(...hexes.map(h => h.cy)) - pad;
+    return { left: Math.max(0, -minX), top: Math.max(0, -minY) };
   }
 
   /**
