@@ -4,7 +4,7 @@ This repository is a Angular project template shipped with a base configuration 
 
 This project has been initialized from Angular CLI version 18.2.
 
-🔥 To properly understand the structure of this project, open the `package.json` file and take your time reviewing it.
+To properly understand the structure of this project, open the `package.json` file and take your time reviewing it.
 
 
 ## Branch protection rules
