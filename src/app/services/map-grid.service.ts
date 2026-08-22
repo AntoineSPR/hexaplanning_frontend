@@ -36,8 +36,8 @@ export class MapGridService {
     return coords;
   }
 
-  // Create the axial hexes by outward rings from 0..maxExpansion
-  generateHexes(maxExpansion: number, size: number, mapHeight: number): Hex[] {
+  // Create the starting island's axial hexes
+  generateHexes(size: number, mapHeight: number): Hex[] {
     // Set stable origin based on initial mapHeight
     this.originY = mapHeight / 2;
     const hexes: Hex[] = [];

@@ -190,6 +190,21 @@ $hex-clip-path: polygon(93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%, 50% 
   stroke-width: 3 !important;
 }
 
+// Shown when dropping here would push some other quest further than MAX_QUEST_SPREAD away.
+.hex-drop-invalid {
+  filter: drop-shadow(0 0 6px #e24c4c);
+  stroke: #e24c4c !important;
+  stroke-width: 3 !important;
+}
+
+// Persistent boundary indicator on empty hexes outside the currently reachable drag area (past
+// MAX_QUEST_SPREAD) - unlike hex-drop-invalid, which only flags the one hex directly under the
+// cursor, this tints every hex past the edge so the boundary itself is clear.
+.hex-out-of-bounds {
+  fill: #e24c4c !important;
+  opacity: 0.5;
+}
+
 .hex-landed {
   animation: hex-land-pulse 0.5s ease-out;
 }
