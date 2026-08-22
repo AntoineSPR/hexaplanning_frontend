@@ -621,23 +621,64 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`;
   }
 
+  // With no quests to frame, fitAllQuests falls back here - zooms in on the center hex instead
+  // of zooming out on the whole grid.
   resetCamera(): void {
-    this.centerCameraOnCenterHex();
+    this.centerCameraOnCenterHex(this._zoomMax);
     if (this.zoomHandle) {
       this.zoomHandle.setTransform(this.panX, this.panY, this.zoom);
     }
   }
 
-  centerCameraOnCenterHex(): void {
+  centerCameraOnCenterHex(zoom = 1): void {
     const centerHex = this.hexes.find(h => h.q === 0 && h.r === 0 && h.s === 0);
+    this.zoom = zoom;
     if (centerHex) {
-      this.panX = this.mapWidth / 2 - centerHex.cx;
-      this.panY = this.mapHeight / 2 - centerHex.cy;
+      this.panX = this.mapWidth / 2 - centerHex.cx * zoom;
+      this.panY = this.mapHeight / 2 - centerHex.cy * zoom;
     } else {
       this.panX = 0;
       this.panY = 0;
     }
     this.zoom = 1;
+  }
+
+  // Re-centers on a hex, keeping the current zoom (unlike centerCameraOnCenterHex/resetCamera).
+  // Called by HexDragController after a successful drop.
+  centerCameraOnHex(hex: Hex): void {
+    this.panX = this.mapWidth / 2 - hex.cx * this.zoom;
+    this.panY = this.mapHeight / 2 - hex.cy * this.zoom;
+    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
+  }
+
+  // Zooms/pans to frame every currently assigned quest at once - an escape hatch back to an
+  // overview when quests end up spread across a large map. Falls back to the default centered
+  // view when there's nothing assigned yet.
+  fitAllQuests(): void {
+    const assignedHexes = this.hexes.filter(h => h.quest);
+    if (assignedHexes.length === 0) {
+      this.resetCamera();
+      return;
+    }
+
+    const pad = this.size + 10;
+    const xs = assignedHexes.map(h => h.cx);
+    const ys = assignedHexes.map(h => h.cy);
+    const minX = Math.min(...xs) - pad;
+    const maxX = Math.max(...xs) + pad;
+    const minY = Math.min(...ys) - pad;
+    const maxY = Math.max(...ys) + pad;
+    const boxWidth = Math.max(maxX - minX, 1);
+    const boxHeight = Math.max(maxY - minY, 1);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), ZOOM_MIN), this._zoomMax);
+
+    this.zoom = newZoom;
+    this.panX = this.mapWidth / 2 - centerX * newZoom;
+    this.panY = this.mapHeight / 2 - centerY * newZoom;
+    this.zoomHandle?.setTransform(this.panX, this.panY, this.zoom);
   }
 
   // Re-centers on a hex, keeping the current zoom (unlike centerCameraOnCenterHex/resetCamera).
