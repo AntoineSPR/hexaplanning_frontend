@@ -514,6 +514,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return priorityQuest?.borderColor ?? '';
   }
 
+  // Glow matching the priority border's own color.
+  getHexBorderGlow(hex: Hex): string {
+    const color = this.getHexBorderColor(hex);
+    return color ? `drop-shadow(0 0 4px ${color})` : 'none';
+  }
+
   getPriorityKey(priorityValue: string): string {
     if (priorityValue && typeof priorityValue === 'string') {
       return priorityValue.toLowerCase();

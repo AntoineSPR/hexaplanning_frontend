@@ -69,6 +69,7 @@
         [attr.points]="getHexPoints(h.cx, h.cy, -2)"
         [attr.stroke]="getHexBorderColor(h)"
         [attr.stroke-width]="2"
+        [style.filter]="getHexBorderGlow(h)"
         fill="none"
         tabindex="-1"
         role="presentation"
@@ -144,7 +145,12 @@
         clip-path="url(#drag-preview-clip)"
         stroke="none" />
     }
-    <polygon [attr.points]="getHexPoints(size, size, -2)" [attr.stroke]="getHexBorderColor(draggingHex)" stroke-width="2" fill="none" />
+    <polygon
+      [attr.points]="getHexPoints(size, size, -2)"
+      [attr.stroke]="getHexBorderColor(draggingHex)"
+      stroke-width="2"
+      [style.filter]="getHexBorderGlow(draggingHex)"
+      fill="none" />
     <foreignObject [attr.width]="size * 2" [attr.height]="size * 2">
       <xhtml:div xmlns="http://www.w3.org/1999/xhtml" class="hex_text_container">
         <div class="hex_quest_title">{{ draggingHex.quest.title }}</div>

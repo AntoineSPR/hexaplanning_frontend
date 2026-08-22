@@ -203,6 +203,10 @@ input {
     width: 100%;
   }
 
+  #title {
+    text-align: center;
+  }
+
   .p-datepicker-panel,
   .p-datepicker-time-picker {
     &.p-datepicker-overflowing-bottom {
