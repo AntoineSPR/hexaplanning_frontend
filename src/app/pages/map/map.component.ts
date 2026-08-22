@@ -150,7 +150,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
         if (changed) {
-          this._mapGrid.removeOrphanedDynamicHexes(this.hexes);
+          const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+          if (islandRestored) {
+            this.resetCamera();
+          }
         }
       }
     });
@@ -161,7 +164,12 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         // Silent background refresh: no wipe/spinner, since the offline snapshot is already
         // showing something reasonable - just reconcile it with the server now that we can.
         this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
-          next: () => this._mapGrid.removeOrphanedDynamicHexes(this.hexes),
+          next: () => {
+            const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+            if (islandRestored) {
+              this.resetCamera();
+            }
+          },
           error: err => console.error('Failed to refresh assignments after reconnect:', err),
         });
       }
@@ -189,6 +197,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       this.mapHeight = bounds.height;
     });
 
+    // Register callback for when the starting island gets restored (map back to zero quests)
+    this._questAssignment.setOnIslandRestored(() => this.resetCamera());
+
     // Persist camera on refresh/navigation and when tab/app is backgrounded
     window.addEventListener('beforeunload', this._persistCamera);
     window.addEventListener('pagehide', this._persistCamera); // iOS Safari friendly
@@ -204,7 +215,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
       next: () => {
         // After assignments load, trim any orphaned dynamic hexes and update bounds
-        this._mapGrid.removeOrphanedDynamicHexes(this.hexes);
+        const { islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(this.hexes, this.size);
+        if (islandRestored) {
+          this.resetCamera();
+        }
       },
       complete: () => {
         // Trigger fade-out animation first

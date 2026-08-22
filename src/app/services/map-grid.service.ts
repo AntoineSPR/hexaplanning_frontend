@@ -17,26 +17,35 @@ export class MapGridService {
     { q: 0, r: 1, s: -1 },
   ];
 
-  // Create the axial hexes by outward rings from 0..maxExpansion
-  generateHexes(maxExpansion: number, size: number, mapHeight: number): Hex[] {
-    // Set stable origin based on initial mapHeight
-    this.originY = mapHeight / 2;
-    const hexes: Hex[] = [];
-
-    // Generate 7 hexes: 1 center (level 0) + 6 neighbors (level 1)
+  // Coordinates of the starting island: 1 center (level 0) + 6 neighbors (level 1)
+  private seedCoordinates(): { q: number; r: number; s: number }[] {
+    const coords: { q: number; r: number; s: number }[] = [];
     const initialMaxLevel = 1;
 
     for (let level = 0; level <= initialMaxLevel; level++) {
       for (let q = -level; q <= level; q++) {
         for (let r = Math.max(-level, -level - q); r <= Math.min(level, level - q); r++) {
           const s = -q - r;
-          const maxAbs = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
-          if (maxAbs === level) {
-            const { cx, cy } = this.hexToPixel(q, r, size);
-            hexes.push({ q, r, s, cx, cy, level, isInitial: true }); // Mark as initial
+          if (Math.max(Math.abs(q), Math.abs(r), Math.abs(s)) === level) {
+            coords.push({ q, r, s });
           }
         }
       }
+    }
+
+    return coords;
+  }
+
+  // Create the axial hexes by outward rings from 0..maxExpansion
+  generateHexes(maxExpansion: number, size: number, mapHeight: number): Hex[] {
+    // Set stable origin based on initial mapHeight
+    this.originY = mapHeight / 2;
+    const hexes: Hex[] = [];
+
+    for (const { q, r, s } of this.seedCoordinates()) {
+      const { cx, cy } = this.hexToPixel(q, r, size);
+      const level = Math.max(Math.abs(q), Math.abs(r), Math.abs(s));
+      hexes.push({ q, r, s, cx, cy, level, isInitial: true }); // Mark as initial
     }
 
     return hexes;
@@ -135,15 +144,34 @@ export class MapGridService {
   }
 
   /**
-   * Remove orphaned dynamic hexes that:
-   * - Are empty (no quest)
-   * - Were dynamically added (isInitial = false)
-   * - Are not neighbors of any assigned hex
-   * Note: Initial 7 hexes are always preserved
+   * Remove hexes that are empty and not neighbors of any assigned hex. The starting island
+   * (the initial 7 hexes) is only preserved while the map has no quests on it at all, so
+   * there's always something to click on a fresh map; once a first quest is placed anywhere,
+   * it's pruned like any other empty hex. If pruning brings the map back to zero quests (e.g.
+   * the only quest on the map gets removed), the starting island is restored so the map never
+   * ends up with nothing left to click.
    */
-  removeOrphanedDynamicHexes(hexes: Hex[]): number {
-    // Find all hexes with quests
+  removeOrphanedDynamicHexes(hexes: Hex[], size: number): { removedCount: number; islandRestored: boolean } {
     const assignedHexes = hexes.filter(h => h.quest);
+
+    if (assignedHexes.length === 0) {
+      const seedCoords = this.seedCoordinates();
+      // Whether the map is already exactly the starting island - if so, there's nothing to
+      // restore (avoids signalling a restore, e.g. an unwanted camera reset, on every call
+      // while the map is simply sitting empty rather than just having become empty).
+      const alreadyJustSeedIsland =
+        hexes.length === seedCoords.length &&
+        hexes.every(h => seedCoords.some(c => c.q === h.q && c.r === h.r && c.s === h.s));
+
+      // Reset to exactly the starting island: drop every other leftover hex (e.g. the ring
+      // that was protecting whatever hex just lost its last quest) so it doesn't sit there as
+      // a second, merged empty cluster next to the restored seed island.
+      hexes.length = 0;
+      for (const { q, r, s } of seedCoords) {
+        this.addHex(hexes, q, r, s, size).isInitial = true;
+      }
+      return { removedCount: 0, islandRestored: !alreadyJustSeedIsland };
+    }
 
     // Build set of all neighbors of assigned hexes
     const protectedCoords = new Set<string>();
@@ -162,10 +190,8 @@ export class MapGridService {
     // Count before cleanup
     const initialLength = hexes.length;
 
-    // Remove dynamic hexes that are not protected
+    // Remove hexes that are not protected
     const toKeep = hexes.filter(h => {
-      // Keep if initial
-      if (h.isInitial) return true;
       // Keep if has quest
       if (h.quest) return true;
       // Keep if neighbor of assigned hex
@@ -177,6 +203,6 @@ export class MapGridService {
     hexes.length = 0;
     hexes.push(...toKeep);
 
-    return initialLength - hexes.length; // Number removed
+    return { removedCount: initialLength - hexes.length, islandRestored: false };
   }
 }

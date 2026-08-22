@@ -25,6 +25,9 @@ export class QuestAssignmentService {
 
   // Callback to notify map component of bounds changes
   private onBoundsChange?: (bounds: { width: number; height: number }) => void;
+  // Callback to notify map component that the starting island was just restored (the map went
+  // back to zero quests), so it can re-center the camera on it.
+  private onIslandRestored?: () => void;
 
   // Snapshot of the last successfully resolved assignments, so a load triggered while offline
   // (e.g. navigating back to the map, or a full page reload) can still show the map read-only
@@ -54,6 +57,10 @@ export class QuestAssignmentService {
 
   setOnBoundsChange(callback: (bounds: { width: number; height: number }) => void): void {
     this.onBoundsChange = callback;
+  }
+
+  setOnIslandRestored(callback: () => void): void {
+    this.onIslandRestored = callback;
   }
 
   loadAssignmentsIntoHexes(hexes: Hex[], size: number): Observable<void> {
@@ -140,6 +147,9 @@ export class QuestAssignmentService {
 
         // Expand the map by adding neighbors around the assigned hex
         this._mapGrid.ensureNeighborsOf(hexes, selectedHex, size);
+        // Once a first quest is on the map, the starting island's leftover empty hexes are
+        // no longer needed and get pruned like any other empty hex.
+        this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
 
         // Recalculate and notify map bounds
         const bounds = this._mapGrid.adjustMapBounds(hexes, size);
@@ -158,17 +168,24 @@ export class QuestAssignmentService {
         subscriber.complete();
       });
     }
-    const questToUpdate = { ...hex.quest } as QuestUpdateDTO;
+    // Deleting the HexAssignment row (below) is enough to unassign the quest - the relationship
+    // is owned entirely by that table (FK on HexAssignment.QuestId), so there's nothing on the
+    // Quest entity itself that needs saving. An earlier version of this also PUT the quest back
+    // unchanged, which was both unnecessary and risky: the backend's quest-update endpoint sets
+    // the quest's HexAssignment navigation from whatever the request body carries, so echoing
+    // back a stale/cached quest object here could resurrect the assignment that was just deleted.
     return this._hexService.deleteAssignment(hex.q, hex.r, hex.s).pipe(
-      switchMap(() => this._questService.updateQuest(questToUpdate)),
       tap(() => {
         hex.quest = undefined;
         hex.hexAssignmentId = undefined;
         this._questService.getAllUnassignedPendingQuests().subscribe();
 
         // Clean up orphaned dynamic hexes
-        const removed = this._mapGrid.removeOrphanedDynamicHexes(hexes);
-        console.log(`Removed ${removed} orphaned dynamic hexes`);
+        const { removedCount, islandRestored } = this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
+        console.log(`Removed ${removedCount} orphaned dynamic hexes`);
+        if (islandRestored) {
+          this.onIslandRestored?.();
+        }
 
         // Recalculate and notify map bounds
         const bounds = this._mapGrid.adjustMapBounds(hexes, size);
@@ -211,7 +228,7 @@ export class QuestAssignmentService {
           fromHex.hexAssignmentId = undefined;
 
           this._mapGrid.ensureNeighborsOf(hexes, toHex, size);
-          this._mapGrid.removeOrphanedDynamicHexes(hexes);
+          this._mapGrid.removeOrphanedDynamicHexes(hexes, size);
 
           const bounds = this._mapGrid.adjustMapBounds(hexes, size);
           if (this.onBoundsChange) {
