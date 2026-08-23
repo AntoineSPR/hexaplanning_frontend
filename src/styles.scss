@@ -13,6 +13,7 @@
   --tertiary-priority-bg-color: #5e5b5b;
   --progress-bar-color: #39008474;
   --base-hex-color: #1d1e1e;
+  --light-hex-color: #2a2a2a;
   --shadow-gradient: rgba(184, 127, 237, 0.25);
   --shadow-gradient-light: rgba(184, 127, 237, 0.15);
   --neon-glow-color: #7c3aed;
@@ -21,7 +22,7 @@
   --focus-color: var(--neon-glow-color);
   --error-color: #e24c4c;
   --error-shadow: rgba(226, 76, 76, 0.3);
-  --input-bg: var(--base-hex-color);
+  --input-bg: var(--light-hex-color);
   --input-text-color: var(--text-color);
   font-family: 'Inter', sans-serif;
 }
