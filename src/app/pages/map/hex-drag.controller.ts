@@ -91,6 +91,26 @@ export class HexDragController {
   // "ready to drag" color cue in the template.
   armedHex: Hex | null = null;
 
+  // Tracks total active pointers across the whole map (see onGlobalPointerDown/Up, wired to the
+  // svg root) so a second finger arriving mid-gesture can abort whatever single-pointer drag/pan
+  // state the first finger started - this only ever tracks one pointer, so left alone it fights
+  // d3-zoom's own pinch handling for that same finger.
+  private activePointerCount = 0;
+
+  onGlobalPointerDown(): void {
+    this.activePointerCount++;
+    if (this.activePointerCount > 1 && this.pointerDrag) {
+      this.pointerDrag = null;
+      this.armedHex = null;
+      this.draggingHex = null;
+      this.dragOverHex = null;
+    }
+  }
+
+  onGlobalPointerUp(): void {
+    this.activePointerCount = Math.max(0, this.activePointerCount - 1);
+  }
+
   onPointerDown(hex: Hex, event: PointerEvent): void {
     if (!hex.quest || event.button !== 0 || this.connectivity.isOffline()) {
       return;
