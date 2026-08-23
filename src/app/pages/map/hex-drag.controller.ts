@@ -22,6 +22,10 @@ export interface HexDragHost {
   readonly size: number;
   readonly mapWidth: number;
   readonly mapHeight: number;
+  // Extent of the generated rectangular grid itself (bigger than mapWidth/mapHeight - see
+  // MapComponent.gridWidth/gridHeight) - what drag targets get clamped to below.
+  readonly gridWidth: number;
+  readonly gridHeight: number;
   panX: number;
   panY: number;
   readonly zoom: number;
@@ -36,15 +40,14 @@ export interface HexDragHost {
 // and delegates its template-facing drag methods straight through to this controller.
 //
 // The map is a fixed-size, fully pre-generated grid (see MapGridService.generateHexes), so
-// dragging just clamps the target to the map's fixed radius (mapRadius) and follows the cursor -
-// no grid growth or camera auto-panning to worry about.
+// dragging just clamps the target to the map's fixed rectangular bounds (host.gridWidth/
+// gridHeight) and follows the cursor.
 export class HexDragController {
   constructor(
     private readonly host: HexDragHost,
     private readonly mapGrid: MapGridService,
     private readonly questAssignment: QuestAssignmentService,
-    private readonly connectivity: ConnectivityService,
-    private readonly mapRadius: number
+    private readonly connectivity: ConnectivityService
   ) {}
 
   // Quest drag-and-drop state
@@ -273,7 +276,7 @@ export class HexDragController {
 
     // Rather than only flagging the drop as invalid once released, slide the target back to the
     // edge of the map so the cursor can't drag it into territory that doesn't exist.
-    const target = this.mapGrid.clampToDistance(rawTarget, { q: 0, r: 0, s: 0 }, this.mapRadius);
+    const target = this.mapGrid.clampToRectangle(rawTarget, this.host.gridWidth, this.host.gridHeight, this.host.size);
     this.dragTargetClamped = target.q !== rawTarget.q || target.r !== rawTarget.r || target.s !== rawTarget.s;
 
     if (this.dragTargetClamped) {
@@ -328,7 +331,16 @@ export class HexDragController {
   private clientPointToHexLocal(clientX: number, clientY: number): { x: number; y: number } | null {
     if (!this.host.svgRoot) return null;
     const rect = this.host.svgRoot.nativeElement.getBoundingClientRect();
-    return this.mapGrid.screenToHexLocal(clientX, clientY, rect, this.host.mapWidth, this.host.mapHeight, this.host.panX, this.host.panY, this.host.zoom);
+    return this.mapGrid.screenToHexLocal(
+      clientX,
+      clientY,
+      rect,
+      this.host.mapWidth,
+      this.host.mapHeight,
+      this.host.panX,
+      this.host.panY,
+      this.host.zoom
+    );
   }
 
   // Inverse of clientPointToHexLocal: converts hex-local coordinates back into a screen point,
