@@ -134,6 +134,40 @@
   user-select: none;
 }
 
+// Drop a dragged quest here to cancel instead of assigning it - see overCancelZone in
+// hex-drag.controller.ts. Fixed bottom-center: thumb-reachable during a one-handed drag, clear
+// of the top-right .camera-controls. z-index below .quest-drag-overlay's 2000 so the floating
+// preview still renders on top while it's dragged over this.
+.drag-cancel-zone {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--menu-height, 0px) + 24px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 50%;
+  background-color: var(--background-color);
+  border: 1px solid var(--neon-glow-color);
+  box-shadow: 0 0 6px var(--neon-glow-color);
+  color: var(--neon-glow-color);
+  font-weight: bold;
+  z-index: 1500;
+  transition: all 0.15s ease;
+
+  i {
+    font-size: 20px;
+  }
+
+  &.active {
+    box-shadow:
+      0 0 10px var(--neon-glow-color),
+      0 0 20px var(--neon-glow-shadow);
+    transform: translateX(-50%) scale(1.1);
+  }
+}
+
 .hex_text_wrapper {
   pointer-events: none;
 }

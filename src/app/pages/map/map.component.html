@@ -244,6 +244,14 @@
   <div class="zoom-indicator">{{ (zoom * 100).toFixed(0) }}%</div>
 </div>
 
+<!-- Drag a quest here to put it back instead of dropping it on a hex - see HexDragController's
+   overCancelZone/isPointOverCancelZone. -->
+@if (draggingHex) {
+  <div #cancelZone class="drag-cancel-zone" [class.active]="overCancelZone">
+    <i class="pi pi-undo"></i>
+  </div>
+}
+
 <p-dialog class="select-dialog" [(visible)]="dialogVisible" [modal]="true" [dismissableMask]="true">
   <ng-template #header>
     @if (selectedHex) {

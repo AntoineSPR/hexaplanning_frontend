@@ -30,6 +30,9 @@ export interface HexDragHost {
   panY: number;
   readonly zoom: number;
   readonly svgRoot?: ElementRef<SVGSVGElement>;
+  // Drop target that cancels the current drag instead of moving the quest - see
+  // HexDragController.isPointOverCancelZone.
+  readonly cancelZone?: ElementRef<HTMLElement>;
   readonly zoomHandle?: SvgZoomHandle;
   suppressClicksUntil: number;
   centerCameraOnHex(hex: Hex): void;
@@ -91,6 +94,10 @@ export class HexDragController {
   // "ready to drag" color cue in the template.
   armedHex: Hex | null = null;
 
+  // Whether the pointer's true position is currently over the cancel zone - drives its hover
+  // styling and, on release, aborts the drag instead of resolving dragOverHex.
+  overCancelZone = false;
+
   // Tracks total active pointers across the whole map (see onGlobalPointerDown/Up, wired to the
   // svg root) so a second finger arriving mid-gesture can abort whatever single-pointer drag/pan
   // state the first finger started - this only ever tracks one pointer, so left alone it fights
@@ -104,6 +111,7 @@ export class HexDragController {
       this.armedHex = null;
       this.draggingHex = null;
       this.dragOverHex = null;
+      this.overCancelZone = false;
     }
   }
 
@@ -210,6 +218,15 @@ export class HexDragController {
     // A real drag just occurred: ignore the click that follows pointerup
     this.host.suppressClicksUntil = Date.now() + 250;
 
+    if (this.overCancelZone) {
+      // Released over the cancel zone: abort unconditionally, regardless of what dragOverHex
+      // may have resolved to before the pointer reached it.
+      this.overCancelZone = false;
+      this.draggingHex = null;
+      this.dragOverHex = null;
+      return;
+    }
+
     if (target && target !== hex) {
       // Keep the origin hex dimmed and the preview visible until the move actually resolves,
       // instead of clearing draggingHex immediately - otherwise the origin hex snaps back to
@@ -243,6 +260,7 @@ export class HexDragController {
     this.armedHex = null;
     this.draggingHex = null;
     this.dragOverHex = null;
+    this.overCancelZone = false;
   }
 
   isLandedHex(hex: Hex): boolean {
@@ -281,6 +299,15 @@ export class HexDragController {
     }
     const clientX = this.pointerClientX;
     const clientY = this.pointerClientY;
+
+    this.overCancelZone = this.isPointOverCancelZone(clientX, clientY);
+    if (this.overCancelZone) {
+      this.dragOverHex = null;
+      this.dragTargetClamped = false;
+      this.dragPreviewX = clientX;
+      this.dragPreviewY = clientY;
+      return;
+    }
 
     const local = this.clientPointToHexLocal(clientX, clientY);
     if (!local) {
@@ -378,6 +405,12 @@ export class HexDragController {
       x: offsetX + viewBoxX * fitScale,
       y: offsetY + viewBoxY * fitScale,
     };
+  }
+
+  private isPointOverCancelZone(clientX: number, clientY: number): boolean {
+    const rect = this.host.cancelZone?.nativeElement.getBoundingClientRect();
+    if (!rect || !rect.width || !rect.height) return false;
+    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
   }
 
   private findHexAtPoint(x: number, y: number): Hex | null {

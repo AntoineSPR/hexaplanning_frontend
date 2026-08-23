@@ -38,6 +38,7 @@ const GRID_HEIGHT = 725;
 export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHost {
   @ViewChild('svgRoot', { static: false }) svgRoot?: ElementRef<SVGSVGElement>;
   @ViewChild('cameraGroup', { static: false }) cameraGroup?: ElementRef<SVGGElement>;
+  @ViewChild('cancelZone', { static: false }) cancelZone?: ElementRef<HTMLElement>;
   // Used to measure the fixed bottom nav's actual height (see _updateMenuHeightVar).
   @ViewChild(MenuComponent, { read: ElementRef, static: false }) menuEl?: ElementRef<HTMLElement>;
   _questService = inject(QuestService);
@@ -194,6 +195,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
   get armedHex(): Hex | null {
     return this._drag.armedHex;
+  }
+  get overCancelZone(): boolean {
+    return this._drag.overCancelZone;
   }
 
   // Set when the initial assignment load had to fall back to the offline snapshot; tells the
