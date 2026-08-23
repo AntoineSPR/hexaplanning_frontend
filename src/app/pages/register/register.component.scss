@@ -4,24 +4,23 @@
   align-items: center;
   min-height: 100vh;
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--background-color);
 }
 
 .register-card {
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   overflow: hidden;
 
   ::ng-deep .p-card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--dark-theme-color);
+    color: var(--text-color);
     text-align: center;
     font-size: 1.5rem;
     font-weight: 600;
     padding: 2rem;
-    border-bottom: none;
+    border-bottom: 1px solid var(--neon-glow-color);
   }
 
   ::ng-deep .p-card-body {
@@ -57,18 +56,18 @@
   ::ng-deep input {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--dark-theme-color);
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
 
     &:focus {
-      border-color: var(--focus-color);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--light-theme-color);
+      box-shadow: 0 0 0 3px var(--shadow-gradient-light);
     }
 
     &.p-invalid {
-      border-color: #e24c4c;
+      border-color: var(--error-color);
     }
   }
 
@@ -78,18 +77,18 @@
     .p-password-input {
       width: 100%;
       padding: 0.75rem;
-      border: 2px solid #e0e0e0;
+      border: 2px solid var(--dark-theme-color);
       border-radius: 8px;
       font-size: 1rem;
       transition: all 0.3s ease;
 
       &:focus {
-        border-color: var(--focus-color);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--light-theme-color);
+        box-shadow: 0 0 0 3px var(--shadow-gradient-light);
       }
 
       &.p-invalid {
-        border-color: #e24c4c;
+        border-color: var(--error-color);
       }
     }
   }
@@ -104,7 +103,7 @@
     ::ng-deep .p-button {
       width: 100%;
       padding: 0.75rem 1.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(90deg, var(--theme-color), var(--neon-glow-color));
       border: none;
       border-radius: 8px;
       font-size: 1rem;
@@ -112,9 +111,7 @@
       transition: all 0.3s ease;
 
       &:hover:not(:disabled) {
-        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 0 12px var(--neon-glow-color);
       }
 
       &:disabled {
@@ -129,22 +126,22 @@
   text-align: center;
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--dark-theme-color);
 
   p {
     margin: 0;
-    color: gray;
+    color: var(--text-color);
     font-size: 0.9rem;
   }
 
   .login-link {
-    color: #667eea;
+    color: var(--light-theme-color);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 
     &:hover {
-      color: #5a6fd8;
+      color: var(--ligher-theme-color);
       text-decoration: underline;
     }
   }
@@ -159,18 +156,18 @@
   .checkbox-label {
     font-size: 0.9rem;
     line-height: 1.4;
-    color: gray;
+    color: var(--text-color);
     cursor: pointer;
     margin: 0;
 
     .terms-link {
-      color: #667eea;
+      color: var(--light-theme-color);
       text-decoration: underline;
       font-weight: 600;
       transition: color 0.3s ease;
 
       &:hover {
-        color: #5a6fd8;
+        color: var(--ligher-theme-color);
       }
     }
   }
@@ -181,34 +178,34 @@
     .p-checkbox-box {
       width: 18px;
       height: 18px;
-      border: 2px solid #d1d5db;
+      border: 2px solid var(--dark-theme-color);
       border-radius: 4px;
       transition: all 0.3s ease;
 
       &.p-highlight {
-        background: #667eea;
-        border-color: #667eea;
+        background: var(--light-theme-color);
+        border-color: var(--light-theme-color);
       }
 
       &.p-invalid {
-        border-color: #e24c4c;
+        border-color: var(--error-color);
       }
 
       .p-checkbox-icon {
-        color: white;
+        color: var(--dark-theme-color);
         font-size: 12px;
       }
     }
 
     &:hover .p-checkbox-box {
-      border-color: #667eea;
+      border-color: var(--light-theme-color);
     }
   }
 }
 
 .requirements-list {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
   font-style: italic;
 }
@@ -220,14 +217,9 @@
 }
 
 .p-error {
-  color: #e24c4c;
+  color: var(--error-color);
   font-size: 0.8rem;
   margin-top: 0.25rem;
-}
-
-// Toast positioning
-::ng-deep .p-toast {
-  z-index: 9999;
 }
 
 // Responsive adjustments

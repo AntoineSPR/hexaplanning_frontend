@@ -91,7 +91,7 @@
 }
 
 .camera-reset-btn {
-  background-color: var(--theme-color);
+  background-color: var(--neon-glow-color);
   color: white;
   border: none;
   border-radius: 50%;
@@ -101,11 +101,15 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 6px var(--neon-glow-color);
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: var(--dark-theme-color);
+    background-color: var(--light-theme-color);
+    color: var(--dark-theme-color);
+    box-shadow:
+      0 0 8px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
     transform: scale(1.1);
   }
 
@@ -316,11 +320,11 @@ path {
     padding-bottom: 0;
     margin-top: 0;
     background-color: var(--background-color);
-    border: 1px solid var(--light-theme-color);
+    border: 1px solid var(--neon-glow-color);
     border-radius: 0.5rem 0.5rem 0 0;
     box-shadow:
-      0 0 6px var(--light-theme-color),
-      0 0 16px var(--shadow-gradient);
+      0 0 6px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
   }
   .p-dialog-header-actions {
     display: none;
@@ -375,10 +379,10 @@ path {
     display: flex;
     justify-content: space-between;
     background-color: var(--background-color);
-    border: 1px solid var(--light-theme-color);
+    border: 1px solid var(--neon-glow-color);
     border-radius: 0 0 0.5rem 0.5rem;
     box-shadow:
-      0 0 6px var(--light-theme-color),
-      0 0 16px var(--shadow-gradient);
+      0 0 6px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
   }
 }

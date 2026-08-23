@@ -6,7 +6,6 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
 import { UserService } from '../../services/user.service';
 import { ResetPasswordDTO } from '../../models/resetPasswordDTO.model';
 import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from '../../validators/password.validators';
@@ -14,8 +13,7 @@ import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage }
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, PasswordModule, ToastModule],
-  providers: [MessageService],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, PasswordModule],
   templateUrl: './reset-password.component.html',
   styleUrl: './reset-password.component.scss',
 })
