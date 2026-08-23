@@ -294,6 +294,13 @@ path {
   cursor: grabbing !important;
 }
 
+// Suppresses every drop-shadow filter inside the map for the duration of an active camera
+// gesture (pan, wheel-zoom, or pinch-zoom - is-panning is toggled for all three, see
+// togglePanning/onStart/onEnd in map.component.ts) : re-rendering many filtered SVG elements is expensive on mobile.
+:host(.is-panning) #hexmap * {
+  filter: none !important;
+}
+
 ::ng-deep .select-dialog {
   .p-dialog {
     width: 80%;
