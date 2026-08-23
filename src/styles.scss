@@ -12,10 +12,17 @@
   --secondary-priority-bg-color: #d3d3d3;
   --tertiary-priority-bg-color: #5e5b5b;
   --progress-bar-color: #39008474;
-  --focus-color: #667eea;
   --base-hex-color: #1d1e1e;
   --shadow-gradient: rgba(184, 127, 237, 0.25);
   --shadow-gradient-light: rgba(184, 127, 237, 0.15);
+  --neon-glow-color: #7c3aed;
+  --neon-glow-shadow: rgba(124, 58, 237, 0.3);
+  --neon-glow-shadow-light: rgba(124, 58, 237, 0.15);
+  --focus-color: var(--neon-glow-color);
+  --error-color: #e24c4c;
+  --error-shadow: rgba(226, 76, 76, 0.3);
+  --input-bg: var(--base-hex-color);
+  --input-text-color: var(--text-color);
   font-family: 'Inter', sans-serif;
 }
 
@@ -78,11 +85,11 @@ app-root {
   .p-dialog-content {
     background-color: var(--background-color) !important;
     color: var(--text-color) !important;
-    border: 1px solid var(--light-theme-color) !important;
+    border: 1px solid var(--neon-glow-color) !important;
     padding: 0.5rem !important;
     box-shadow:
-      0 0 6px var(--light-theme-color),
-      0 0 16px var(--shadow-gradient);
+      0 0 6px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
     border-radius: 0.5rem;
   }
 
@@ -101,16 +108,16 @@ app-root {
   padding: 1.5rem;
   border-radius: 4px;
   background-color: var(--background-color);
-  border: 1px solid var(--light-theme-color);
+  border: 1px solid var(--neon-glow-color);
   box-shadow:
-    0 0 6px var(--light-theme-color),
-    0 0 16px var(--shadow-gradientS);
+    0 0 6px var(--neon-glow-color),
+    0 0 16px var(--neon-glow-shadow);
   color: var(--text-color);
 
   .cancel-confirmation-button,
   .accept-confirmation-button {
-    border: 1px solid var(--light-theme-color);
-    box-shadow: 0 0 6px var(--light-theme-color);
+    border: 1px solid var(--neon-glow-color);
+    box-shadow: 0 0 6px var(--neon-glow-color);
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
@@ -123,25 +130,24 @@ app-root {
 
   .cancel-confirmation-button {
     background: transparent;
-    color: var(--light-theme-color);
+    color: var(--neon-glow-color);
 
     &:hover {
-      background-color: var(--shadow-gradient-light);
+      background-color: var(--neon-glow-shadow-light);
       box-shadow:
-        0 0 8px var(--light-theme-color),
-        0 0 16px var(--shadow-gradient);
+        0 0 8px var(--neon-glow-color),
+        0 0 16px var(--neon-glow-shadow);
     }
   }
 
   .accept-confirmation-button {
-    background: var(--light-theme-color);
-    color: var(--dark-theme-color);
+    background: var(--neon-glow-color);
+    color: var(--text-color);
 
     &:hover {
-      background: var(--ligher-theme-color);
       box-shadow:
-        0 0 8px var(--light-theme-color),
-        0 0 16px var(--shadow-gradient);
+        0 0 10px var(--neon-glow-color),
+        0 0 18px var(--neon-glow-shadow);
     }
   }
 }
@@ -179,6 +185,14 @@ h1 {
   font-variant: small-caps;
 }
 
+.page-title {
+  font-variant: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--neon-glow-color);
+}
+
 @keyframes pop-in {
   0% {
     transform: scale(0.5);
@@ -206,11 +220,22 @@ h1 {
   max-width: 300px;
   margin: auto;
   font-weight: bold;
-  background-color: var(--progress-bar-color);
-  color: white;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border: 1px solid var(--neon-glow-color);
+  box-shadow:
+    0 0 6px var(--neon-glow-color),
+    0 0 16px var(--neon-glow-shadow);
   border-radius: 8px;
   animation: pop-in 300ms ease-out;
   pointer-events: none;
+
+  &.p-toast-message-error {
+    border-color: var(--error-color);
+    box-shadow:
+      0 0 6px var(--error-color),
+      0 0 16px var(--error-shadow);
+  }
 
   .p-toast-message-content {
     display: flex;
@@ -268,9 +293,9 @@ input.quest-checkbox[type='checkbox'] {
   width: 2.75rem;
   height: 2.75rem;
   background: transparent;
-  color: var(--light-theme-color);
-  border: 1px solid var(--light-theme-color);
-  box-shadow: 0 0 6px var(--light-theme-color);
+  color: var(--neon-glow-color);
+  border: 1px solid var(--neon-glow-color);
+  box-shadow: 0 0 6px var(--neon-glow-color);
   border-radius: 18%;
   display: flex;
   align-items: center;
@@ -283,10 +308,10 @@ input.quest-checkbox[type='checkbox'] {
   }
 
   &:hover {
-    background-color: var(--shadow-gradient-light);
+    background-color: var(--neon-glow-shadow-light);
     box-shadow:
-      0 0 8px var(--light-theme-color),
-      0 0 16px var(--shadow-gradient);
+      0 0 8px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
     transform: scale(1.1);
   }
 
@@ -295,7 +320,7 @@ input.quest-checkbox[type='checkbox'] {
   }
 
   &:focus-visible {
-    outline-color: var(--light-theme-color) !important;
+    outline-color: var(--neon-glow-color) !important;
     box-shadow: 0 0 0 2px var(--focus-color) !important;
   }
 
@@ -327,8 +352,8 @@ input.quest-checkbox[type='checkbox'] {
   display: flex;
   align-items: center;
   padding: 10px;
-  border: 1px solid var(--light-theme-color);
-  box-shadow: 0 0 5px var(--light-theme-color);
+  border: 1px solid var(--neon-glow-color);
+  box-shadow: 0 0 5px var(--neon-glow-color);
   border-radius: 8px;
   background-color: var(--background-color);
   cursor: pointer;
@@ -336,8 +361,8 @@ input.quest-checkbox[type='checkbox'] {
 
   &:hover {
     box-shadow:
-      0 0 8px var(--light-theme-color),
-      0 0 16px var(--shadow-gradient);
+      0 0 8px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
   }
 
   .priority-icon {

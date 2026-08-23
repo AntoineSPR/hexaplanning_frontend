@@ -1,11 +1,11 @@
 <main>
-  <h1>Paramètres</h1>
+  <h1 class="page-title">Paramètres</h1>
 
-  <div class="settings-section">
-    <label class="settings-toggle" for="glow-toggle">
-      <input id="glow-toggle" type="checkbox" class="quest-checkbox" [checked]="glowEnabled()" (change)="onGlowToggle($event)" />
-      Effets lumineux sur la carte
-    </label>
+  <div class="settings-card">
+    <div class="settings-row">
+      <label class="settings-label" for="glow-toggle">Effets lumineux sur la carte</label>
+      <p-toggleswitch id="glow-toggle" [ngModel]="glowEnabled()" (onChange)="onGlowToggle($event.checked)" ariaLabel="Activer les effets lumineux sur la carte" />
+    </div>
     <p class="settings-hint">
       @if (glowOverridden()) {
         Choix mémorisé pour cet appareil.
@@ -21,6 +21,7 @@
       label="Modifier le mot de passe"
       (click)="openPasswordModal()"
       variant="outlined"
+      icon="pi pi-lock"
       [disabled]="_connectivity.isOffline()"
       aria-label="Ouvrir le formulaire de modification de mot de passe" />
     <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" aria-label="Se déconnecter de l'application" />
@@ -41,8 +42,6 @@
   <ng-template pTemplate="header">
     <h3 id="password-modal-title">Modifier le mot de passe</h3>
   </ng-template>
-
-  <p-toast></p-toast>
 
   <div class="password-container">
     <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPasswordChange()" class="password-form" role="form">

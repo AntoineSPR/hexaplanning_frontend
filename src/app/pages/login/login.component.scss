@@ -4,24 +4,23 @@
   align-items: center;
   min-height: 100vh;
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--background-color);
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   overflow: hidden;
 
   ::ng-deep .p-card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--dark-theme-color);
+    color: var(--text-color);
     text-align: center;
     font-size: 1.5rem;
     font-weight: 600;
     padding: 2rem;
-    border-bottom: none;
+    border-bottom: 1px solid var(--neon-glow-color);
   }
 
   ::ng-deep .p-card-body {
@@ -47,18 +46,18 @@
   ::ng-deep input {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--dark-theme-color);
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
 
     &:focus {
-      border-color: var(--focus-color);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--light-theme-color);
+      box-shadow: 0 0 0 3px var(--shadow-gradient-light);
     }
 
     &.p-invalid {
-      border-color: #e24c4c;
+      border-color: var(--error-color);
     }
   }
 
@@ -68,18 +67,18 @@
     .p-password-input {
       width: 100%;
       padding: 0.75rem;
-      border: 2px solid #e0e0e0;
+      border: 2px solid var(--dark-theme-color);
       border-radius: 8px;
       font-size: 1rem;
       transition: all 0.3s ease;
 
       &:focus {
-        border-color: var(--focus-color);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--light-theme-color);
+        box-shadow: 0 0 0 3px var(--shadow-gradient-light);
       }
 
       &.p-invalid {
-        border-color: #e24c4c;
+        border-color: var(--error-color);
       }
     }
   }
@@ -97,7 +96,7 @@
     ::ng-deep .p-button {
       width: 100%;
       padding: 0.75rem 1.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(90deg, var(--theme-color), var(--neon-glow-color));
       border: none;
       border-radius: 8px;
       font-size: 1rem;
@@ -105,9 +104,7 @@
       transition: all 0.3s ease;
 
       &:hover:not(:disabled) {
-        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 0 12px var(--neon-glow-color);
       }
 
       &:disabled {
@@ -119,12 +116,12 @@
 
   .forgot-password-button {
     ::ng-deep .p-button {
-      color: #667eea;
+      color: var(--neon-glow-color);
       font-size: 0.9rem;
       padding: 0.5rem;
 
       &:hover {
-        color: #5a6fd8;
+        color: var(--light-theme-color);
         background: transparent;
       }
     }
@@ -135,36 +132,31 @@
   text-align: center;
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--dark-theme-color);
 
   p {
     margin: 0;
-    color: gray;
+    color: var(--text-color);
     font-size: 0.9rem;
   }
 
   .register-link {
-    color: #667eea;
+    color: var(--light-theme-color);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 
     &:hover {
-      color: #5a6fd8;
+      color: var(--ligher-theme-color);
       text-decoration: underline;
     }
   }
 }
 
 .p-error {
-  color: #e24c4c;
+  color: var(--error-color);
   font-size: 0.8rem;
   margin-top: 0.25rem;
-}
-
-// Toast positioning
-::ng-deep .p-toast {
-  z-index: 9999;
 }
 
 // Forgot Password Modal Styling
@@ -172,15 +164,19 @@
   width: 90vw;
   max-width: 450px;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid var(--neon-glow-color) !important;
+  box-shadow:
+    0 0 6px var(--neon-glow-color),
+    0 0 16px var(--neon-glow-shadow) !important;
 
   .p-dialog-header {
     display: block !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-color);
+    color: var(--text-color);
     text-align: center;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    border: none;
+    box-shadow: none;
 
     h3 {
       margin: 0;
@@ -197,15 +193,58 @@
   }
 
   .p-dialog-content {
+    background: var(--background-color);
+    color: var(--text-color);
     padding: 2rem;
+    border: none !important;
     box-shadow: none !important;
   }
 
   .p-dialog-footer {
+    background: var(--background-color);
     padding: 1.5rem 2rem 2rem 2rem;
-    border-top: none !important;
+    border: none;
+    box-shadow: none;
     gap: 1rem;
     justify-content: flex-end;
+
+    // Same outline (cancel) / filled (confirm) pair as the settings page's change-password
+    // dialog (see settings-page.component.scss) and .cancel-confirmation-button/
+    // .accept-confirmation-button in styles.scss.
+    .p-button {
+      border: 1px solid var(--neon-glow-color);
+      box-shadow: 0 0 6px var(--neon-glow-color);
+      border-radius: 6px;
+      transition: all 0.2s ease;
+
+      &.p-button-text {
+        background: transparent;
+        color: var(--text-color);
+
+        &:hover:not(:disabled) {
+          background-color: var(--neon-glow-shadow-light);
+          box-shadow:
+            0 0 8px var(--neon-glow-color),
+            0 0 16px var(--neon-glow-shadow);
+        }
+      }
+
+      &:not(.p-button-text) {
+        background: var(--neon-glow-color);
+        color: var(--text-color);
+
+        &:hover:not(:disabled) {
+          box-shadow:
+            0 0 10px var(--neon-glow-color),
+            0 0 18px var(--neon-glow-shadow);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        box-shadow: none;
+      }
+    }
   }
 }
 
@@ -216,7 +255,7 @@
 
 .forgot-password-description {
   margin-bottom: 1.5rem;
-  color: #666;
+  color: var(--text-color);
   font-size: 0.95rem;
   line-height: 1.5;
 }

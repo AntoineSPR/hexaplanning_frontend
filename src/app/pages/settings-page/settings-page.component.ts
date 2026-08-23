@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -10,7 +10,7 @@ import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ChangePasswordDTO } from 'src/app/models/changePasswordDTO.model';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from 'src/app/validators/password.validators';
@@ -22,6 +22,7 @@ import { GlowPreferenceService } from 'src/app/services/glow-preference.service'
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     MenuComponent,
     ButtonModule,
@@ -29,10 +30,14 @@ import { GlowPreferenceService } from 'src/app/services/glow-preference.service'
     CardModule,
     InputTextModule,
     PasswordModule,
-    ToastModule,
+    ToggleSwitchModule,
     ConfirmDialogModule,
   ],
-  providers: [MessageService, ConfirmationService],
+  // Only ConfirmationService is scoped to this page (paired with its own local
+  // <p-confirmdialog>) - MessageService is intentionally NOT provided here, so toasts fall
+  // through to the app-wide instance/styling in app.component.ts/.html instead of an unstyled
+  // local one (see the same change on login/register/reset-password).
+  providers: [ConfirmationService],
   templateUrl: './settings-page.component.html',
   styleUrls: ['./settings-page.component.scss'],
 })
@@ -164,8 +169,8 @@ export class SettingsPageComponent {
     return !!(field?.touched && field?.errors);
   }
 
-  onGlowToggle(event: Event): void {
-    this._glowPreference.setOverride((event.target as HTMLInputElement).checked);
+  onGlowToggle(checked: boolean): void {
+    this._glowPreference.setOverride(checked);
   }
 
   resetGlowToAuto(): void {

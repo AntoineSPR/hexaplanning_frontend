@@ -7,7 +7,6 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
 import { CheckboxModule } from 'primeng/checkbox';
 import { UserService } from '../../services/user.service';
 import { UserCreateDTO } from '../../models/userCreateDTO.model';
@@ -28,8 +27,7 @@ function noSpaceValidator() {
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, InputTextModule, PasswordModule, ToastModule, CheckboxModule],
-  providers: [MessageService],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, InputTextModule, PasswordModule, CheckboxModule],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
 })

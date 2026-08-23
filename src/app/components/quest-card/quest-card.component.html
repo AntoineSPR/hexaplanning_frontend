@@ -5,9 +5,9 @@
   (keydown.enter)="openDetails()"
   [style.background]="
     isInProgress
-      ? 'linear-gradient(to right, var(--progress-bar-color) ' + advancement + '%, transparent ' + advancement + '%)'
+      ? 'linear-gradient(to right, var(--theme-color) 0%, var(--light-theme-color) ' + advancement + '%, transparent ' + advancement + '%)'
       : isCompleted
-      ? 'var(--progress-bar-color)'
+      ? 'linear-gradient(to right, var(--theme-color), var(--light-theme-color))'
       : null
   ">
   <!-- Case à cocher -->

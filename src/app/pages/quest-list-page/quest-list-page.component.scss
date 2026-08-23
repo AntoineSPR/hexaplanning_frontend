@@ -28,11 +28,12 @@
       align-items: stretch;
 
       .p-tabmenuitem {
-        border: 1px solid var(--light-theme-color);
-        box-shadow: 0 0 5px var(--light-theme-color);
+        border: 1px solid var(--neon-glow-color);
+        box-shadow: 0 0 5px var(--neon-glow-color);
         border-radius: 8px;
         border-bottom: none;
         flex: 1 1 auto;
+        transition: all 0.2s ease;
 
         .p-menuitem-link {
           background-color: transparent;
@@ -44,7 +45,10 @@
         }
       }
       .p-tabmenuitem-active {
-        background-color: var(--theme-color);
+        background-color: var(--neon-glow-color);
+        box-shadow:
+          0 0 8px var(--neon-glow-color),
+          0 0 16px var(--neon-glow-shadow);
       }
     }
   }

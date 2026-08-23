@@ -8,7 +8,6 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { UserService } from '../../services/user.service';
 import { ForgotPasswordDTO } from '../../models/forgotPasswordDTO.model';
@@ -18,8 +17,7 @@ const MIN_PASSWORD_LENGTH = 6;
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, InputTextModule, PasswordModule, ToastModule, DialogModule],
-  providers: [MessageService],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonModule, CardModule, InputTextModule, PasswordModule, DialogModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
