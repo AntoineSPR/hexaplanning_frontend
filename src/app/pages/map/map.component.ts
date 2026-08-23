@@ -527,6 +527,17 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
   }
 
+  // Fires for every pointerdown/up on the map (bubbled from the svg root), not just on hex drag
+  // surfaces - lets HexDragController tell a second pinch finger apart from a real single-finger
+  // gesture. See HexDragController.onGlobalPointerDown.
+  onMapPointerDown(): void {
+    this._drag.onGlobalPointerDown();
+  }
+
+  onMapPointerUp(): void {
+    this._drag.onGlobalPointerUp();
+  }
+
   // Drag gesture handling lives in HexDragController - see hex-drag.controller.ts.
   onHexPointerDown(hex: Hex, event: PointerEvent): void {
     this._drag.onPointerDown(hex, event);
