@@ -15,6 +15,7 @@ import { Hex } from 'src/app/models/hex.model';
 import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 import { ConnectivityService } from 'src/app/services/connectivity.service';
 import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
+import { PriorityIconComponent } from '../../components/priority-icon/priority-icon.component';
 import { HexDragController, HexDragHost } from './hex-drag.controller';
 
 const MAP_WIDTH = 290;
@@ -29,7 +30,7 @@ const GRID_HEIGHT = 725;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule],
+  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule, PriorityIconComponent],
   providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -618,28 +619,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return color ? `drop-shadow(0 0 4px ${color})` : 'none';
   }
 
-  getPriorityKey(priorityValue: string): string {
-    if (priorityValue && typeof priorityValue === 'string') {
-      return priorityValue.toLowerCase();
-    }
-    return 'primary';
-  }
-
-  getPriorityIcon(quest: QuestUpdateDTO): string {
+  getPriorityColor(quest: QuestUpdateDTO): string {
     const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
-    return priority?.icon ?? 'primary';
-  }
-
-  getPriorityImagePath(quest: QuestUpdateDTO): string {
-    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
-    const priorityKey = this.getPriorityKey(priority?.icon ?? 'primary');
-    return `/icons/${priorityKey}.png`;
+    return priority?.borderColor || priority?.color || 'var(--theme-color)';
   }
 
   getPriorityAltText(quest: QuestUpdateDTO): string {
     const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
-    const priorityKey = this.getPriorityKey(priority?.name ?? 'quete principale');
-    return priorityKey;
+    return priority?.name ?? 'Icône de priorité';
   }
 
   selectQuest(quest: QuestUpdateDTO): void {

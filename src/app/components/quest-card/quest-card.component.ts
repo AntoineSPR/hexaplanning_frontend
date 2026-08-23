@@ -5,11 +5,12 @@ import { CommonModule } from '@angular/common';
 import { QuestModalService } from '../../services/quest-modal.service';
 import { QuestService } from '../../services/quest.service';
 import { MessageService } from 'primeng/api';
+import { PriorityIconComponent } from '../priority-icon/priority-icon.component';
 
 @Component({
   selector: 'app-quest-card',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, PriorityIconComponent],
   templateUrl: './quest-card.component.html',
   styleUrls: ['./quest-card.component.scss'],
 })
@@ -56,21 +57,9 @@ export class QuestCardComponent implements OnInit {
     }
   }
 
-  /** Récupération de la clé associée à la priorité */
-  getPriorityKey(priorityValue: string): string {
-    if (priorityValue && typeof priorityValue === 'string') {
-      return priorityValue.toLowerCase();
-    }
-    return 'primary';
-  }
-
-  get priorityKey(): string {
+  get priorityColor(): string {
     const priority = this._questService.priorities()?.find(p => p.id === this.quest.priorityId);
-    return priority?.icon ?? 'Inconnu';
-  }
-
-  get priorityImagePath(): string {
-    return `/icons/${this.priorityKey}.png`;
+    return priority?.borderColor || priority?.color || 'var(--theme-color)';
   }
 
   get priorityAltText(): string {
@@ -88,5 +77,9 @@ export class QuestCardComponent implements OnInit {
 
   get isCompleted(): boolean {
     return this.quest?.statusId === '6662dfc1-9c40-4d78-806f-34cd22e07023';
+  }
+
+  get isOnHold(): boolean {
+    return this.quest?.statusId === this._questService.statusOnHoldId;
   }
 }
