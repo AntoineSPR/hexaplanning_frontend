@@ -15,6 +15,7 @@ import { ChangePasswordDTO } from 'src/app/models/changePasswordDTO.model';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from 'src/app/validators/password.validators';
 import { ConnectivityService } from 'src/app/services/connectivity.service';
+import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -42,8 +43,15 @@ export class SettingsPageComponent {
   private readonly _messageService = inject(MessageService);
   private readonly _confirmationService = inject(ConfirmationService);
   readonly _connectivity = inject(ConnectivityService);
+  private readonly _glowPreference = inject(GlowPreferenceService);
 
   user = this._userService.user;
+
+  // Whether the map's glow effects are currently on for this device, and whether that's an
+  // explicit per-device choice (localStorage) or just the auto-detected default - see
+  // GlowPreferenceService.
+  glowEnabled = this._glowPreference.enabled;
+  glowOverridden = this._glowPreference.isOverridden;
 
   passwordModalVisible = false;
   passwordForm: FormGroup;
@@ -154,6 +162,14 @@ export class SettingsPageComponent {
   get hasConfirmPasswordError(): boolean {
     const field = this.passwordForm.get('confirmPassword');
     return !!(field?.touched && field?.errors);
+  }
+
+  onGlowToggle(event: Event): void {
+    this._glowPreference.setOverride((event.target as HTMLInputElement).checked);
+  }
+
+  resetGlowToAuto(): void {
+    this._glowPreference.setOverride(null);
   }
 
   logout(): void {
