@@ -1,6 +1,7 @@
 <button
   type="button"
   class="quest-card"
+  [class.on-hold]="isOnHold"
   (click)="openDetails()"
   (keydown.enter)="openDetails()"
   [style.background]="
@@ -24,5 +25,9 @@
     {{ quest.title }}
   </span>
 
-  <img class="priority-icon" [src]="priorityImagePath" [alt]="priorityAltText" [class]="'priority-' + priorityKey" />
+  @if (isOnHold) {
+    <i class="pi pi-pause on-hold-icon" aria-label="En attente" title="En attente"></i>
+  }
+
+  <app-priority-icon [color]="priorityColor" [alt]="priorityAltText" [size]="32" />
 </button>

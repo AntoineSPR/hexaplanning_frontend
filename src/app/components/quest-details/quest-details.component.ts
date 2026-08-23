@@ -30,6 +30,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { Router } from '@angular/router';
 import { ConnectivityService } from '../../services/connectivity.service';
+import { PriorityIconComponent } from '../priority-icon/priority-icon.component';
 
 @Component({
   selector: 'app-quest-details',
@@ -49,6 +50,7 @@ import { ConnectivityService } from '../../services/connectivity.service';
     InputNumberModule,
     SliderModule,
     ProgressBarModule,
+    PriorityIconComponent,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
@@ -386,8 +388,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     return this.statusOptions?.find(s => s.id === this.quest.statusId)?.color ?? '#f7f6f6ff';
   }
 
-  get priorityColor() {
-    return this.priorityOptions?.find(p => p.id === this.quest.priorityId)?.color ?? '#f7f6f6ff';
+  get priorityColor(): string {
+    const priority = this.priorityOptions?.find(p => p.id === this.quest.priorityId);
+    return priority?.borderColor || priority?.color || 'var(--theme-color)';
   }
 
   getStatusName(statusId: string): string {

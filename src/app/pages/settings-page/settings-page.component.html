@@ -4,9 +4,13 @@
   <div class="settings-card">
     <div class="settings-row">
       <label class="settings-label" for="glow-toggle">Effets lumineux sur la carte</label>
-      <p-toggleswitch id="glow-toggle" [ngModel]="glowEnabled()" (onChange)="onGlowToggle($event.checked)" ariaLabel="Activer les effets lumineux sur la carte" />
+      <p-toggleswitch
+        id="glow-toggle"
+        [ngModel]="glowEnabled()"
+        (onChange)="onGlowToggle($event.checked)"
+        ariaLabel="Activer les effets lumineux sur la carte" />
     </div>
-    <p class="settings-hint">Désactivés par défaut pour les appareils mobiles.</p>
+    <p class="settings-hint">Affecte la performance - désactivé par défaut pour les appareils mobiles.</p>
   </div>
 
   <div class="settings-buttons">
@@ -51,9 +55,9 @@
           class="form-input"
           [feedback]="false"></p-password>
         @if (hasCurrentPasswordError) {
-        <small class="p-error" id="currentPassword-error" role="alert" aria-live="polite">
-          {{ currentPasswordError }}
-        </small>
+          <small class="p-error" id="currentPassword-error" role="alert" aria-live="polite">
+            {{ currentPasswordError }}
+          </small>
         }
       </div>
 
@@ -77,9 +81,9 @@
           mediumLabel="Moyen"
           strongLabel="Fort"></p-password>
         @if (hasNewPasswordError) {
-        <small class="p-error" id="newPassword-error" role="alert" aria-live="polite">
-          {{ newPasswordError }}
-        </small>
+          <small class="p-error" id="newPassword-error" role="alert" aria-live="polite">
+            {{ newPasswordError }}
+          </small>
         }
       </div>
 
@@ -96,9 +100,9 @@
           autocomplete="new-password"
           class="form-input"></p-password>
         @if (hasConfirmPasswordError) {
-        <small class="p-error" id="confirmPassword-error" role="alert" aria-live="polite">
-          {{ confirmPasswordError }}
-        </small>
+          <small class="p-error" id="confirmPassword-error" role="alert" aria-live="polite">
+            {{ confirmPasswordError }}
+          </small>
         }
       </div>
     </form>

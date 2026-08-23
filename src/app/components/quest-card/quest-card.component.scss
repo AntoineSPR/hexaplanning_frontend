@@ -8,6 +8,10 @@
     text-decoration: line-through;
   }
 
+  &.on-hold {
+    border-style: dashed;
+  }
+
   .quest-title {
     flex-grow: 1;
     margin-left: 10px;
@@ -18,13 +22,20 @@
     z-index: 1;
   }
 
+  .on-hold-icon {
+    color: var(--neon-glow-color);
+    margin-right: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
   select {
     margin-left: 10px;
   }
 
   // Ensure text and elements are readable over the progress background
   .quest-checkbox,
-  .priority-icon {
+  app-priority-icon {
     position: relative;
     z-index: 1;
   }
