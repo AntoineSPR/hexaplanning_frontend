@@ -23,7 +23,7 @@
       </linearGradient>
     }
     <!-- Only occupied hexes need a clip path (for the progress arc below). -->
-    @for (h of hexes; track getHexClipId(h)) {
+    @for (h of visibleHexes; track getHexClipId(h)) {
       @if (h.quest) {
         <clipPath [attr.id]="getHexClipId(h)">
           <polygon [attr.points]="getHexPoints(h.cx, h.cy)" />
@@ -39,7 +39,7 @@
 
   <!-- Camera transform group -->
   <g #cameraGroup [attr.transform]="getCameraTransform()">
-    @for (h of hexes; track getHexClipId(h)) {
+    @for (h of visibleHexes; track getHexClipId(h)) {
       <!-- Base hexagon -->
       <polygon
         [attr.points]="getHexPoints(h.cx, h.cy)"

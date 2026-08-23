@@ -19,9 +19,11 @@ import { HexDragController, HexDragHost } from './hex-drag.controller';
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
 const HEX_SIZE = 40;
-const MAP_RADIUS = 18;
-const ZOOM_MIN = 1;
 const MAX_ZOOM_HEXES_VISIBLE = 3;
+// Fixed size of the generated grid, in the same pixel-equivalent units as HEX_SIZE. mapWidth/mapHeight (the viewBox) still adapts to
+// match the container's aspect ratio, but that only changes how much of this fixed grid is visible at once, never the grid itself.
+const GRID_WIDTH = 1650;
+const GRID_HEIGHT = 725;
 
 @Component({
   selector: 'app-map',
@@ -52,19 +54,37 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   // Drives the drag-and-drop gesture; this component implements HexDragHost so it can read/
   // drive camera and hex state. See hex-drag.controller.ts.
-  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity, MAP_RADIUS);
+  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity);
 
+  // Full grid data - every hex that exists, whether currently on-screen or not. Assignment
+  // loading, the quest-sync/delete effects, fitAllQuests's off-screen bounding-box scan, and
+  // HexDragController (via HexDragHost.hexes) all need to see the whole thing.
   hexes: Hex[] = [];
+  // Subset of `hexes` actually rendered by the template - see recomputeVisibleHexes. Keeping this
+  // separate from `hexes` is what lets the template's @for stay cheap regardless of total grid
+  // size: a ~1000-hex grid (many with a <foreignObject> each) rendered unconditionally was the
+  // main remaining cause of mobile jank once per-frame camera-gesture overhead was fixed.
+  visibleHexes: Hex[] = [];
   size = HEX_SIZE;
 
-  // viewBox size, fixed once matchMapDimensionsToContainer sizes it to fit the whole grid.
+  // viewBox size, fixed once matchMapDimensionsToContainer sizes it to match the container.
   mapWidth = MAP_WIDTH;
   mapHeight = MAP_HEIGHT;
+
+  // Extent of the generated rectangular grid itself (see MapGridService.coordinatesInRectangle) -
+  // fixed, never derived from the viewport (see GRID_WIDTH/GRID_HEIGHT above). Public (not
+  // private) because HexDragController reads these live via HexDragHost.
+  readonly gridWidth = GRID_WIDTH;
+  readonly gridHeight = GRID_HEIGHT;
 
   // Max zoom-in level, derived from mapWidth/mapHeight in matchMapDimensionsToContainer so
   // "fully zoomed in" always shows about MAX_ZOOM_HEXES_VISIBLE hexes. This value is just the
   // fallback used before that runs.
   private _zoomMax = 3;
+  // Min zoom-out level, derived in matchMapDimensionsToContainer so the whole fixed-size grid
+  // always fits the viewport at maximum zoom-out, regardless of device/screen size. Fallback
+  // value used before that runs.
+  private _zoomMin = 1;
 
   // Camera state for panning and zoom
   panX = 0;
@@ -88,7 +108,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     const local = this._mapGrid.screenToHexLocal(event.clientX, event.clientY, rect, this.mapWidth, this.mapHeight, this.panX, this.panY, this.zoom);
     if (!local) return;
     const hovered = this._mapGrid.pixelToAxial(local.x, local.y, this.size);
-    if (!this.isWithinMapRadius(hovered)) {
+    if (!this.isWithinGrid(hovered)) {
       this.cursorLightVisible = false;
       return;
     }
@@ -98,7 +118,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     this.cursorLightY = center.cy;
     this.cursorLightNeighbors = this._mapGrid
       .neighborsOf(hovered, this.size)
-      .filter(n => this.isWithinMapRadius(n))
+      .filter(n => this.isWithinGrid(n))
       .map(n => {
         const dx = n.cx - center.cx;
         const dy = n.cy - center.cy;
@@ -117,8 +137,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     this.cursorLightVisible = true;
   }
 
-  private isWithinMapRadius(c: { q: number; r: number; s: number }): boolean {
-    return Math.max(Math.abs(c.q), Math.abs(c.r), Math.abs(c.s)) <= MAP_RADIUS;
+  private isWithinGrid(c: { q: number; r: number; s: number }): boolean {
+    return this._mapGrid.isWithinRectangle(c, this.gridWidth, this.gridHeight, this.size);
   }
 
   onMapPointerLeave(): void {
@@ -208,6 +228,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         // Silent background refresh: no wipe/spinner, since the offline snapshot is already
         // showing something reasonable - just reconcile it with the server now that we can.
         this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
+          // A legacy assignment outside the pre-generated grid gets synthesized onto `hexes` via
+          // MapGridService.addHex - re-derive visibleHexes in case that landed on-screen.
+          complete: () => this.recomputeVisibleHexes(),
           error: err => console.error('Failed to refresh assignments after reconnect:', err),
         });
       }
@@ -243,6 +266,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
     this._questAssignment.loadAssignmentsIntoHexes(this.hexes, this.size).subscribe({
       complete: () => {
+        // A legacy assignment outside the pre-generated grid gets synthesized onto `hexes` via
+        // MapGridService.addHex - re-derive visibleHexes in case that landed on-screen.
+        this.recomputeVisibleHexes();
         // Trigger fade-out animation first
         this.isFadingOut = true;
         // Then remove from DOM after animation completes
@@ -254,6 +280,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         // Without this, a failed request (e.g. an expired session) left isLoading stuck true
         // forever, since `complete` never fires after `error`.
         console.error('Failed to load assignments:', err);
+        this.recomputeVisibleHexes();
         this.isFadingOut = true;
         setTimeout(() => {
           this.isLoading = false;
@@ -267,6 +294,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     this._updateMenuHeightVar();
     window.addEventListener('resize', this._updateMenuHeightVar);
     this.matchMapDimensionsToContainer();
+    this.recomputeVisibleHexes();
     const saved = this._cameraState.getState();
     // The zoom/pan gesture itself (and the d3-zoom listeners it registers) is run outside
     // Angular's zone: d3 already applies the transform straight to the DOM (see
@@ -275,7 +303,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     // mobile. Only onStart/onEnd (once per gesture, not once per frame) re-enter the zone.
     this.zoomHandle = await this._ngZone.runOutsideAngular(() =>
       this._svgZoom.attach(this.svgRoot!.nativeElement, this.cameraGroup!.nativeElement, {
-        scaleMin: ZOOM_MIN,
+        scaleMin: this._zoomMin,
         scaleMax: this._zoomMax,
         onStart: () => {
           this._ngZone.run(() => {
@@ -292,6 +320,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
             // Persisted once per gesture (here) rather than on every transform tick, which used
             // to mean a synchronous localStorage write on every frame of a drag/pinch.
             this._cameraState.saveState(this.panX, this.panY, this.zoom);
+            this.recomputeVisibleHexes();
           });
         },
         onTransform: t => {
@@ -326,34 +355,34 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   //#region Generate Map
   generateHexes(): void {
-    this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight, MAP_RADIUS);
+    this.hexes = this._mapGrid.generateHexes(this.size, this.mapWidth, this.mapHeight, this.gridWidth, this.gridHeight);
   }
 
-  // Resizes the viewBox to fit the whole grid and match the container's aspect ratio (avoiding
-  // pillarboxing under preserveAspectRatio="xMidYMid meet"), then re-centers the origin. Called
-  // once from ngAfterViewInit, once the container is measurable. Rewrites this.hexes in place
-  // rather than reassigning it - ngOnInit already handed this array's reference to
+  // Resizes the viewBox to match the container's aspect ratio (avoiding pillarboxing under
+  // preserveAspectRatio="xMidYMid meet") and re-centers the origin - the fixed-size grid itself
+  // (GRID_WIDTH/GRID_HEIGHT) doesn't change, only how much of it this viewport shows at once.
+  // Called once from ngAfterViewInit, once the container is measurable. Rewrites this.hexes in
+  // place rather than reassigning it - ngOnInit already handed this array's reference to
   // loadAssignmentsIntoHexes, whose response resolves later and writes into whatever array it
   // was given.
   private matchMapDimensionsToContainer(): void {
     const rect = this.svgRoot?.nativeElement.getBoundingClientRect();
     if (!rect || !rect.width || !rect.height) return;
 
-    // The grid's span is independent of the placeholder origin it was generated with.
-    const bounds = this._mapGrid.computeContentBounds(this.hexes, this.size);
-    const naturalWidth = bounds.maxX - bounds.minX;
-    const naturalHeight = bounds.maxY - bounds.minY;
-
-    // Never shrink below the grid's natural size; expand whichever dimension matches the
-    // container's aspect ratio.
+    // Never shrink below the baseline size; expand whichever dimension matches the container's
+    // aspect ratio.
     const aspect = rect.width / rect.height;
-    const width = Math.round(Math.max(naturalWidth, naturalHeight * aspect));
-    const height = Math.round(Math.max(naturalHeight, naturalWidth / aspect));
+    const width = Math.round(Math.max(MAP_WIDTH, MAP_HEIGHT * aspect));
+    const height = Math.round(Math.max(MAP_HEIGHT, MAP_WIDTH / aspect));
 
     this.mapWidth = width;
     this.mapHeight = height;
     this._zoomMax = Math.min(width, height) / (this.size * 2 * MAX_ZOOM_HEXES_VISIBLE);
-    const freshHexes = this._mapGrid.generateHexes(this.size, width, height, MAP_RADIUS);
+    // The zoom level at which the whole fixed-size grid exactly fits this viewport - lets the
+    // user always zoom out far enough to see the entire map, on any device.
+    this._zoomMin = Math.min(width / this.gridWidth, height / this.gridHeight);
+    this._zoomMax = Math.max(this._zoomMax, this._zoomMin);
+    const freshHexes = this._mapGrid.generateHexes(this.size, width, height, this.gridWidth, this.gridHeight);
     this.hexes.length = 0;
     this.hexes.push(...freshHexes);
     if (!this._cameraState.getState()) {
@@ -635,6 +664,21 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`;
   }
 
+  // Recomputes `visibleHexes` from the current pan/zoom: the world-space rect the viewport
+  // currently shows, padded by a full viewport's width/height on each side (a 3x3-tile buffer)
+  // so a single drag/pinch gesture has room to move before the next recompute - which only
+  // happens once per gesture (see the onEnd handler in ngAfterViewInit), not per frame.
+  private recomputeVisibleHexes(): void {
+    const marginX = this.mapWidth / this.zoom;
+    const marginY = this.mapHeight / this.zoom;
+    const worldMinX = -this.panX / this.zoom - marginX;
+    const worldMaxX = (this.mapWidth - this.panX) / this.zoom + marginX;
+    const worldMinY = -this.panY / this.zoom - marginY;
+    const worldMaxY = (this.mapHeight - this.panY) / this.zoom + marginY;
+
+    this.visibleHexes = this.hexes.filter(h => h.cx >= worldMinX && h.cx <= worldMaxX && h.cy >= worldMinY && h.cy <= worldMaxY);
+  }
+
   // With no quests to frame, fitAllQuests falls back here - zooms in on the center hex instead
   // of zooming out on the whole grid.
   resetCamera(): void {
@@ -686,7 +730,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
 
-    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), ZOOM_MIN), this._zoomMax);
+    const newZoom = Math.min(Math.max(Math.min(this.mapWidth / boxWidth, this.mapHeight / boxHeight), this._zoomMin), this._zoomMax);
 
     this.zoom = newZoom;
     this.panX = this.mapWidth / 2 - centerX * newZoom;
