@@ -52,11 +52,7 @@ export class SettingsPageComponent {
 
   user = this._userService.user;
 
-  // Whether the map's glow effects are currently on for this device, and whether that's an
-  // explicit per-device choice (localStorage) or just the auto-detected default - see
-  // GlowPreferenceService.
   glowEnabled = this._glowPreference.enabled;
-  glowOverridden = this._glowPreference.isOverridden;
 
   passwordModalVisible = false;
   passwordForm: FormGroup;
@@ -171,10 +167,6 @@ export class SettingsPageComponent {
 
   onGlowToggle(checked: boolean): void {
     this._glowPreference.setOverride(checked);
-  }
-
-  resetGlowToAuto(): void {
-    this._glowPreference.setOverride(null);
   }
 
   logout(): void {

@@ -6,14 +6,7 @@
       <label class="settings-label" for="glow-toggle">Effets lumineux sur la carte</label>
       <p-toggleswitch id="glow-toggle" [ngModel]="glowEnabled()" (onChange)="onGlowToggle($event.checked)" ariaLabel="Activer les effets lumineux sur la carte" />
     </div>
-    <p class="settings-hint">
-      @if (glowOverridden()) {
-        Choix mémorisé pour cet appareil.
-        <button type="button" class="link-button" (click)="resetGlowToAuto()">Revenir au réglage automatique</button>
-      } @else {
-        Réglé automatiquement pour cet appareil ({{ glowEnabled() ? 'activé' : 'désactivé' }}).
-      }
-    </p>
+    <p class="settings-hint">Désactivés par défaut pour les appareils mobiles.</p>
   </div>
 
   <div class="settings-buttons">
