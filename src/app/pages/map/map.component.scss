@@ -294,10 +294,15 @@ path {
   cursor: grabbing !important;
 }
 
-// Suppresses every drop-shadow filter inside the map for the duration of an active camera
-// gesture (pan, wheel-zoom, or pinch-zoom - is-panning is toggled for all three, see
-// togglePanning/onStart/onEnd in map.component.ts) : re-rendering many filtered SVG elements is expensive on mobile.
-:host(.is-panning) #hexmap * {
+// Suppresses every drop-shadow filter inside the map when glow is disabled (see
+// GlowPreferenceService / [class.no-glow] in map.component.html) - re-rendering many filtered
+// SVG elements on every pan/zoom frame is expensive on mobile GPUs, so glow defaults to off on
+// touch-primary devices. Unlike the earlier attempt at suppressing filters only during an active
+// gesture (timing-sensitive, and didn't cover every gesture path - e.g. panning by touching a
+// quest hex directly, which bypasses the camera's own start/end events), this is a flat, always-
+// on toggle: no glow at all until the user opts back in from settings, so there's nothing to
+// desync.
+#hexmap.no-glow * {
   filter: none !important;
 }
 

@@ -21,6 +21,39 @@ h1 {
   justify-content: center;
 }
 
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 2rem;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.settings-hint {
+  font-size: 0.8rem;
+  color: gray;
+  text-align: center;
+  margin: 0;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--light-theme-color);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
 // Password Modal Styling
 ::ng-deep .p-dialog {
   width: 90vw;

@@ -31,12 +31,17 @@ export class SvgZoomService {
 
     const behavior: any = zoom()
       .scaleExtent([opts.scaleMin ?? 0.5, opts.scaleMax ?? 3])
-      // Disable double-click zoom. Let an occupied hex's drag surface own click-drag gestures
-      // (empty hexes have no drag capability, so panning still works over them) - but always
-      // allow the wheel, since scroll-to-zoom doesn't conflict with the quest long-press-drag.
+      // Disable double-click zoom. Let an occupied hex's drag surface own single-finger/mouse
+      // click-drag gestures (empty hexes have no drag capability, so panning still works over
+      // them) - but always allow the wheel, since scroll-to-zoom doesn't conflict with the quest
+      // long-press-drag, and always allow a second touch point: hex-drag.controller.ts's
+      // long-press-drag only ever tracks one pointer, so two fingers down unambiguously means a
+      // pinch-to-zoom, not a quest pickup - without this, a pinch starting with both fingers on
+      // occupied hexes (easy to hit once the grid is mostly full of quests) couldn't zoom at all.
       .filter((ev: any) => {
         if (ev.type === 'dblclick') return false;
         if (ev.type === 'wheel') return true;
+        if (ev.touches && ev.touches.length > 1) return true;
         return !(ev.target as Element)?.closest?.('.hex-drag-surface');
       })
       .on('start', () => opts.onStart && opts.onStart())

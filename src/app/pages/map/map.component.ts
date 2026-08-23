@@ -14,6 +14,7 @@ import { CameraStateService } from 'src/app/services/camera-state.service';
 import { Hex } from 'src/app/models/hex.model';
 import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 import { ConnectivityService } from 'src/app/services/connectivity.service';
+import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
 import { HexDragController, HexDragHost } from './hex-drag.controller';
 
 const MAP_WIDTH = 290;
@@ -47,6 +48,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   _svgZoom = inject(SvgZoomService);
   _connectivity = inject(ConnectivityService);
   _ngZone = inject(NgZone);
+  _glowPreference = inject(GlowPreferenceService);
 
   zoomHandle?: SvgZoomHandle;
 

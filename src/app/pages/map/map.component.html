@@ -1,6 +1,7 @@
 <svg
   #svgRoot
   id="hexmap"
+  [class.no-glow]="!_glowPreference.enabled()"
   [attr.viewBox]="'0 0 ' + mapWidth + ' ' + mapHeight"
   preserveAspectRatio="xMidYMid meet"
   [style.cursor]="isPanning ? 'grabbing' : 'grab'"
