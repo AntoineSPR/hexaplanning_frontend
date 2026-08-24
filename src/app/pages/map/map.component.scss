@@ -135,14 +135,20 @@
 }
 
 // Drop a dragged quest here to cancel instead of assigning it - see overCancelZone in
-// hex-drag.controller.ts. Fixed bottom-center: thumb-reachable during a one-handed drag, clear
-// of the top-right .camera-controls. z-index below .quest-drag-overlay's 2000 so the floating
-// preview still renders on top while it's dragged over this.
+// hex-drag.controller.ts. Centered directly on top of the bottom nav's "+" button (see
+// menu.component.scss's .losange, the middle item of the 5-column .menubar) rather than floating
+// above it - doesn't eat into hex space that way, and "drag down onto the plus button" is a more
+// natural, thumb-reachable cancel target than empty space above the nav. Its own opaque background
+// fully covers the "+" underneath while a drag is in progress; z-index above .menubar's 1000 (and
+// still below .quest-drag-overlay's 2000 so the floating preview stays on top while dragged here).
 .drag-cancel-zone {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--menu-height, 0px) + 24px);
-  transform: translateX(-50%);
+  bottom: calc(var(--menu-height, 0px) / 2);
+  // The bottom offset above lands on the "+" button's own center, not this element's bottom edge -
+  // translateY(50%) (on top of the existing horizontal centering) re-centers this element on that
+  // point regardless of its own size.
+  transform: translate(-50%, 50%);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -164,7 +170,7 @@
     box-shadow:
       0 0 10px var(--neon-glow-color),
       0 0 20px var(--neon-glow-shadow);
-    transform: translateX(-50%) scale(1.1);
+    transform: translate(-50%, 50%) scale(1.1);
   }
 }
 
