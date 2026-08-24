@@ -39,12 +39,20 @@
   }
 }
 
-// Shown on every quest except done ones (see showsInnerOutline).
+// Shown on every quest except done ones (see showsInnerOutline). Stroke color is now set inline
+// per-hex (see getInnerHexColor) rather than fixed here, so a primary theme member's ring can
+// take its theme's color - this rule keeps everything else (width, glow).
 .hex-inner-outline {
   pointer-events: none;
-  stroke: var(--dark-theme-color);
   stroke-width: 1.2;
   filter: drop-shadow(0 0 3px var(--light-theme-color));
+}
+
+// Secondary-theme member's bottom-corner dot (see hasSecondaryThemeDot) - fill/glow are set
+// inline per-hex from the theme's own color.
+.hex-secondary-theme-dot {
+  pointer-events: none;
+  stroke: none;
 }
 
 .loading-overlay {

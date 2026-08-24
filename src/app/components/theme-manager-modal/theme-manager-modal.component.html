@@ -1,0 +1,63 @@
+<p-dialog modal headless [dismissableMask]="true" [visible]="isVisible" (visibleChange)="handleVisibleChange($event)">
+  <div class="theme-manager-dialog">
+    <h3>Gérer les thèmes</h3>
+
+    @if (themes().length === 0) {
+      <p class="theme-manager-empty">Aucun thème pour le moment.</p>
+    } @else {
+      <ul class="theme-manager-list">
+        @for (theme of themes(); track theme.id) {
+          <li class="theme-manager-row">
+            <app-theme-icon [color]="theme.color" [alt]="theme.name" [size]="20" />
+            <span class="theme-manager-name">{{ theme.name }}</span>
+            <button
+              type="button"
+              class="icon-button"
+              [disabled]="_connectivity.isOffline()"
+              (click)="openEdit(theme)"
+              aria-label="Modifier le thème"
+              title="Modifier le thème">
+              <i class="pi pi-pencil"></i>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              [disabled]="_connectivity.isOffline()"
+              (click)="deleteTheme(theme)"
+              aria-label="Supprimer le thème"
+              title="Supprimer le thème">
+              <i class="pi pi-trash"></i>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="button-group">
+      <button type="button" class="icon-button" (click)="close()" aria-label="Fermer" title="Fermer">
+        <i class="pi pi-times"></i>
+      </button>
+      <button
+        type="button"
+        class="icon-button"
+        [disabled]="_connectivity.isOffline()"
+        (click)="openCreate()"
+        aria-label="Créer un thème"
+        title="Créer un thème">
+        <i class="pi pi-plus"></i>
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<p-confirmdialog #cd>
+  <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
+    <div class="confirmation-dialog">
+      <p>{{ message.message }}</p>
+      <div class="flex items-center gap-2">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32">Annuler</button>
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32">Supprimer</button>
+      </div>
+    </div>
+  </ng-template>
+</p-confirmdialog>

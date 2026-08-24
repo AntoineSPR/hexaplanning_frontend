@@ -1,0 +1,30 @@
+<p-dialog modal headless [dismissableMask]="true" [focusOnShow]="false" [visible]="isVisible" (visibleChange)="handleVisibleChange($event)">
+  <div class="theme-edit-dialog">
+    <h3>{{ title }}</h3>
+    <div class="theme-edit-fields">
+      <label for="themeTitleField">Nom :</label>
+      <input #nameInput id="themeTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
+      <div class="theme-color-row">
+        <label for="themeModalColorInput">Couleur :</label>
+        <p-colorPicker id="themeModalColorInput" [(ngModel)]="color" format="hex" [appendTo]="'body'" [baseZIndex]="1000" />
+      </div>
+      @if (colorAlreadyUsed) {
+        <small class="theme-color-warning">Un autre thème utilise déjà cette couleur.</small>
+      }
+    </div>
+    <div class="button-group">
+      <button type="button" class="icon-button" (click)="cancel()" aria-label="Annuler" title="Annuler">
+        <i class="pi pi-times"></i>
+      </button>
+      <button
+        type="button"
+        class="icon-button"
+        [disabled]="!name.trim() || _connectivity.isOffline()"
+        (click)="confirm()"
+        aria-label="Confirmer"
+        title="Confirmer">
+        <i class="pi pi-check"></i>
+      </button>
+    </div>
+  </div>
+</p-dialog>

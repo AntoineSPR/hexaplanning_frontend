@@ -16,6 +16,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { apiPasswordValidator, passwordMatchValidator, getPasswordErrorMessage } from 'src/app/validators/password.validators';
 import { ConnectivityService } from 'src/app/services/connectivity.service';
 import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
+import { ThemeManagerModalService } from 'src/app/services/theme-manager-modal.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -49,6 +50,7 @@ export class SettingsPageComponent {
   private readonly _confirmationService = inject(ConfirmationService);
   readonly _connectivity = inject(ConnectivityService);
   private readonly _glowPreference = inject(GlowPreferenceService);
+  private readonly _themeManagerModal = inject(ThemeManagerModalService);
 
   user = this._userService.user;
 
@@ -167,6 +169,10 @@ export class SettingsPageComponent {
 
   onGlowToggle(checked: boolean): void {
     this._glowPreference.setOverride(checked);
+  }
+
+  openThemeManager(): void {
+    this._themeManagerModal.open();
   }
 
   logout(): void {

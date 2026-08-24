@@ -15,6 +15,12 @@
 
   <div class="settings-buttons">
     <p-button
+      label="Gérer les thèmes"
+      (click)="openThemeManager()"
+      variant="outlined"
+      icon="pi pi-palette"
+      aria-label="Ouvrir la gestion des thèmes" />
+    <p-button
       label="Modifier le mot de passe"
       (click)="openPasswordModal()"
       variant="outlined"

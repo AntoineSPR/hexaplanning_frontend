@@ -2,7 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 
 const STORAGE_KEY = 'hexaplanning.glowOverride.v1';
 
-// Whether the map's filter-based glow effects (on-hold/done markers, priority border, progress
+// Whether the map's filter-based glow effects (on-hold/done markers, inner-hex ring, progress
 // arc) render at all. They're expensive to redraw on mobile GPUs (see map.component.scss), so
 // this defaults to off on coarse-pointer (touch-primary) devices and on everywhere else - but is
 // always user-overridable from the settings page, and that choice is remembered per-device

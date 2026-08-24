@@ -15,11 +15,12 @@ import { Hex } from 'src/app/models/hex.model';
 import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 import { ConnectivityService } from 'src/app/services/connectivity.service';
 import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
-import { PriorityIconComponent } from '../../components/priority-icon/priority-icon.component';
+import { ThemeIconComponent } from '../../components/theme-icon/theme-icon.component';
 import { HexDragController, HexDragHost } from './hex-drag.controller';
 import { QuestGroupService } from 'src/app/services/quest-group.service';
 import { QuestGroupGeometryService } from 'src/app/services/quest-group-geometry.service';
 import { QuestGroupModalService } from 'src/app/services/quest-group-modal.service';
+import { ThemeService } from 'src/app/services/theme.service';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
@@ -45,7 +46,7 @@ interface GroupOutline {
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule, PriorityIconComponent],
+  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule, ThemeIconComponent],
   providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -69,6 +70,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   _questGroupService = inject(QuestGroupService);
   _questGroupGeometry = inject(QuestGroupGeometryService);
   private readonly _questGroupModalService = inject(QuestGroupModalService);
+  _themeService = inject(ThemeService);
 
   zoomHandle?: SvgZoomHandle;
 
@@ -456,6 +458,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   ngOnInit(): void {
     this._questService.getAllUnassignedPendingQuests().subscribe();
     this._questGroupService.getAllQuestGroups().subscribe();
+    this._themeService.getAllThemes().subscribe();
 
     this.generateHexes();
 
@@ -806,7 +809,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
 
   // Thin perimeter color for the base hex polygon: a subtle theme color on empty hexes,
-  // plain black on occupied ones so it doesn't compete with the quest's own fill/priority border.
+  // plain black on occupied ones so it doesn't compete with the quest's own fill.
   getHexStrokeColor(hex: Hex): string {
     return hex.quest ? 'black' : 'var(--base-hex-color)';
   }
@@ -834,30 +837,53 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return !!hex?.quest && hex.quest.statusId !== this._questService.statusDoneId;
   }
 
+  // Color of the "inner hex" ring - the near-edge .hex-inner-outline for a normal quest, or the
+  // near-center ring connecting the corner-marker's own dots for a done one (see
+  // showsInnerOutline/getInnerRingPoints and their template usage). A primary theme member takes
+  // its theme's color here; everything else keeps the flat default this ring has always had. This
+  // is unrelated to the hex's own fill (getHexColor, still status-driven) and to the outer border
+  // below (getHexBorderColor) - "inner hex" refers specifically to this ring.
+  getInnerHexColor(hex: Hex | null): string {
+    if (hex?.quest?.themeId && hex.quest.isPrimaryTheme) {
+      const theme = this._themeService.themes()?.find(t => t.id === hex.quest!.themeId);
+      if (theme) return theme.color;
+    }
+    return 'var(--dark-theme-color)';
+  }
+
+  // The per-quest colored border priority used to draw here is gone along with priority itself;
+  // most quests already rendered with no border (only priorities with a BorderColor set did, and
+  // the default new-quest priority had none), so this keeps that common baseline rather than
+  // introducing a new universal border style.
   getHexBorderColor(hex: Hex): string {
-    if (!hex.quest) return '';
-    if (hex.quest.statusId === this._questService.statusDoneId) return '';
-    if (hex.quest.statusId === this._questService.statusOnHoldId) return '';
-
-    const priorityQuest = this._questService?.priorities()?.find(x => x.id == hex?.quest?.priorityId);
-
-    return priorityQuest?.borderColor ?? '';
+    return '';
   }
 
-  // Glow matching the priority border's own color.
   getHexBorderGlow(hex: Hex): string {
-    const color = this.getHexBorderColor(hex);
-    return color ? `drop-shadow(0 0 4px ${color})` : 'none';
+    return 'none';
   }
 
-  getPriorityColor(quest: QuestUpdateDTO): string {
-    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
-    return priority?.borderColor || priority?.color || 'var(--theme-color)';
+  getThemeColor(quest: QuestUpdateDTO): string {
+    const theme = this._themeService.themes()?.find(t => t.id === quest.themeId);
+    return theme?.color ?? 'var(--theme-color)';
   }
 
-  getPriorityAltText(quest: QuestUpdateDTO): string {
-    const priority = this._questService.priorities()?.find(p => p.id === quest.priorityId);
-    return priority?.name ?? 'Icône de priorité';
+  getThemeAltText(quest: QuestUpdateDTO): string {
+    const theme = this._themeService.themes()?.find(t => t.id === quest.themeId);
+    return theme?.name ?? 'Icône de thème';
+  }
+
+  // Secondary-theme member: one new dot at the bottom corner (pads[2] - see
+  // getHexOnHoldMarker/getInnerHexColor's own comment for the corner-angle math), independent of
+  // status so it shows even for a plain pending/in-progress quest, and paints over the standard
+  // dark dot at that same spot when the quest is also done/on-hold.
+  hasSecondaryThemeDot(hex: Hex | null): boolean {
+    return !!hex?.quest?.themeId && !hex.quest.isPrimaryTheme;
+  }
+
+  getSecondaryThemeDotColor(hex: Hex | null): string {
+    const theme = this._themeService.themes()?.find(t => t.id === hex?.quest?.themeId);
+    return theme?.color ?? 'var(--theme-color)';
   }
 
   selectQuest(quest: QuestUpdateDTO): void {

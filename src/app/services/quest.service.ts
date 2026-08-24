@@ -5,7 +5,6 @@ import { QuestUpdateDTO, QuestCreateDTO } from '../models/quest.model';
 import { environment } from '../../environments/environment.development';
 import { HexService } from './hex.service';
 import { Status } from '../models/status';
-import { Priority } from '../models/priority';
 import { ConnectivityService } from './connectivity.service';
 
 @Injectable({ providedIn: 'root' })
@@ -49,7 +48,6 @@ export class QuestService {
 
   //status
   statuses = signal<Status[] | null>(this._loadCached('hexaplanning.statuses.v1', null));
-  priorities = signal<Priority[] | null>(this._loadCached('hexaplanning.priorities.v1', null));
   statusDoneId = '6662dfc1-9c40-4d78-806f-34cd22e07023';
   statusPendingId = '17c07323-d5b4-4568-b773-de3487ff30b1';
   statusOnHoldId = 'b34563d0-1ae5-42f9-950a-beffa4e27dce';
@@ -75,7 +73,7 @@ export class QuestService {
     if (this._connectivity.isOffline()) return of(this._pendingQuests());
     return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/pending`).pipe(
       tap(quests => {
-        const sortedQuests = this.sortQuestsByPriority(quests);
+        const sortedQuests = this.sortQuestsByTheme(quests);
         this._pendingQuests.set(sortedQuests);
         this._saveCached('hexaplanning.pendingQuests.v1', sortedQuests);
       })
@@ -96,7 +94,7 @@ export class QuestService {
     if (this._connectivity.isOffline()) return of(this._unassignedPendingQuests());
     return this._http.get<QuestUpdateDTO[]>(`${this._apiUrl}/unassigned_pending`).pipe(
       tap(quests => {
-        const sortedQuests = this.sortQuestsByPriority(quests);
+        const sortedQuests = this.sortQuestsByTheme(quests);
         this._unassignedPendingQuests.set(sortedQuests);
         this._saveCached('hexaplanning.unassignedPendingQuests.v1', sortedQuests);
       })
@@ -141,7 +139,7 @@ export class QuestService {
     );
   }
 
-  // load statuses and priorities
+  // load statuses
   public loadStatuses() {
     if (this._connectivity.isOffline()) return of(this.statuses());
     return this._http.get<Status[]>(`${this._apiUrlBase}/status`).pipe(
@@ -152,45 +150,15 @@ export class QuestService {
     );
   }
 
-  public loadPriorities() {
-    if (this._connectivity.isOffline()) return of(this.priorities());
-    return this._http.get<Priority[]>(`${this._apiUrlBase}/priority`).pipe(
-      tap(priorities => {
-        this.priorities.set(priorities);
-        this._saveCached('hexaplanning.priorities.v1', priorities);
-      })
-    );
-  }
+  // Primary-theme quests first, then secondary-theme, then unthemed - themes have no inherent
+  // cross-theme order (unlike the old fixed primary/secondary/tertiary priorities), so only a
+  // quest's own role within whichever theme it belongs to (or lack thereof) drives the sort.
+  private sortQuestsByTheme(quests: QuestUpdateDTO[]): QuestUpdateDTO[] {
+    const getOrder = (q: QuestUpdateDTO): number => {
+      if (!q.themeId) return 3;
+      return q.isPrimaryTheme ? 1 : 2;
+    };
 
-  private sortQuestsByPriority(quests: QuestUpdateDTO[]): QuestUpdateDTO[] {
-    return quests.sort((a, b) => {
-      // Get priority information
-      const priorityA = this.priorities()?.find(p => p.id === a.priorityId);
-      const priorityB = this.priorities()?.find(p => p.id === b.priorityId);
-
-      // Define priority order (primary = 1, secondary = 2, tertiary = 3)
-      const getPriorityOrder = (priority: Priority | undefined): number => {
-        if (!priority || !priority.icon) return 999;
-        switch (priority.icon.toLowerCase()) {
-          case 'primary':
-            return 1;
-          case 'secondary':
-            return 2;
-          case 'tertiary':
-            return 3;
-          default:
-            return 999;
-        }
-      };
-
-      const orderA = getPriorityOrder(priorityA);
-      const orderB = getPriorityOrder(priorityB);
-
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-
-      return 0;
-    });
+    return quests.sort((a, b) => getOrder(a) - getOrder(b));
   }
 }

@@ -63,21 +63,24 @@
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
       @if (showsInnerOutline(h)) {
-        <polygon class="hex-inner-outline" [attr.points]="getHexPoints(h.cx, h.cy, -8)" fill="none" />
+        <polygon class="hex-inner-outline" [attr.points]="getHexPoints(h.cx, h.cy, -8)" [attr.stroke]="getInnerHexColor(h)" fill="none" />
       }
 
-      <!-- Corner marker: a short line + dot from each corner, for on-hold and done quests. -->
+      <!-- Corner marker: a short line + dot from each corner, for on-hold and done quests. The
+         (colored, for a primary theme) ring is drawn before the dots so the dots - which are
+         status markers, always dark - stay fully visible on top of it rather than being
+         partially painted over by the ring's own edges. -->
       @if (showsCornerMarker(h)) {
         @let marker = getHexOnHoldMarker(h.cx, h.cy);
         <g class="hex-onhold-marker">
           @for (trace of marker.traces; track $index) {
             <path [attr.d]="trace" fill="none" />
           }
+          @if (isDone(h)) {
+            <polygon [attr.points]="getInnerRingPoints(marker.pads)" [attr.stroke]="getInnerHexColor(h)" fill="none" />
+          }
           @for (pad of marker.pads; track $index) {
             <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
-          }
-          @if (isDone(h)) {
-            <polygon [attr.points]="getInnerRingPoints(marker.pads)" fill="none" />
           }
         </g>
       }
@@ -93,18 +96,34 @@
           tabindex="-1"
           role="presentation" />
 
-        <!-- Same done-quest marker (corner lines + connecting ring), but only revealed within the
-           progress arc - as the quest advances, more of it shows, like it's slowly becoming done. -->
+        <!-- Same done-quest marker (corner lines + connecting ring, ring colored the same way as
+           the done case above), but only revealed within the progress arc - as the quest
+           advances, more of it shows, like it's slowly becoming done. -->
         @let progressMarker = getHexOnHoldMarker(h.cx, h.cy);
         <g class="hex-onhold-marker" [attr.clip-path]="'url(#' + getProgressClipId(h) + ')'">
           @for (trace of progressMarker.traces; track $index) {
             <path [attr.d]="trace" fill="none" />
           }
+          <polygon [attr.points]="getInnerRingPoints(progressMarker.pads)" [attr.stroke]="getInnerHexColor(h)" fill="none" />
           @for (pad of progressMarker.pads; track $index) {
             <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
           }
-          <polygon [attr.points]="getInnerRingPoints(progressMarker.pads)" fill="none" />
         </g>
+      }
+
+      <!-- Secondary-theme dot: always independent of status, so it shows on its own for a plain
+         pending quest - rendered last (after the corner marker AND the progress overlay above) so
+         it always paints on top, whether or not the progress arc's own dark fill/marker happens to
+         cover that same corner. -->
+      @if (hasSecondaryThemeDot(h)) {
+        @let secondaryDot = getHexOnHoldMarker(h.cx, h.cy).pads[2];
+        <circle
+          class="hex-secondary-theme-dot"
+          [attr.cx]="secondaryDot.x"
+          [attr.cy]="secondaryDot.y"
+          [attr.r]="secondaryDot.r"
+          [attr.fill]="getSecondaryThemeDotColor(h)"
+          [style.filter]="'drop-shadow(0 0 3px ' + getSecondaryThemeDotColor(h) + ')'" />
       }
 
       <!-- Border -->
@@ -279,7 +298,7 @@
     </defs>
     <polygon [attr.points]="getHexPoints(size, size)" stroke="black" stroke-width="1" [attr.fill]="getHexColor(draggingHex)" />
     @if (showsInnerOutline(draggingHex)) {
-      <polygon class="hex-inner-outline" [attr.points]="getHexPoints(size, size, -8)" fill="none" />
+      <polygon class="hex-inner-outline" [attr.points]="getHexPoints(size, size, -8)" [attr.stroke]="getInnerHexColor(draggingHex)" fill="none" />
     }
     @if (showsCornerMarker(draggingHex)) {
       @let marker = getHexOnHoldMarker(size, size);
@@ -287,11 +306,11 @@
         @for (trace of marker.traces; track $index) {
           <path [attr.d]="trace" fill="none" />
         }
+        @if (isDone(draggingHex)) {
+          <polygon [attr.points]="getInnerRingPoints(marker.pads)" [attr.stroke]="getInnerHexColor(draggingHex)" fill="none" />
+        }
         @for (pad of marker.pads; track $index) {
           <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
-        }
-        @if (isDone(draggingHex)) {
-          <polygon [attr.points]="getInnerRingPoints(marker.pads)" fill="none" />
         }
       </g>
     }
@@ -308,11 +327,21 @@
         @for (trace of dragProgressMarker.traces; track $index) {
           <path [attr.d]="trace" fill="none" />
         }
+        <polygon [attr.points]="getInnerRingPoints(dragProgressMarker.pads)" [attr.stroke]="getInnerHexColor(draggingHex)" fill="none" />
         @for (pad of dragProgressMarker.pads; track $index) {
           <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
         }
-        <polygon [attr.points]="getInnerRingPoints(dragProgressMarker.pads)" fill="none" />
       </g>
+    }
+    @if (hasSecondaryThemeDot(draggingHex)) {
+      @let secondaryDot = getHexOnHoldMarker(size, size).pads[2];
+      <circle
+        class="hex-secondary-theme-dot"
+        [attr.cx]="secondaryDot.x"
+        [attr.cy]="secondaryDot.y"
+        [attr.r]="secondaryDot.r"
+        [attr.fill]="getSecondaryThemeDotColor(draggingHex)"
+        [style.filter]="'drop-shadow(0 0 3px ' + getSecondaryThemeDotColor(draggingHex) + ')'" />
     }
     <polygon
       [attr.points]="getHexPoints(size, size, -2)"
@@ -360,7 +389,7 @@
           <div class="quest-item quest-card" (click)="selectQuest(quest)" [class.selected]="selectedQuest?.id === quest.id">
             <p-radioButton [value]="quest" [(ngModel)]="selectedQuest" [inputId]="'quest_' + quest.id"> </p-radioButton>
             <label [for]="'quest_' + quest.id" class="ml-2"> {{ quest.title }} </label>
-            <app-priority-icon [color]="getPriorityColor(quest)" [alt]="getPriorityAltText(quest)" [size]="32" />
+            <app-theme-icon [color]="getThemeColor(quest)" [alt]="getThemeAltText(quest)" [size]="32" />
           </div>
         }
       }

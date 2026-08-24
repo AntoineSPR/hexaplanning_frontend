@@ -1,0 +1,67 @@
+// Box styling (border/background/glow) comes entirely from the app-wide .p-dialog rule already
+// applied to every p-dialog's .p-dialog-content - see the same note on quest-group-modal/
+// theme-modal's own dialogs.
+.theme-manager-dialog {
+  min-width: 18rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.theme-manager-empty {
+  color: var(--light-theme-color);
+  font-style: italic;
+  margin: 0;
+}
+
+.theme-manager-list {
+  width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.theme-manager-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  background: var(--light-hex-color);
+
+  .theme-manager-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .icon-button {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+}
+
+// Same layout as every other form-style modal's button bar in the app.
+.button-group {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
