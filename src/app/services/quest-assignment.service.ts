@@ -8,6 +8,11 @@ import { QuestUpdateDTO } from '../models/quest.model';
 import { HexAssignment } from '../models/hexAssignment.model';
 import { ConnectivityService } from './connectivity.service';
 
+export interface HexMove {
+  fromHex: Hex;
+  toHex: Hex;
+}
+
 interface ResolvedAssignment {
   q: number;
   r: number;
@@ -103,7 +108,9 @@ export class QuestAssignmentService {
     return this._hexService.getAssignmentByCoordinates(q, r, s);
   }
 
-  assignQuestToHex(selectedHex: Hex, selectedQuest: QuestUpdateDTO): Observable<void> {
+  // `allHexes`/`size` are only needed for reconcileGroupMembership below (placing an unassigned
+  // quest next to an existing group's cluster should auto-attach it, same as a drag would).
+  assignQuestToHex(selectedHex: Hex, selectedQuest: QuestUpdateDTO, allHexes: Hex[], size: number): Observable<void> {
     const hexAssignment = {
       q: selectedHex.q,
       r: selectedHex.r,
@@ -117,7 +124,7 @@ export class QuestAssignmentService {
         selectedHex.hexAssignmentId = created.id;
         this._questService.getAllUnassignedPendingQuests().subscribe();
       }),
-      map(() => void 0)
+      switchMap(() => this.reconcileGroupMembership(selectedHex, allHexes, size))
     );
   }
 
@@ -128,6 +135,7 @@ export class QuestAssignmentService {
         subscriber.complete();
       });
     }
+    const quest = hex.quest;
     // Deleting the HexAssignment row is enough to unassign the quest - the relationship is owned
     // entirely by that table (FK on HexAssignment.QuestId), so there's nothing to save on the
     // Quest entity itself. Don't PUT the quest back unchanged: the update endpoint sets the
@@ -139,7 +147,14 @@ export class QuestAssignmentService {
         hex.hexAssignmentId = undefined;
         this._questService.getAllUnassignedPendingQuests().subscribe();
       }),
-      map(() => void 0)
+      switchMap(() => {
+        if (!quest.questGroupId) return of(void 0);
+        // An off-map quest can't belong to a spatial group - clear membership. Don't carry
+        // hexAssignmentId in the body for the same reason as the comment above: the assignment
+        // was just deleted, so a stale id here could resurrect it.
+        const updatedQuest: QuestUpdateDTO = { ...quest, hexAssignmentId: undefined, questGroupId: undefined };
+        return this._questService.updateQuest(updatedQuest).pipe(map(() => void 0));
+      })
     );
   }
 
@@ -148,7 +163,9 @@ export class QuestAssignmentService {
   // rather than delete+recreate, so the quest never transiently disappears from the map.
   // Note: the backend has no active DB constraint on (q, r, s) uniqueness, so occupancy
   // is only checked client-side against the currently loaded hexes.
-  moveQuestToHex(fromHex: Hex, toHex: Hex): Observable<void> {
+  // `allHexes`/`size` are only needed for reconcileGroupMembership below - single-quest moves
+  // (unlike moveGroupToHexes) can auto-attach to or detach from a group as a side effect.
+  moveQuestToHex(fromHex: Hex, toHex: Hex, allHexes: Hex[], size: number): Observable<void> {
     if (!fromHex.quest || !fromHex.hexAssignmentId || fromHex === toHex) {
       return new Observable<void>(subscriber => {
         subscriber.next();
@@ -173,7 +190,7 @@ export class QuestAssignmentService {
           fromHex.quest = undefined;
           fromHex.hexAssignmentId = undefined;
         }),
-        map(() => void 0)
+        switchMap(() => this.reconcileGroupMembership(toHex, allHexes, size))
       );
     }
 
@@ -211,6 +228,94 @@ export class QuestAssignmentService {
         fromHex.hexAssignmentId = toHex.hexAssignmentId;
         toHex.quest = fromQuest;
         toHex.hexAssignmentId = fromAssignmentId;
+      }),
+      switchMap(() => forkJoin([this.reconcileGroupMembership(fromHex, allHexes, size), this.reconcileGroupMembership(toHex, allHexes, size)])),
+      map(() => void 0)
+    );
+  }
+
+  // Rigidly translates a whole quest group: one plain "move to empty" PUT per member, via
+  // forkJoin - never a swap payload, since group-drop validation (see HexDragController) already
+  // excludes any target occupied by a non-member. No auto-attach/detach reconciliation here
+  // (unlike moveQuestToHex): a deliberate whole-group drag shouldn't second-guess membership.
+  moveGroupToHexes(moves: HexMove[]): Observable<void> {
+    const validMoves = moves.filter(m => m.fromHex.quest && m.fromHex.hexAssignmentId && m.fromHex !== m.toHex);
+    if (validMoves.length === 0) {
+      return new Observable<void>(subscriber => {
+        subscriber.next();
+        subscriber.complete();
+      });
+    }
+
+    const requests = validMoves.map(({ fromHex, toHex }) => {
+      const updated: HexAssignment = {
+        id: fromHex.hexAssignmentId,
+        questId: fromHex.quest!.id,
+        q: toHex.q,
+        r: toHex.r,
+        s: toHex.s,
+      };
+      return this._hexService.updateAssignment(fromHex.hexAssignmentId!, updated);
+    });
+
+    return forkJoin(requests).pipe(
+      tap(() => {
+        // A rigid slide can have a target coordinate equal to another member's *original*
+        // coordinate (e.g. a line of hexes sliding one step along its own length) - snapshot
+        // every source quest/assignment id before mutating anything, then clear every origin hex,
+        // then write every target, so an overlapping from/to pair never clobbers data still needed
+        // by another pair in the same batch.
+        const snapshot = validMoves.map(({ toHex, fromHex }) => ({
+          toHex,
+          quest: fromHex.quest!,
+          hexAssignmentId: fromHex.hexAssignmentId!,
+        }));
+        for (const { fromHex } of validMoves) {
+          fromHex.quest = undefined;
+          fromHex.hexAssignmentId = undefined;
+        }
+        for (const { toHex, quest, hexAssignmentId } of snapshot) {
+          toHex.quest = quest;
+          toHex.hexAssignmentId = hexAssignmentId;
+        }
+      }),
+      map(() => void 0)
+    );
+  }
+
+  // Compute the moved hex's occupied neighbors' distinct group ids and auto-attach/detach the
+  // moved quest accordingly:
+  // - was grouped, no longer adjacent to that group -> detach
+  // - was ungrouped, adjacent to exactly one distinct group -> attach
+  // - otherwise (0 neighboring groups, 2+ distinct ones while ungrouped, or still adjacent to its
+  //   own group) -> no change
+  private reconcileGroupMembership(movedHex: Hex, allHexes: Hex[], size: number): Observable<void> {
+    const quest = movedHex.quest;
+    if (!quest) return of(void 0);
+
+    const neighborGroupIds = new Set<string>();
+    for (const n of this._mapGrid.neighborsOf(movedHex, size)) {
+      const neighborHex = allHexes.find(h => h.q === n.q && h.r === n.r && h.s === n.s);
+      if (neighborHex?.quest?.questGroupId) {
+        neighborGroupIds.add(neighborHex.quest.questGroupId);
+      }
+    }
+
+    const currentGroupId = quest.questGroupId;
+    let nextGroupId: string | undefined;
+    if (currentGroupId) {
+      if (neighborGroupIds.has(currentGroupId)) return of(void 0); // still adjacent - no change
+      nextGroupId = undefined; // detach
+    } else if (neighborGroupIds.size === 1) {
+      nextGroupId = [...neighborGroupIds][0]; // attach
+    } else {
+      return of(void 0); // 0 or 2+ distinct neighboring groups - do nothing
+    }
+
+    const updatedQuest: QuestUpdateDTO = { ...quest, questGroupId: nextGroupId };
+    return this._questService.updateQuest(updatedQuest).pipe(
+      tap(() => {
+        movedHex.quest = { ...quest, questGroupId: nextGroupId };
       }),
       map(() => void 0)
     );
