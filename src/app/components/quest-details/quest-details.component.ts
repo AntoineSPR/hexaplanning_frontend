@@ -14,6 +14,7 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { catchError, of } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { Textarea, TextareaModule } from 'primeng/textarea';
@@ -25,6 +26,8 @@ import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { QuestModalService } from '../../services/quest-modal.service';
+import { QuestGroupModalService } from '../../services/quest-group-modal.service';
+import { HexService } from '../../services/hex.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -67,6 +70,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
   private readonly _questModalService = inject(QuestModalService);
+  private readonly _questGroupModalService = inject(QuestGroupModalService);
+  private readonly _hexService = inject(HexService);
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
   private readonly _router = inject(Router);
@@ -77,6 +82,50 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   statusOptions = this._questService.statuses();
   isEdit: boolean = false;
 
+  //#region Quest groups
+  // "Create group" is offered when the quest is on the map and not already grouped; "Leave
+  // group" instead when it is - the two are mutually exclusive.
+
+  // `QuestUpdateDTO.hexAssignmentId` is never actually populated by the backend (GET /quest/{id}
+  // only ever returns a nested `hexAssignment` object, never a flat id - the rest of this app
+  // tracks map placement on the Hex object instead, which this globally-mounted component has no
+  // access to). Resolved once per quest via the same endpoint the map itself has no need for,
+  // since it already has this info locally.
+  resolvedHexAssignmentId: string | null = null;
+
+  get isOnMap(): boolean {
+    return !!this.resolvedHexAssignmentId;
+  }
+
+  get isGrouped(): boolean {
+    return !!this.quest?.questGroupId;
+  }
+
+  // Opens the shared create/edit group modal (see QuestGroupModalService) seeded with this
+  // quest's hex, and closes this dialog first so the two modals are never open at once.
+  openGroupCreationModal(): void {
+    if (this._connectivity.isOffline() || !this.resolvedHexAssignmentId) return;
+    this._questGroupModalService.openCreate(this.resolvedHexAssignmentId);
+    this.closeDialog.emit();
+  }
+
+  leaveGroup(): void {
+    if (this._connectivity.isOffline() || !this.quest?.questGroupId) return;
+
+    const updatedQuest: QuestUpdateDTO = { ...this.quest, questGroupId: undefined };
+    this._questService.updateQuest(updatedQuest).subscribe({
+      next: quest => {
+        this.quest = quest;
+        this._messageService.add({ severity: 'success', summary: 'Quête retirée du groupe', detail: this.quest.title, life: 2000 });
+      },
+      error: error => {
+        console.error('Failed to leave quest group:', error);
+        this._messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors du retrait du groupe', life: 2000 });
+      },
+    });
+  }
+  //#endregion
+
   ngOnInit(): void {
     this._router.events.subscribe(() => {
       this.onReturn();
@@ -85,6 +134,15 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this._createFormGroup();
     this.resetForm();
     this._setFormValues();
+
+    if (!this.isNew && this.quest?.id) {
+      this._hexService
+        .getAssignmentByQuestId(this.quest.id)
+        .pipe(catchError(() => of(null)))
+        .subscribe(assignment => {
+          this.resolvedHexAssignmentId = assignment?.id ?? null;
+        });
+    }
   }
 
   ngAfterViewInit(): void {
@@ -236,7 +294,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this._confirmationService.confirm({
       message: 'Annuler les modifications non enregistrées ?',
       acceptLabel: 'Quitter',
-      rejectLabel: 'Continuer',
+      rejectLabel: 'Revenir',
       closable: true,
       closeOnEscape: true,
       accept: onAccept,

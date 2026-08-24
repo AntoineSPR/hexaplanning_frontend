@@ -1,6 +1,7 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { QuestContainerComponent } from './components/quest-container/quest-container.component';
+import { QuestGroupModalComponent } from './components/quest-group-modal/quest-group-modal.component';
 import { UserService } from './services/user.service';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -10,7 +11,7 @@ import { ConnectivityService } from './services/connectivity.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, QuestContainerComponent, ToastModule],
+  imports: [RouterModule, QuestContainerComponent, QuestGroupModalComponent, ToastModule],
   providers: [MessageService],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

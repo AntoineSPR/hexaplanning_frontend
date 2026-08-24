@@ -3,6 +3,7 @@ import { Hex } from 'src/app/models/hex.model';
 import { MapGridService } from 'src/app/services/map-grid.service';
 import { QuestAssignmentService } from 'src/app/services/quest-assignment.service';
 import { ConnectivityService } from 'src/app/services/connectivity.service';
+import { QuestGroupGeometryService } from 'src/app/services/quest-group-geometry.service';
 import { SvgZoomHandle } from 'src/app/services/svg-zoom.service';
 
 // Hand-rolled long-press-then-drag gesture, using native Pointer Events directly rather than
@@ -35,7 +36,14 @@ export interface HexDragHost {
   readonly cancelZone?: ElementRef<HTMLElement>;
   readonly zoomHandle?: SvgZoomHandle;
   suppressClicksUntil: number;
+  // Id of the currently selected quest group (see MapComponent.selectGroup) - a drag started from
+  // one of its member hexes moves the whole group instead of just that hex.
+  selectedGroupId: string | null;
   centerCameraOnHex(hex: Hex): void;
+  // Recomputes group outline geometry after a move that could have changed it (a group drag, or a
+  // single-hex drag that auto-attached/detached). Optional so tests/hosts that don't care about
+  // groups don't need to implement it.
+  recomputeGroupOutlines?(): void;
 }
 
 // Drives the whole quest drag-and-drop gesture: long-press-to-arm, the drag itself, and the
@@ -50,7 +58,8 @@ export class HexDragController {
     private readonly host: HexDragHost,
     private readonly mapGrid: MapGridService,
     private readonly questAssignment: QuestAssignmentService,
-    private readonly connectivity: ConnectivityService
+    private readonly connectivity: ConnectivityService,
+    private readonly groupGeometry: QuestGroupGeometryService
   ) {}
 
   // Quest drag-and-drop state
@@ -65,6 +74,19 @@ export class HexDragController {
   // The overlay lives outside the SVG as a plain fixed-position div, so it needs this same
   // scale applied explicitly or it renders at "true" size - visibly smaller than the real hex.
   dragOverlayScale = 1;
+
+  // Whole-group drag state: set once a drag that started on the selected group's own member hex
+  // actually starts moving (see onPointerMove). Every member hex, translated rigidly by the same
+  // delta - see updateGroupDragPreview.
+  draggingGroupMembers: Hex[] | null = null;
+  // Precomputed once at drag-start (from the group's original member positions) - traced with a
+  // live [attr.transform] translate in the template rather than recomputed every tick.
+  groupDragPathD: string | null = null;
+  // Pixel offset (in the same local, pre-zoom coordinate space as hex cx/cy) corresponding to the
+  // current valid group delta - see updateGroupDragPreview.
+  groupDragOffsetX = 0;
+  groupDragOffsetY = 0;
+
   private lastLandedHex: Hex | null = null;
   // The pointer's *true* screen position, updated only from real pointer events - never from
   // the (possibly clamped/pinned) drag preview position, which would create a feedback loop.
@@ -75,7 +97,9 @@ export class HexDragController {
   private dragTargetClamped = false;
 
   private pointerDrag: {
-    hex: Hex;
+    // Null for a gesture started on the group's title rather than one of its member hexes (see
+    // onGroupTitlePointerDown) - there's no single hex being individually picked up in that case.
+    hex: Hex | null;
     pointerId: number;
     startX: number;
     startY: number;
@@ -88,6 +112,25 @@ export class HexDragController {
     panning: boolean;
     panStartX: number;
     panStartY: number;
+    // Whether this gesture started on a member hex of the currently selected group, or on the
+    // group's title - decided once up front in onPointerDown/onGroupTitlePointerDown; the long-
+    // press timing/threshold/pan-fallback logic stays identical either way (skipped entirely for
+    // a title-started drag, which has no competing pan gesture to disambiguate from), only what
+    // happens once the drag actually starts differs.
+    isGroupDrag: boolean;
+    // Which group this gesture would drag, if it turns into a drag - null when !isGroupDrag.
+    // Selecting it (host.selectedGroupId) is deferred to the moment the drag actually starts (see
+    // onPointerMove), not done here in onPointerDown/onGroupTitlePointerDown: doing it immediately
+    // on pointerdown would already be in effect by the time a plain click's own toggle handler
+    // (selectGroup) runs right after, making every plain click on the title immediately select
+    // and then instantly re-toggle itself back off.
+    groupId: string | null;
+    // Axial coordinate the pointer resolved to at the moment the drag actually started (see
+    // onPointerMove) - the group-drag reference frame is "how far has the pointer moved since
+    // then", not "which hex is under the cursor now minus some member's own coordinate", so it
+    // works starting from the title (which isn't a hex, so has no coordinate of its own) exactly
+    // the same way it works starting from a member hex. Null until the drag starts.
+    startAxial: { q: number; r: number; s: number } | null;
   } | null = null;
 
   // The hex currently primed for pickup (held past the hold delay, not yet moved): drives the
@@ -109,8 +152,7 @@ export class HexDragController {
     if (this.activePointerCount > 1 && this.pointerDrag) {
       this.pointerDrag = null;
       this.armedHex = null;
-      this.draggingHex = null;
-      this.dragOverHex = null;
+      this.resetDragState();
       this.overCancelZone = false;
     }
   }
@@ -123,6 +165,7 @@ export class HexDragController {
     if (!hex.quest || event.button !== 0 || this.connectivity.isOffline()) {
       return;
     }
+    const isGroupDrag = this.host.selectedGroupId != null && hex.quest?.questGroupId === this.host.selectedGroupId;
     const drag = {
       hex,
       pointerId: event.pointerId,
@@ -133,6 +176,9 @@ export class HexDragController {
       panning: false,
       panStartX: 0,
       panStartY: 0,
+      isGroupDrag,
+      groupId: isGroupDrag ? this.host.selectedGroupId : null,
+      startAxial: null,
     };
     this.pointerDrag = drag;
     // Guarantees this element keeps receiving pointermove/pointerup for this gesture
@@ -149,13 +195,56 @@ export class HexDragController {
     }, DRAG_START_DELAY_MS);
   }
 
+  // Starts a group drag directly from its title (see the <g class="quest-group-title"> in the
+  // template), rather than requiring "select the group, then drag one of its member hexes". Does
+  // NOT select the group itself here (see the groupId field comment above) - only once this turns
+  // into an actual drag (onPointerMove), so a plain click still goes through selectGroup's own
+  // toggle untouched, exactly as it did before this existed.
+  //
+  // Same long-press arm delay as onPointerDown, deliberately - the title sits in what usually
+  // reads as empty, pannable map space, so a user panning across it who happens to start their
+  // gesture right on the title needs the exact same grace period a hex gives them before movement
+  // commits to a drag instead of falling back to panning (see the !drag.armed branch below); it'd
+  // be a jarring inconsistency for the title alone to react to camera-pan-speed movement as a
+  // pickup. (Opting the title out of d3-zoom's own competing pan gesture, via the same
+  // .hex-drag-surface class a hex carries - see the filter in svg-zoom.service.ts - is a separate
+  // concern: that's what makes our own manual panning fallback here the only pan gesture in play,
+  // not a decision to skip the fallback itself.)
+  onGroupTitlePointerDown(groupId: string, event: PointerEvent): void {
+    if (event.button !== 0 || this.connectivity.isOffline()) {
+      return;
+    }
+    const drag = {
+      hex: null,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startTime: Date.now(),
+      armed: false,
+      panning: false,
+      panStartX: 0,
+      panStartY: 0,
+      isGroupDrag: true,
+      groupId,
+      startAxial: null,
+    };
+    this.pointerDrag = drag;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+
+    setTimeout(() => {
+      if (this.pointerDrag === drag && !drag.panning) {
+        drag.armed = true;
+      }
+    }, DRAG_START_DELAY_MS);
+  }
+
   onPointerMove(event: PointerEvent): void {
     const drag = this.pointerDrag;
     if (!drag || drag.pointerId !== event.pointerId) {
       return;
     }
 
-    if (this.draggingHex) {
+    if (this.draggingHex || this.draggingGroupMembers) {
       this.pointerClientX = event.clientX;
       this.pointerClientY = event.clientY;
       // dragPreviewX/Y get set inside updateDragOverHex - clamped to the edge of the map's
@@ -198,6 +287,28 @@ export class HexDragController {
     this.dragPreviewX = event.clientX;
     this.dragPreviewY = event.clientY;
     this.dragOverlayScale = this.computeMapScale();
+
+    if (drag.isGroupDrag) {
+      // Selecting the group is deferred to right here - the moment a drag past the threshold
+      // actually starts - rather than on pointerdown (see the groupId field comment), so a plain
+      // click on the title still goes through selectGroup's own toggle untouched.
+      this.host.selectedGroupId = drag.groupId;
+      this.draggingGroupMembers = this.host.hexes.filter(h => h.quest?.questGroupId === this.host.selectedGroupId);
+      this.groupDragOffsetX = 0;
+      this.groupDragOffsetY = 0;
+      this.groupDragPathD = this.groupGeometry.getGroupBoundaryPath(this.draggingGroupMembers, this.host.size);
+      // Reference point for the delta math below (see updateGroupDragPreview): wherever the
+      // pointer resolves to right now, whether or not that's actually where a member hex sits -
+      // for a hex-started drag this lands on (or extremely close to) that hex's own coordinate
+      // anyway, since the movement so far is capped at DRAG_START_THRESHOLD_PX.
+      const startLocal = this.clientPointToHexLocal(event.clientX, event.clientY);
+      drag.startAxial = startLocal
+        ? this.mapGrid.pixelToAxial(startLocal.x, startLocal.y, this.host.size)
+        : (drag.hex ?? { q: 0, r: 0, s: 0 });
+    } else {
+      this.draggingGroupMembers = null;
+      this.groupDragPathD = null;
+    }
   }
 
   onPointerUp(event: PointerEvent): void {
@@ -209,12 +320,14 @@ export class HexDragController {
     this.pointerDrag = null;
     this.armedHex = null;
 
-    if (!this.draggingHex) {
+    if (!this.draggingHex && !this.draggingGroupMembers) {
       return; // was a plain tap, or resolved into a camera pan; let the native click fire if applicable
     }
 
     const hex = this.draggingHex;
     const target = this.dragOverHex;
+    const groupMembers = this.draggingGroupMembers;
+    const startAxial = drag.startAxial;
     // A real drag just occurred: ignore the click that follows pointerup
     this.host.suppressClicksUntil = Date.now() + 250;
 
@@ -222,8 +335,50 @@ export class HexDragController {
       // Released over the cancel zone: abort unconditionally, regardless of what dragOverHex
       // may have resolved to before the pointer reached it.
       this.overCancelZone = false;
-      this.draggingHex = null;
-      this.dragOverHex = null;
+      this.resetDragState();
+      return;
+    }
+
+    if (groupMembers) {
+      if (!target || !startAxial || (target.q === startAxial.q && target.r === startAxial.r)) {
+        this.resetDragState();
+        return;
+      }
+      const delta = { q: target.q - startAxial.q, r: target.r - startAxial.r, s: target.s - startAxial.s };
+      const moves = groupMembers
+        .map(m => {
+          const toHex = this.host.hexes.find(h => h.q === m.q + delta.q && h.r === m.r + delta.r && h.s === m.s + delta.s);
+          return toHex ? { fromHex: m, toHex } : null;
+        })
+        .filter((mv): mv is { fromHex: Hex; toHex: Hex } => mv !== null);
+
+      if (moves.length !== groupMembers.length) {
+        // Shouldn't happen (every target was validated live during the drag - see
+        // updateGroupDragPreview), but bail out safely rather than move only part of the group.
+        this.resetDragState();
+        return;
+      }
+
+      this.questAssignment.moveGroupToHexes(moves).subscribe({
+        next: () => {
+          this.markLandedHex(target);
+          this.resetDragState();
+          this.host.centerCameraOnHex(target);
+          this.host.recomputeGroupOutlines?.();
+        },
+        error: err => {
+          console.error('Failed to move quest group:', err);
+          this.resetDragState();
+        },
+      });
+      return;
+    }
+
+    if (!hex) {
+      // No member hexes to fall back to (a title-started drag never resolved into a group drag -
+      // e.g. released before crossing the movement threshold) and no single hex was being carried
+      // either - nothing to commit.
+      this.resetDragState();
       return;
     }
 
@@ -232,22 +387,20 @@ export class HexDragController {
       // instead of clearing draggingHex immediately - otherwise the origin hex snaps back to
       // full opacity (still showing its old quest) for the length of the request, then fades
       // out again once the response arrives, which reads as a flash.
-      this.questAssignment.moveQuestToHex(hex, target).subscribe({
+      this.questAssignment.moveQuestToHex(hex, target, this.host.hexes, this.host.size).subscribe({
         next: () => {
           this.markLandedHex(target);
-          this.draggingHex = null;
-          this.dragOverHex = null;
+          this.resetDragState();
           this.host.centerCameraOnHex(target);
+          this.host.recomputeGroupOutlines?.();
         },
         error: err => {
           console.error('Failed to move quest:', err);
-          this.draggingHex = null;
-          this.dragOverHex = null;
+          this.resetDragState();
         },
       });
     } else {
-      this.draggingHex = null;
-      this.dragOverHex = null;
+      this.resetDragState();
     }
   }
 
@@ -258,8 +411,7 @@ export class HexDragController {
     }
     this.pointerDrag = null;
     this.armedHex = null;
-    this.draggingHex = null;
-    this.dragOverHex = null;
+    this.resetDragState();
     this.overCancelZone = false;
   }
 
@@ -272,6 +424,21 @@ export class HexDragController {
       return '';
     }
     return hex.quest ? 'hex-drop-swap' : 'hex-drop-move';
+  }
+
+  // Whether `hex` is one of the members currently being carried along by an in-progress group
+  // drag - used by the template to dim every member the same way a single dragged hex dims.
+  isGroupDragMember(hex: Hex): boolean {
+    return !!this.draggingGroupMembers && this.draggingGroupMembers.includes(hex);
+  }
+
+  private resetDragState(): void {
+    this.draggingHex = null;
+    this.dragOverHex = null;
+    this.draggingGroupMembers = null;
+    this.groupDragPathD = null;
+    this.groupDragOffsetX = 0;
+    this.groupDragOffsetY = 0;
   }
 
   private computeFitScale(): number {
@@ -339,7 +506,51 @@ export class HexDragController {
     }
     this.clampPreviewToMapViewport();
 
+    if (this.draggingGroupMembers && drag.startAxial) {
+      this.updateGroupDragPreview(drag.startAxial, target);
+    } else if (!this.draggingGroupMembers) {
+      this.dragOverHex = this.host.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
+    }
+  }
+
+  // Validates the whole group's prospective rigid translation (startAxial -> target) each tick:
+  // every member's prospective coordinate must stay within the grid's bounds and be either empty
+  // or one of the group's own original coordinates (so the group can slide over cells it's itself
+  // vacating). If any member fails, this tick's target is rejected outright - dragOverHex and the
+  // group offset are left exactly as they were (pinned to the last valid delta), same spirit as
+  // the single-hex edge-clamp above.
+  //
+  // `startAxial` is the pointer's own resolved position when the drag started (see
+  // onPointerMove), not any one member's coordinate - the whole group moves by exactly however far
+  // the pointer itself has moved since then, which is what lets a drag starting from the group's
+  // title (nowhere near any member hex) still translate the group correctly rather than snapping
+  // some member hex to wherever the cursor happens to be.
+  private updateGroupDragPreview(startAxial: { q: number; r: number; s: number }, target: { q: number; r: number; s: number }): void {
+    const members = this.draggingGroupMembers;
+    if (!members) return;
+
+    const delta = { q: target.q - startAxial.q, r: target.r - startAxial.r, s: target.s - startAxial.s };
+    const memberKeys = new Set(members.map(m => `${m.q},${m.r},${m.s}`));
+
+    const allValid = members.every(m => {
+      const pq = m.q + delta.q;
+      const pr = m.r + delta.r;
+      const ps = m.s + delta.s;
+      if (!this.mapGrid.isWithinRectangle({ q: pq, r: pr, s: ps }, this.host.gridWidth, this.host.gridHeight, this.host.size)) {
+        return false;
+      }
+      if (memberKeys.has(`${pq},${pr},${ps}`)) return true; // one of the group's own cells, being vacated too
+      const occupant = this.host.hexes.find(h => h.q === pq && h.r === pr && h.s === ps);
+      return !occupant?.quest;
+    });
+
+    if (!allValid) return;
+
     this.dragOverHex = this.host.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
+    const startPixel = this.mapGrid.hexToPixel(startAxial.q, startAxial.r, this.host.size);
+    const targetPixel = this.mapGrid.hexToPixel(target.q, target.r, this.host.size);
+    this.groupDragOffsetX = targetPixel.cx - startPixel.cx;
+    this.groupDragOffsetY = targetPixel.cy - startPixel.cy;
   }
 
   // The floating drag preview (.quest-drag-overlay) is a position:fixed element tracking raw

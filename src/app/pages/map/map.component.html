@@ -58,7 +58,7 @@
         tabindex="0"
         role="button"
         [attr.aria-label]="getHexAriaLabel(h)"
-        [class.hex-drag-origin]="draggingHex === h"
+        [class.hex-drag-origin]="draggingHex === h || isGroupDragMember(h)"
         [class.hex-armed]="armedHex === h"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
@@ -146,6 +146,62 @@
       </foreignObject>
     }
 
+    <!-- Quest group outlines/labels - traced around each group's member hexes (see
+       QuestGroupGeometryService.getGroupBoundaryPath). Sits above the hex fills/borders so its
+       thin stroke reads clearly, but its fill is none and only the stroke/label are clickable
+       (see .quest-group-outline's pointer-events in map.component.scss), so it never blocks a
+       hex's own drag/click surface. -->
+    @for (group of groupOutlines; track group.id) {
+      <path
+        class="quest-group-outline"
+        [attr.d]="group.pathD"
+        fill="none"
+        [attr.stroke]="group.color"
+        [class.quest-group-selected]="selectedGroupId === group.id"
+        (pointerdown)="$event.stopPropagation()"
+        (click)="selectGroup(group.id, $event)" />
+      <!-- Grouped under one element so the hover effect (see .quest-group-title-box) reacts to
+         hovering either the box or the text glyphs identically - handling them as two separate
+         hoverable siblings meant the effect flickered on/off as the cursor crossed between glyph
+         ink (hitting the text) and the gaps between letters (hitting the rect) within what reads
+         as a single control. Also doubles as a drag handle for the whole group (see
+         HexDragController.onGroupTitlePointerDown) - pointerdown here starts a group drag exactly
+         like one starting on a member hex would, without needing the group already selected. -->
+      <g
+        class="quest-group-title hex-drag-surface"
+        (pointerdown)="onGroupTitlePointerDown(group.id, $event)"
+        (pointermove)="onHexPointerMove($event)"
+        (pointerup)="onHexPointerUp($event)"
+        (pointercancel)="onHexPointerCancel($event)"
+        (click)="selectGroup(group.id, $event)">
+        <rect
+          class="quest-group-title-box"
+          [attr.x]="group.titleBox.x"
+          [attr.y]="group.titleBox.y"
+          [attr.width]="group.titleBox.width"
+          [attr.height]="group.titleBox.height"
+          rx="4"
+          [attr.stroke]="group.color"
+          [attr.fill]="group.color" />
+        <text [attr.fill]="group.color" class="quest-group-label" text-anchor="middle" dominant-baseline="middle">
+          @for (line of group.nameLines; track $index) {
+            <tspan [attr.x]="group.labelX" [attr.y]="line.y">{{ line.text }}</tspan>
+          }
+        </text>
+      </g>
+    }
+
+    <!-- Live preview while dragging a whole selected group: the precomputed boundary path,
+       translated by the current valid pixel delta - see HexDragController.updateGroupDragPreview. -->
+    @if (draggingGroupMembers && groupDragPathD) {
+      <path
+        class="quest-group-outline quest-group-drag-preview"
+        [attr.d]="groupDragPathD"
+        [attr.transform]="'translate(' + groupDragOffsetX + ',' + groupDragOffsetY + ')'"
+        fill="none"
+        stroke="var(--light-theme-color)" />
+    }
+
     @if (cursorLightVisible) {
       <polygon
         class="cursor-light"
@@ -162,10 +218,46 @@
           stroke-width="1" />
       }
     }
+
+    <!-- Rendered after the cursor-light above (not alongside its group's outline/label further up)
+       so its already-opaque background reliably paints over the light's glow instead of under it -
+       SVG siblings paint in document order, so this is the only way to guarantee it's never drawn
+       through, regardless of background opacity. -->
+    @if (selectedGroupOutline(); as group) {
+      <g class="quest-group-actions" [attr.transform]="'translate(' + group.labelX + ',' + group.actionsY + ')'">
+        <!-- Sized to closely hug its content (2 buttons + gap, see .group-quick-actions in
+           map.component.scss) rather than the previous wider fixed box, which centered the
+           buttons via flex but left visible horizontal slack on both sides. -->
+        <foreignObject x="-32" y="-18" width="64" height="36">
+          <xhtml:div
+            xmlns="http://www.w3.org/1999/xhtml"
+            class="group-quick-actions"
+            (pointerdown)="$event.stopPropagation()"
+            (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              [attr.disabled]="_connectivity.isOffline() ? '' : null"
+              (click)="startEditGroup(group, $event)"
+              aria-label="Éditer le groupe"
+              title="Éditer le groupe">
+              <i class="pi pi-pencil"></i>
+            </button>
+            <button
+              type="button"
+              [attr.disabled]="_connectivity.isOffline() ? '' : null"
+              (click)="deleteGroup(group, $event)"
+              aria-label="Supprimer le groupe"
+              title="Supprimer le groupe">
+              <i class="pi pi-trash"></i>
+            </button>
+          </xhtml:div>
+        </foreignObject>
+      </g>
+    }
   </g>
 </svg>
 
-@if (draggingHex && draggingHex.quest) {
+@if (draggingHex && draggingHex.quest && !draggingGroupMembers) {
   <!-- Floating preview that follows the pointer while dragging: a standalone mini-SVG replica
      of the real hex, using the same getHexPoints/getHexColor/getHexBorderColor helpers. -->
   <svg
@@ -246,7 +338,7 @@
 
 <!-- Drag a quest here to put it back instead of dropping it on a hex - see HexDragController's
    overCancelZone/isPointOverCancelZone. -->
-@if (draggingHex) {
+@if (draggingHex || draggingGroupMembers) {
   <div #cancelZone class="drag-cancel-zone" [class.active]="overCancelZone">
     <i class="pi pi-undo"></i>
   </div>

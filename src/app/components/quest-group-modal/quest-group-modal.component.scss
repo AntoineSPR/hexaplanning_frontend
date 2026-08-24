@@ -1,0 +1,61 @@
+// Box styling (border/background/glow) comes entirely from the app-wide .p-dialog rule already
+// applied to every p-dialog's .p-dialog-content - this must not also carry .confirmation-dialog
+// (or redeclare that border/background/shadow itself), which would nest one bordered/glowing box
+// inside another identically-styled one and read as two overlapping modals.
+.group-edit-dialog {
+  min-width: 16rem;
+  // .p-dialog-content already carries its own 0.5rem (see the app-wide .p-dialog rule) - this adds
+  // the rest.
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+  }
+
+  label {
+    font-weight: bold;
+    text-align: center;
+    color: var(--light-theme-color);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+
+  .group-edit-fields {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    input[type='text'] {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+  }
+
+  .group-color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    label {
+      margin-bottom: 0;
+    }
+  }
+
+  // Same layout as quest-details' own button-group, for visual consistency with every other
+  // form-style modal in the app.
+  .button-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+}

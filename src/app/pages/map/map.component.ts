@@ -17,6 +17,9 @@ import { ConnectivityService } from 'src/app/services/connectivity.service';
 import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
 import { PriorityIconComponent } from '../../components/priority-icon/priority-icon.component';
 import { HexDragController, HexDragHost } from './hex-drag.controller';
+import { QuestGroupService } from 'src/app/services/quest-group.service';
+import { QuestGroupGeometryService } from 'src/app/services/quest-group-geometry.service';
+import { QuestGroupModalService } from 'src/app/services/quest-group-modal.service';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
@@ -26,6 +29,18 @@ const MAX_ZOOM_HEXES_VISIBLE = 3;
 // match the container's aspect ratio, but that only changes how much of this fixed grid is visible at once, never the grid itself.
 const GRID_WIDTH = 1650;
 const GRID_HEIGHT = 725;
+
+interface GroupOutline {
+  id: string;
+  pathD: string;
+  color: string;
+  name: string;
+  labelX: number;
+  labelY: number;
+  nameLines: { text: string; y: number }[];
+  actionsY: number;
+  titleBox: { x: number; y: number; width: number; height: number };
+}
 
 @Component({
   selector: 'app-map',
@@ -51,6 +66,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   _connectivity = inject(ConnectivityService);
   _ngZone = inject(NgZone);
   _glowPreference = inject(GlowPreferenceService);
+  _questGroupService = inject(QuestGroupService);
+  _questGroupGeometry = inject(QuestGroupGeometryService);
+  private readonly _questGroupModalService = inject(QuestGroupModalService);
 
   zoomHandle?: SvgZoomHandle;
 
@@ -58,7 +76,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   // Drives the drag-and-drop gesture; this component implements HexDragHost so it can read/
   // drive camera and hex state. See hex-drag.controller.ts.
-  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity);
+  private readonly _drag = new HexDragController(this, this._mapGrid, this._questAssignment, this._connectivity, this._questGroupGeometry);
 
   // Full grid data - every hex that exists, whether currently on-screen or not. Assignment
   // loading, the quest-sync/delete effects, fitAllQuests's off-screen bounding-box scan, and
@@ -199,6 +217,189 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   get overCancelZone(): boolean {
     return this._drag.overCancelZone;
   }
+  get draggingGroupMembers(): Hex[] | null {
+    return this._drag.draggingGroupMembers;
+  }
+  get groupDragPathD(): string | null {
+    return this._drag.groupDragPathD;
+  }
+  get groupDragOffsetX(): number {
+    return this._drag.groupDragOffsetX;
+  }
+  get groupDragOffsetY(): number {
+    return this._drag.groupDragOffsetY;
+  }
+  isGroupDragMember(hex: Hex): boolean {
+    return this._drag.isGroupDragMember(hex);
+  }
+
+  //#region Quest groups
+  // One outline + label per quest group that currently has at least one member on the map -
+  // recomputed whenever the group list or quest membership changes (see the constructor effect
+  // below) or a drag/reconciliation could have moved a member (see HexDragHost.recomputeGroupOutlines).
+  groupOutlines: GroupOutline[] = [];
+  selectedGroupId: string | null = null;
+
+  // Rendered separately from the @for below, positioned after the cursor-light block in the
+  // template so its (already fully opaque) background reliably paints over the light's glow
+  // rather than under it - SVG siblings paint in document order, so which one is "on top" is
+  // purely about position in the markup, not something opacity alone can fix regardless of order.
+  selectedGroupOutline(): GroupOutline | null {
+    return this.groupOutlines.find(g => g.id === this.selectedGroupId) ?? null;
+  }
+
+  // Always derived from `this.hexes` (the full grid), never `visibleHexes` (the viewport-culled
+  // subset) - a group outline must stay complete even while some of its members are off-screen.
+  //
+  // Membership is read fresh from `_questService.quests()` (each quest's own current
+  // `questGroupId`) rather than from either the group entity's own cached `questIds` or each
+  // hex's `quest.questGroupId`: the former only reflects members as of that group's last CRUD
+  // response, so leaving a group (a per-quest PUT, not a group update) left it silently stale
+  // here and the outline never shrank; the latter is only kept in sync by a separate effect (see
+  // the constructor) that may not have run yet in the same tick. Reading the quests signal
+  // directly is correct immediately after either kind of change.
+  recomputeGroupOutlines(): void {
+    const groupIdByQuestId = new Map(this._questService.quests().map(q => [q.id, q.questGroupId]));
+    this.groupOutlines = this._questGroupService
+      .questGroups()
+      .map(group => {
+        const members = this.hexes.filter(h => h.quest?.id && groupIdByQuestId.get(h.quest.id) === group.id);
+        if (members.length === 0) return null;
+        const pathD = this._questGroupGeometry.getGroupBoundaryPath(members, this.size);
+        const { labelX, labelY } = this.computeGroupLabelPosition(members);
+        const nameLines = this.layoutGroupNameLines(group.name, labelY);
+        // Quick-actions box sits a fixed gap above the topmost rendered line (not just above
+        // labelY), so it clears a two-line name exactly as it did a one-line one.
+        const actionsY = nameLines[0].y - this.size * 0.9;
+        const titleBox = this.computeGroupTitleBox(nameLines, labelX);
+        return { id: group.id, pathD, color: group.color, name: group.name, labelX, labelY, nameLines, actionsY, titleBox };
+      })
+      .filter((g): g is GroupOutline => g !== null);
+  }
+
+  // Splits a group name onto two lines once it's long enough to risk overrunning its neighbors,
+  // breaking at whichever space falls closest to the middle (a hard mid-string split if the name
+  // has no space to break at), and returns each line's absolute y so they end up centered as a
+  // block on `labelY` - capped at two lines regardless of length, matching what was asked for
+  // rather than wrapping indefinitely.
+  private layoutGroupNameLines(name: string, labelY: number): { text: string; y: number }[] {
+    const MAX_SINGLE_LINE = 12;
+    const LINE_HEIGHT = 11;
+
+    let lines: string[];
+    if (name.length <= MAX_SINGLE_LINE) {
+      lines = [name];
+    } else {
+      const mid = Math.floor(name.length / 2);
+      let splitIndex = -1;
+      let bestDistance = Infinity;
+      for (let i = 0; i < name.length; i++) {
+        if (name[i] === ' ') {
+          const distance = Math.abs(i - mid);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            splitIndex = i;
+          }
+        }
+      }
+      lines = splitIndex === -1 ? [name.slice(0, mid), name.slice(mid)] : [name.slice(0, splitIndex).trim(), name.slice(splitIndex + 1).trim()];
+    }
+
+    return lines.map((text, i) => ({ text, y: labelY + (i - (lines.length - 1) / 2) * LINE_HEIGHT }));
+  }
+
+  // A clickable/hoverable box around the (possibly 2-line) title, sized to the text rather than a
+  // fixed size - width from a rough average glyph width for the label's 9px bold font (exact
+  // measurement would need a post-render getBBox() pass; this is close enough for a click target,
+  // not for pixel-perfect fit), height from the line count. Widens the effective click target for
+  // selecting a group well beyond the thin outline stroke or the text glyphs themselves.
+  private computeGroupTitleBox(nameLines: { text: string; y: number }[], labelX: number): { x: number; y: number; width: number; height: number } {
+    const FONT_SIZE = 9;
+    const CHAR_WIDTH = FONT_SIZE * 0.62;
+    const PAD_X = 6;
+    const PAD_Y = 4;
+
+    const maxChars = Math.max(...nameLines.map(l => l.text.length));
+    const width = maxChars * CHAR_WIDTH + PAD_X * 2;
+    const top = nameLines[0].y - FONT_SIZE / 2 - PAD_Y;
+    const bottom = nameLines[nameLines.length - 1].y + FONT_SIZE / 2 + PAD_Y;
+    return { x: labelX - width / 2, y: top, width, height: bottom - top };
+  }
+
+  // Anchors the label at an empty hex just above the group, checked against the live grid rather
+  // than assumed. Right after the group is created, every such spot is guaranteed empty (flood-
+  // fill already swept up any occupied neighbor), but a later whole-group drag can validly land
+  // the group flush against an unrelated quest (dragging a group never auto-merges it with
+  // whatever it lands next to - see the constructor comment on reconcileGroupMembership, which
+  // only runs for single-quest moves), so the "just above" spot can no longer be assumed empty by
+  // construction alone. Every member's two upward neighbors (NE/NW - this grid has no straight-up
+  // neighbor) are tried, nearest-and-most-central first, and only the first one actually unoccupied
+  // is used; if the group is completely hemmed in from above, it falls back to a fixed offset
+  // above the topmost row rather than searching indefinitely.
+  private computeGroupLabelPosition(members: Hex[]): { labelX: number; labelY: number } {
+    const isOccupied = (q: number, r: number, s: number): boolean => {
+      const hex = this.hexes.find(h => h.q === q && h.r === r && h.s === s);
+      return !!hex?.quest;
+    };
+
+    const centroidX = members.reduce((sum, m) => sum + m.cx, 0) / members.length;
+    const halfWidth = (this.size * Math.sqrt(3)) / 2;
+    const candidates = members
+      .flatMap(m => [
+        { q: m.q, r: m.r - 1, s: m.s + 1, cx: m.cx - halfWidth, cy: m.cy - this.size * 1.5 }, // NW
+        { q: m.q + 1, r: m.r - 1, s: m.s, cx: m.cx + halfWidth, cy: m.cy - this.size * 1.5 }, // NE
+      ])
+      .sort((a, b) => a.cy - b.cy || Math.abs(a.cx - centroidX) - Math.abs(b.cx - centroidX));
+
+    const best = candidates.find(c => !isOccupied(c.q, c.r, c.s));
+    if (best) return { labelX: best.cx, labelY: best.cy };
+
+    const minCy = Math.min(...members.map(m => m.cy));
+    return { labelX: centroidX, labelY: minCy - this.size * 3 };
+  }
+
+  selectGroup(id: string, event: Event): void {
+    event.stopPropagation();
+    this.selectedGroupId = this.selectedGroupId === id ? null : id;
+  }
+
+  // Opens the shared create/edit group modal (see QuestGroupModalService); its own effect on the
+  // group list/quest signals (below) picks up the rename/recolor once it's saved, so nothing more
+  // is needed here.
+  startEditGroup(group: { id: string; name: string; color: string }, event: Event): void {
+    event.stopPropagation();
+    this._questGroupModalService.openEdit(group);
+  }
+
+  deleteGroup(group: { id: string; name: string }, event: Event): void {
+    event.stopPropagation();
+    if (this._connectivity.isOffline()) return;
+
+    this._confirmationService.confirm({
+      message: `Supprimer le groupe "${group.name}" ?`,
+      closable: true,
+      closeOnEscape: true,
+      accept: () => {
+        this._questGroupService.deleteQuestGroup(group.id).subscribe({
+          next: () => {
+            this.selectedGroupId = null;
+            this._questService.refreshAllQuestLists();
+            this.recomputeGroupOutlines();
+          },
+          error: err => console.error('Failed to delete quest group:', err),
+        });
+      },
+    });
+
+    // Focus management for the confirmation dialog
+    setTimeout(() => {
+      const acceptButton = document.querySelector('.accept-confirmation-button') as HTMLElement;
+      if (acceptButton) {
+        acceptButton.focus();
+      }
+    }, 100);
+  }
+  //#endregion
 
   // Set when the initial assignment load had to fall back to the offline snapshot; tells the
   // reconnect effect below to quietly re-fetch the authoritative state once back online, so the
@@ -206,6 +407,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   private needsRefreshOnReconnect = false;
 
   constructor() {
+    effect(() => {
+      // Re-fires whenever the group list or any quest's membership changes, so a group's outline
+      // stays in sync without every mutation site needing to remember to call this directly.
+      this._questGroupService.questGroups();
+      this._questService.quests();
+      this.recomputeGroupOutlines();
+    });
+
     effect(() => {
       const allQuests = this._questService.quests();
       this.hexes.forEach(hex => {
@@ -246,6 +455,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   ngOnInit(): void {
     this._questService.getAllUnassignedPendingQuests().subscribe();
+    this._questGroupService.getAllQuestGroups().subscribe();
 
     this.generateHexes();
 
@@ -276,6 +486,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         // A legacy assignment outside the pre-generated grid gets synthesized onto `hexes` via
         // MapGridService.addHex - re-derive visibleHexes in case that landed on-screen.
         this.recomputeVisibleHexes();
+        this.recomputeGroupOutlines();
         // Trigger fade-out animation first
         this.isFadingOut = true;
         // Then remove from DOM after animation completes
@@ -288,6 +499,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         // forever, since `complete` never fires after `error`.
         console.error('Failed to load assignments:', err);
         this.recomputeVisibleHexes();
+        this.recomputeGroupOutlines();
         this.isFadingOut = true;
         setTimeout(() => {
           this.isLoading = false;
@@ -417,6 +629,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       return;
     }
 
+    // A group is selected and this click landed outside it (its outline/label already handle
+    // their own click via selectGroup, with stopPropagation) - deselect and swallow the click
+    // instead of opening whatever's under it.
+    if (this.selectedGroupId && hex.quest?.questGroupId !== this.selectedGroupId) {
+      this.selectedGroupId = null;
+      return;
+    }
+
     if (this._connectivity.isOffline()) {
       // No network round-trip while offline: fall back to whatever is already loaded locally
       // so hexes stay browsable read-only without a connection.
@@ -474,7 +694,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     if (this._connectivity.isOffline()) return;
 
     if (this.selectedHex && this.selectedQuest) {
-      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest).subscribe({
+      this._questAssignment.assignQuestToHex(this.selectedHex, this.selectedQuest, this.hexes, this.size).subscribe({
         next: () => {
           this.dialogVisible = false;
           this.selectedHex = null;
@@ -496,7 +716,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     this.selectedHex = null;
 
     this._questModalService.openNewQuest(createdQuest => {
-      this._questAssignment.assignQuestToHex(hex, createdQuest).subscribe({
+      this._questAssignment.assignQuestToHex(hex, createdQuest, this.hexes, this.size).subscribe({
         error: err => console.error('Failed to assign newly created quest:', err),
       });
     });
@@ -558,6 +778,13 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   onHexPointerCancel(event: PointerEvent): void {
     this._drag.onPointerCancel(event);
+  }
+
+  // Starts a group drag directly from its title - see hex-drag.controller.ts. Subsequent
+  // pointermove/up/cancel for this gesture reuse the same onHexPointer* handlers above (generic,
+  // hex-agnostic), the same way a single hex's own pointer capture routes them back here.
+  onGroupTitlePointerDown(groupId: string, event: PointerEvent): void {
+    this._drag.onGroupTitlePointerDown(groupId, event);
   }
 
   isLandedHex(hex: Hex): boolean {

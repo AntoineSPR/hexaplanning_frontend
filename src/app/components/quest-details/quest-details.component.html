@@ -156,6 +156,21 @@
   }
 </form>
 
+<!-- Groupe de quêtes : "Créer un groupe" et "Quitter le groupe" sont mutuellement exclusifs -->
+@if (isOnMap && !isNew) {
+  <div class="quest-group-panel">
+    @if (isGrouped) {
+      <button type="button" class="text-button" [disabled]="_connectivity.isOffline()" (click)="leaveGroup()">
+        <i class="pi pi-sign-out"></i> Quitter le groupe
+      </button>
+    } @else {
+      <button type="button" class="text-button" [disabled]="_connectivity.isOffline()" (click)="openGroupCreationModal()">
+        <i class="pi pi-objects-column"></i> Créer un groupe
+      </button>
+    }
+  </div>
+}
+
 <!-- Confirmation de supression -->
 <p-confirmdialog #cd>
   <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">

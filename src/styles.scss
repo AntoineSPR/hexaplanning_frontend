@@ -24,6 +24,7 @@
   --error-shadow: rgba(226, 76, 76, 0.3);
   --input-bg: var(--light-hex-color);
   --input-text-color: var(--text-color);
+  --input-border-color: #5a5666;
   font-family: 'Inter', sans-serif;
 }
 
@@ -77,6 +78,18 @@ app-root {
 
 .p-inputtext::placeholder {
   color: #aaaaaa !important;
+}
+
+// PrimeNG's own Aura theme also recolors these components' border on focus (a lighter purple
+// driven by the preset's primary-color token) - a different shade than the --neon-glow-color
+// box-shadow ring the global *:focus-visible rule above already draws around them, so together
+// the two read as an uneven, two-tone border instead of one clean ring, most visible at the
+// rounded corners where the mismatched colors overlap. Pinning the border to one color regardless
+// of focus state makes the box-shadow ring the only thing that changes, consistent with every
+// other control (buttons, and the outer-wrapper ring on p-select above).
+.p-inputtext,
+.p-textarea {
+  border-color: var(--input-border-color) !important;
 }
 
 /** Style of PrimeNG modals : */
@@ -174,9 +187,23 @@ app-root {
 
 // Accessibility: Focus management
 *:focus-visible {
-  outline: 2px solid var(--focus-color);
-  outline-offset: 2px;
+  outline: none;
   box-shadow: 0 0 0 2px var(--focus-color) !important;
+}
+
+// PrimeNG's composite components (p-select, p-calendar, p-multiselect, ...) put literal DOM focus
+// on an inner sub-element - e.g. p-select's keyboard-focused combobox is a `.p-select-label` span
+// sized to just the text, not the dropdown's chevron button next to it - while marking their own
+// outer wrapper with a `.p-focus` class specifically so themes can ring the whole visible control
+// instead. Ringing whatever's literally focused (the rule above) only covered that inner span,
+// leaving the chevron button looking like a separate, unfocused box glued on next to it. Ring the
+// outer wrapper (which matches the control's real visual boundary/border-radius) instead, and
+// suppress the undersized inner one.
+.p-component.p-focus {
+  box-shadow: 0 0 0 2px var(--focus-color) !important;
+}
+.p-component.p-focus :focus-visible {
+  box-shadow: none !important;
 }
 
 h1 {
@@ -321,7 +348,6 @@ input.quest-checkbox[type='checkbox'] {
   }
 
   &:focus-visible {
-    outline-color: var(--neon-glow-color) !important;
     box-shadow: 0 0 0 2px var(--focus-color) !important;
   }
 

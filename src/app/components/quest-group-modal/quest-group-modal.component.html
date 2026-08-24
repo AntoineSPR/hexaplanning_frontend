@@ -1,0 +1,27 @@
+<p-dialog modal headless [dismissableMask]="true" [focusOnShow]="false" [visible]="isVisible" (visibleChange)="handleVisibleChange($event)">
+  <div class="group-edit-dialog">
+    <h3>{{ title }}</h3>
+    <div class="group-edit-fields">
+      <label for="groupTitleField">Nom :</label>
+      <input #nameInput id="groupTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
+      <div class="group-color-row">
+        <label for="groupModalColorInput">Couleur :</label>
+        <p-colorPicker id="groupModalColorInput" [(ngModel)]="color" format="hex" [appendTo]="'body'" [baseZIndex]="1000" />
+      </div>
+    </div>
+    <div class="button-group">
+      <button type="button" class="icon-button" (click)="cancel()" aria-label="Annuler" title="Annuler">
+        <i class="pi pi-times"></i>
+      </button>
+      <button
+        type="button"
+        class="icon-button"
+        [disabled]="!name.trim() || _connectivity.isOffline()"
+        (click)="confirm()"
+        aria-label="Confirmer"
+        title="Confirmer">
+        <i class="pi pi-check"></i>
+      </button>
+    </div>
+  </div>
+</p-dialog>

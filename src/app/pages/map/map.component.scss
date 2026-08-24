@@ -68,7 +68,7 @@
   width: 8rem;
   height: 8rem;
   border: 1rem solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--light-theme-color);
+  border-top-color: var(--neon-glow-color);
   border-radius: 50%;
   filter: drop-shadow(0 0 6px var(--light-theme-color));
   animation: spin 0.8s linear infinite;
@@ -170,6 +170,131 @@
 
 .hex_text_wrapper {
   pointer-events: none;
+}
+
+// Traced around a group's member hexes (see QuestGroupGeometryService.getGroupBoundaryPath).
+// fill:none means the shape's interior has no hit area of its own - pointer-events:visibleStroke
+// (rather than the default "auto", which for an SVG shape covers its whole fill box regardless of
+// paint) restricts clicks to the stroke itself, so the outline never steals clicks from the hex
+// drag/click surfaces it passes over.
+.quest-group-outline {
+  stroke-width: 3;
+  pointer-events: visibleStroke;
+  cursor: pointer;
+  transition: stroke-width 0.15s ease;
+
+  &.quest-group-selected {
+    stroke-width: 5;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+// The live boundary-path preview shown while dragging a whole selected group - not itself
+// selectable/clickable, just a floating readout of where the group would land.
+.quest-group-drag-preview {
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px var(--light-theme-color));
+}
+
+.quest-group-label {
+  font-size: 9px;
+  font-weight: bold;
+  pointer-events: auto;
+  paint-order: stroke;
+  stroke: black;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+// Wraps the title box + text (see the <g class="quest-group-title"> in the template) - the hover
+// effect below is keyed off hovering this whole group rather than the rect alone, so it doesn't
+// flicker on/off as the cursor crosses between the text glyphs (which sit on top of the rect and
+// would otherwise "steal" the hover away from it) and the gaps between them.
+.quest-group-title {
+  cursor: pointer;
+}
+
+// Sized to the title text (see MapComponent.computeGroupTitleBox), sitting just behind it - a
+// bigger, more obvious click/drag target than the text glyphs alone, transparent until hovered.
+.quest-group-title-box {
+  fill-opacity: 0;
+  stroke-width: 1;
+  stroke-opacity: 0.6;
+  transition:
+    fill-opacity 0.15s ease,
+    stroke-opacity 0.15s ease;
+}
+
+.quest-group-title:hover .quest-group-title-box {
+  fill-opacity: 0.15;
+  stroke-opacity: 1;
+}
+
+.quest-group-actions {
+  pointer-events: none; // the foreignObject inside opts back in
+
+  foreignObject {
+    pointer-events: auto;
+    overflow: visible;
+  }
+}
+
+.group-quick-actions {
+  // Fills and centers within its foreignObject rather than sizing to content and sitting at the
+  // box's top-left corner (a foreignObject's default child placement) - without this, any gap
+  // between the box and its (slightly narrower) content collected entirely on the right/bottom,
+  // reading as lopsided padding.
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  // --background-color is already a fully opaque solid (#151515, no alpha) - explicit here so it
+  // stays that way regardless of what --background-color itself is defined as elsewhere. Paired
+  // with the template rendering this after the cursor-light block (see map.component.html), this
+  // reliably blocks the light's glow instead of letting it paint through/over the bubble.
+  opacity: 1;
+  background-color: var(--background-color);
+  border: 1px solid var(--neon-glow-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 0 6px var(--neon-glow-color);
+
+  button {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    background: transparent;
+    color: var(--neon-glow-color);
+    border: 1px solid var(--neon-glow-color);
+    border-radius: 18%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    // Own hover feedback so hovering a button reads as hovering the button, not the hex/cursor-
+    // light effect showing through its transparent background underneath it.
+    &:hover:not(:disabled) {
+      background-color: var(--neon-glow-shadow-light);
+      box-shadow:
+        0 0 8px var(--neon-glow-color),
+        0 0 16px var(--neon-glow-shadow);
+      transform: scale(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+  }
 }
 
 // Clips a box to the same pointy-top hexagon shape produced by MapGridService.getHexPoints,

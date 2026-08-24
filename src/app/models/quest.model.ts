@@ -15,6 +15,7 @@ export type QuestUpdateDTO = {
   priorityId: string;
   hexAssignmentId?: string;
   advancement?: number;
+  questGroupId?: string;
 };
 export type QuestOutputDTO = {
   id: string;
@@ -25,6 +26,7 @@ export type QuestOutputDTO = {
   priorityId: string;
   hexAssignmentId?: string;
   advancement: number;
+  questGroupId?: string;
 };
 
 export const DEFAULT_ESTIMATED_TIME = 0;
