@@ -16,6 +16,7 @@ import {
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 import { SelectModule } from 'primeng/select';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { Textarea, TextareaModule } from 'primeng/textarea';
 import { CalendarModule } from 'primeng/calendar';
@@ -23,12 +24,16 @@ import { SliderModule } from 'primeng/slider';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DEFAULT_ESTIMATED_TIME, QuestUpdateDTO, QuestCreateDTO } from '../../models/quest.model';
 import { QuestGroupOutputDTO } from '../../models/quest-group.model';
+import { ThemeOutputDTO } from '../../models/theme.model';
+import { STATUS_COLORS } from '../../models/status-colors';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { QuestModalService } from '../../services/quest-modal.service';
 import { QuestGroupModalService } from '../../services/quest-group-modal.service';
 import { QuestGroupService } from '../../services/quest-group.service';
+import { ThemeService } from '../../services/theme.service';
+import { ThemeModalService } from '../../services/theme-modal.service';
 import { HexService } from '../../services/hex.service';
 import { MapGridService } from '../../services/map-grid.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -36,7 +41,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { Router } from '@angular/router';
 import { ConnectivityService } from '../../services/connectivity.service';
-import { PriorityIconComponent } from '../priority-icon/priority-icon.component';
+import { ThemeIconComponent } from '../theme-icon/theme-icon.component';
 
 @Component({
   selector: 'app-quest-details',
@@ -45,6 +50,7 @@ import { PriorityIconComponent } from '../priority-icon/priority-icon.component'
     ReactiveFormsModule,
     FormsModule,
     SelectModule,
+    ToggleSwitchModule,
     InputTextModule,
     InputNumberModule,
     TextareaModule,
@@ -56,7 +62,7 @@ import { PriorityIconComponent } from '../priority-icon/priority-icon.component'
     InputNumberModule,
     SliderModule,
     ProgressBarModule,
-    PriorityIconComponent,
+    ThemeIconComponent,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
@@ -75,6 +81,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _questModalService = inject(QuestModalService);
   private readonly _questGroupModalService = inject(QuestGroupModalService);
   private readonly _questGroupService = inject(QuestGroupService);
+  private readonly _themeService = inject(ThemeService);
+  private readonly _themeModalService = inject(ThemeModalService);
   private readonly _hexService = inject(HexService);
   private readonly _mapGrid = inject(MapGridService);
   private readonly _confirmationService = inject(ConfirmationService);
@@ -83,9 +91,15 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   readonly _connectivity = inject(ConnectivityService);
 
   questForm!: FormGroup;
-  priorityOptions = this._questService.priorities();
   statusOptions = this._questService.statuses();
   isEdit: boolean = false;
+
+  // A getter (not a field snapshot) so a theme created mid-session - e.g. via
+  // openThemeCreationModal below - immediately appears as a selectable/displayable option,
+  // instead of the p-select being stuck with whatever the signal held at component construction.
+  get themeOptions(): ThemeOutputDTO[] {
+    return this._themeService.themes();
+  }
 
   //#region Quest groups
   // "Create group" is offered when the quest is on the map and not already grouped; "Leave
@@ -203,6 +217,36 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         });
       },
       error: error => console.error('Failed to compute adjacent groups:', error),
+    });
+  }
+  //#endregion
+
+  //#region Themes
+  get selectedTheme(): ThemeOutputDTO | null {
+    const themeId = this.questForm.get('themeId')?.value;
+    return this.themeOptions?.find(t => t.id === themeId) ?? null;
+  }
+
+  get themeColor(): string {
+    return this.selectedTheme?.color ?? 'var(--theme-color)';
+  }
+
+  // Drives the role toggle: Secondaire sits on the left (unchecked), Principale on the right
+  // (checked) - so "checked" maps directly onto isPrimaryTheme, no inversion needed.
+  get isPrimaryToggleOn(): boolean {
+    return !!this.questForm.get('isPrimaryTheme')?.value;
+  }
+
+  onThemeRoleToggle(checked: boolean): void {
+    this.questForm.patchValue({ isPrimaryTheme: checked });
+  }
+
+  // Rename/recolor/delete are only ever done from the theme manager in Settings (see
+  // ThemeManagerModalComponent) - a quest's own theme selector only ever creates.
+  openThemeCreationModal(): void {
+    if (this._connectivity.isOffline()) return;
+    this._themeModalService.openCreate(theme => {
+      this.questForm.patchValue({ themeId: theme.id, isPrimaryTheme: false });
     });
   }
   //#endregion
@@ -474,7 +518,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       title: new FormControl('', [Validators.required, Validators.maxLength(100)]),
       description: new FormControl(''),
       estimatedTime: new FormControl(''),
-      priorityId: new FormControl('', Validators.required),
+      themeId: new FormControl<string | null>(null),
+      isPrimaryTheme: new FormControl(false),
       statusId: new FormControl('', Validators.required),
       advancement: new FormControl(0),
     });
@@ -485,7 +530,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       title: this.quest?.title ?? '',
       description: this.quest?.description ?? '',
       estimatedTime: this.minutesToDate(this.quest?.estimatedTime ?? DEFAULT_ESTIMATED_TIME),
-      priorityId: this.quest?.priorityId ?? this.defaultPriority,
+      themeId: this.quest?.themeId ?? null,
+      isPrimaryTheme: this.quest?.isPrimaryTheme ?? false,
       statusId: this.quest?.statusId ?? this.defaultStatus,
       advancement: this.quest?.advancement ?? 0,
     });
@@ -520,31 +566,12 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     return '17c07323-d5b4-4568-b773-de3487ff30b1';
   }
 
-  get defaultPriority() {
-    return '17c07323-d5b4-4568-b773-de3487ff30b1';
-  }
-
   get statusColor() {
-    return this.statusOptions?.find(s => s.id === this.quest.statusId)?.color ?? '#f7f6f6ff';
-  }
-
-  get priorityColor(): string {
-    const priority = this.priorityOptions?.find(p => p.id === this.quest.priorityId);
-    return priority?.borderColor || priority?.color || 'var(--theme-color)';
+    return STATUS_COLORS[this.quest.statusId] ?? '#f7f6f6ff';
   }
 
   getStatusName(statusId: string): string {
     const status = this.statusOptions?.find(s => s.id === statusId);
     return status ? status.name : 'Inconnu';
-  }
-
-  getPriorityName(priorityId: string): string {
-    const priority = this.priorityOptions?.find(p => p.id === priorityId);
-    return priority ? priority.name : 'Inconnu';
-  }
-
-  getPriorityIcon(priorityId: string): string {
-    const priority = this.priorityOptions?.find(p => p.id === priorityId);
-    return priority ? priority.icon || 'primary' : 'primary';
   }
 }

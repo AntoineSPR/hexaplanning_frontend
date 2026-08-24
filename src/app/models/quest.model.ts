@@ -3,7 +3,6 @@ export type QuestCreateDTO = {
   description?: string;
   estimatedTime: number;
   statusId: string;
-  priorityId: string;
 };
 
 export type QuestUpdateDTO = {
@@ -12,7 +11,8 @@ export type QuestUpdateDTO = {
   description?: string;
   estimatedTime: number;
   statusId: string;
-  priorityId: string;
+  themeId?: string;
+  isPrimaryTheme?: boolean;
   hexAssignmentId?: string;
   advancement?: number;
   questGroupId?: string;
@@ -23,7 +23,8 @@ export type QuestOutputDTO = {
   description?: string;
   estimatedTime: number;
   statusId: string;
-  priorityId: string;
+  themeId?: string;
+  isPrimaryTheme?: boolean;
   hexAssignmentId?: string;
   advancement: number;
   questGroupId?: string;

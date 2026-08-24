@@ -80,6 +80,93 @@ input {
   padding-top: 0.75rem;
 }
 
+// Theme select + role toggle + create affordance, replacing the old fixed-priority picker.
+// --accent-color is set inline per option (see the template) from the theme's own color, same
+// pattern as the quest-group panel below. align-items:center is set explicitly rather than relying
+// on the shared "flex flex-column align-content-center" utility classes used elsewhere in this
+// template - align-content has no effect on a single-line flex container, so those only ever
+// "centered" earlier fields (STATUT, the old PRIORITE) because their own content happened to be
+// full-width; this field's narrower rows (role toggle, actions) need a real align-items to center.
+.theme-field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  // Keeps a long theme name from growing past the select's own width and covering the clear
+  // ("x") button - min-width:0 lets this flex row actually shrink below its content's natural
+  // size (flex items default to min-width:auto, which is what let it overflow before).
+  .theme-selected-row {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .theme-option-label {
+    color: var(--accent-color, inherit);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .theme-role-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+    font-size: 0.85rem;
+
+    label {
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: normal;
+      color: var(--light-theme-color);
+      cursor: pointer;
+      margin-bottom: 0;
+      transition: color 0.2s ease;
+
+      // Highlights whichever side the toggle currently points to.
+      &.theme-role-active {
+        color: var(--text-color);
+        font-weight: bold;
+      }
+    }
+  }
+
+  .theme-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+  }
+}
+
+// Same look as #glow-toggle in settings-page.component.scss, so this is visually the same toggle
+// control wherever it appears in the app.
+::ng-deep #themeRoleToggle {
+  .p-toggleswitch-slider {
+    background: var(--dark-theme-color) !important;
+    border: 1px solid var(--dark-theme-color);
+  }
+
+  .p-toggleswitch-handle {
+    background: var(--text-color) !important;
+    color: var(--dark-theme-color) !important;
+  }
+
+  .p-toggleswitch-checked .p-toggleswitch-slider {
+    background: var(--neon-glow-color) !important;
+    border-color: var(--neon-glow-color);
+    box-shadow: 0 0 8px var(--neon-glow-color);
+  }
+
+  .p-toggleswitch-checked .p-toggleswitch-handle {
+    background: var(--text-color) !important;
+  }
+}
+
 // Quest group (create/leave) affordance, shown below the main form once the quest is on the map.
 .quest-group-panel {
   width: 18rem;
@@ -92,18 +179,19 @@ input {
 }
 
 // Text + icon button, same outline/glow language as .icon-button (styles.scss) but sized for a
-// label rather than an icon alone. Colors read from --group-color when a button sets it (the
-// "join this adjacent group" buttons, one per candidate - see the template), falling back to the
-// theme's own accent for every other .text-button (create/leave group), which don't set it.
+// label rather than an icon alone. Colors read from --accent-color when a button sets it (the
+// "join this adjacent group" buttons and the theme edit/delete buttons), falling back to the
+// theme's own accent for every other .text-button (create/leave group, create theme), which
+// don't set it.
 .text-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: transparent;
-  color: var(--group-color, var(--neon-glow-color));
-  border: 1px solid var(--group-color, var(--neon-glow-color));
-  box-shadow: 0 0 6px var(--group-color, var(--neon-glow-color));
+  color: var(--accent-color, var(--neon-glow-color));
+  border: 1px solid var(--accent-color, var(--neon-glow-color));
+  box-shadow: 0 0 6px var(--accent-color, var(--neon-glow-color));
   border-radius: 999px;
   cursor: pointer;
   font-weight: bold;
@@ -113,7 +201,7 @@ input {
   &:hover {
     background-color: var(--neon-glow-shadow-light);
     box-shadow:
-      0 0 8px var(--group-color, var(--neon-glow-color)),
+      0 0 8px var(--accent-color, var(--neon-glow-color)),
       0 0 16px var(--neon-glow-shadow);
     transform: scale(1.03);
   }
@@ -141,6 +229,27 @@ input {
 
 .p-invalid {
   border-color: #e24c4c !important;
+}
+
+// The overlay panel is portaled outside this component's own DOM subtree, so a plain :host
+// ::ng-deep rule (which only reaches descendants of the host element) can't touch it - this has
+// to be a bare, unscoped ::ng-deep, using panelStyleClass's own distinct name to stay safely
+// targeted instead of leaking onto every p-select panel in the app. Caps the panel to the same
+// width as the closed field (see .custom-select below), so a long theme name wraps/truncates
+// instead of growing the panel past the screen edge.
+::ng-deep .theme-select-panel {
+  max-width: 220px;
+
+  .p-select-option {
+    overflow: hidden;
+
+    .theme-option-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+  }
 }
 
 :host ::ng-deep {

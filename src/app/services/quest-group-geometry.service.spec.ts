@@ -12,7 +12,6 @@ function makeQuest(id: string, questGroupId?: string): QuestUpdateDTO {
     title: `Quest ${id}`,
     estimatedTime: 0,
     statusId: 'status',
-    priorityId: 'priority',
     questGroupId,
   };
 }

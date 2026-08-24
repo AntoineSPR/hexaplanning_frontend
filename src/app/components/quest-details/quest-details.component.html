@@ -65,39 +65,64 @@
       }
     }
 
-    <div class="flex flex-column align-content-center">
-      <!-- PRIORITE -->
-      <label for="priority" [class]="!isEdit && !isNew ? 'visually-hidden' : ''">Priorité :</label>
-      @if (isEdit) {
-        <p-select
-          id="priority"
-          formControlName="priorityId"
-          [options]="priorityOptions ?? []"
-          [readonly]="!isEdit"
-          optionLabel="name"
-          optionValue="id"
-          [styleClass]="'custom-select'">
-          <ng-template let-option pTemplate="selectedItem">
-            <div class="flex align-items-center gap-2">
-              <app-priority-icon [color]="option.borderColor || option.color" [alt]="option.name" [size]="24" />
-              <span [class]="'priority-' + option.icon">
-                {{ option.name }}
-              </span>
+    @if (!isNew) {
+      <div class="flex flex-column align-content-center theme-field">
+        <!-- THEME -->
+        <label for="theme" [class]="!isEdit ? 'visually-hidden' : ''">Thème :</label>
+        @if (isEdit) {
+          <p-select
+            id="theme"
+            formControlName="themeId"
+            [options]="themeOptions"
+            [showClear]="true"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Aucun thème"
+            [styleClass]="'custom-select'"
+            [panelStyleClass]="'theme-select-panel'">
+            <ng-template let-option pTemplate="selectedItem">
+              <div class="flex align-items-center gap-2 theme-selected-row">
+                <app-theme-icon [color]="option.color" [alt]="option.name" [size]="24" />
+                <span [style.--accent-color]="option.color" class="theme-option-label">{{ option.name }}</span>
+              </div>
+            </ng-template>
+            <ng-template let-option pTemplate="item">
+              <span [style.--accent-color]="option.color" class="theme-option-label">{{ option.name }}</span>
+            </ng-template></p-select
+          >
+
+          @if (questForm.get('themeId')?.value) {
+            <div class="theme-role-toggle">
+              <label for="themeRoleToggle" [class.theme-role-active]="!isPrimaryToggleOn">Secondaire</label>
+              <p-toggleswitch
+                id="themeRoleToggle"
+                [ngModel]="isPrimaryToggleOn"
+                [ngModelOptions]="{ standalone: true }"
+                (onChange)="onThemeRoleToggle($event.checked)"
+                ariaLabel="Rôle du thème : principale ou secondaire" />
+              <label for="themeRoleToggle" [class.theme-role-active]="isPrimaryToggleOn">Principale</label>
             </div>
-          </ng-template>
-          <ng-template let-option pTemplate="item">
-            <span [class]="'priority-' + option.icon">
-              {{ option.name }}
-            </span>
-          </ng-template></p-select
-        >
-      } @else {
-        <div class="flex align-items-center gap-2">
-          <app-priority-icon [color]="priorityColor" [alt]="getPriorityName(quest.priorityId)" [size]="24" />
-          <span class="italic">{{ getPriorityName(quest.priorityId) }}</span>
-        </div>
-      }
-    </div>
+          }
+
+          <!-- Only creation lives here - rename/recolor/delete are handled from the theme manager
+             in Settings only, so a quest's theme selector can't accidentally mutate/remove a
+             theme other quests may also be using. -->
+          <div class="theme-actions">
+            <button type="button" class="text-button" [disabled]="_connectivity.isOffline()" (click)="openThemeCreationModal()">
+              <i class="pi pi-plus"></i> Créer un thème
+            </button>
+          </div>
+        } @else {
+          <div class="flex align-items-center gap-2">
+            <app-theme-icon [color]="themeColor" [alt]="selectedTheme?.name ?? 'Aucun thème'" [size]="24" />
+            <span class="italic">{{ selectedTheme?.name ?? 'Aucun thème' }}</span>
+            @if (selectedTheme) {
+              <span class="italic">({{ quest.isPrimaryTheme ? 'principale' : 'secondaire' }})</span>
+            }
+          </div>
+        }
+      </div>
+    }
 
     <!-- TEMPS ESTIME -->
     @if (isEdit || hasEstimatedTime) {
@@ -176,7 +201,7 @@
         <button
           type="button"
           class="text-button"
-          [style.--group-color]="group.color"
+          [style.--accent-color]="group.color"
           [disabled]="_connectivity.isOffline()"
           (click)="joinAdjacentGroup(group)">
           <i class="pi pi-sign-in"></i> Rejoindre « {{ group.name }} »
