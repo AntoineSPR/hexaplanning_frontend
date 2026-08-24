@@ -22,12 +22,15 @@ import { CalendarModule } from 'primeng/calendar';
 import { SliderModule } from 'primeng/slider';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DEFAULT_ESTIMATED_TIME, QuestUpdateDTO, QuestCreateDTO } from '../../models/quest.model';
+import { QuestGroupOutputDTO } from '../../models/quest-group.model';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { QuestModalService } from '../../services/quest-modal.service';
 import { QuestGroupModalService } from '../../services/quest-group-modal.service';
+import { QuestGroupService } from '../../services/quest-group.service';
 import { HexService } from '../../services/hex.service';
+import { MapGridService } from '../../services/map-grid.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -71,7 +74,9 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _questService = inject(QuestService);
   private readonly _questModalService = inject(QuestModalService);
   private readonly _questGroupModalService = inject(QuestGroupModalService);
+  private readonly _questGroupService = inject(QuestGroupService);
   private readonly _hexService = inject(HexService);
+  private readonly _mapGrid = inject(MapGridService);
   private readonly _confirmationService = inject(ConfirmationService);
   private readonly _messageService = inject(MessageService);
   private readonly _router = inject(Router);
@@ -101,6 +106,14 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     return !!this.quest?.questGroupId;
   }
 
+  // Groups this quest is adjacent to but isn't a member of - populated once by
+  // refreshAdjacentGroups (see ngOnInit). Only ever non-empty while ungrouped: a quest that's
+  // adjacent to exactly one group already auto-joins it (see QuestAssignmentService's
+  // reconcileGroupMembership, run on every drag/assignment), so this only comes up for the
+  // genuinely ambiguous case that auto-attach deliberately leaves alone - a quest dropped between
+  // two (or more) different groups at once, adjacent to all of them, joining none automatically.
+  adjacentGroups: QuestGroupOutputDTO[] = [];
+
   // Opens the shared create/edit group modal (see QuestGroupModalService) seeded with this
   // quest's hex, and closes this dialog first so the two modals are never open at once.
   openGroupCreationModal(): void {
@@ -117,11 +130,79 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       next: quest => {
         this.quest = quest;
         this._messageService.add({ severity: 'success', summary: 'Quête retirée du groupe', detail: this.quest.title, life: 2000 });
+        this.refreshAdjacentGroups();
       },
       error: error => {
         console.error('Failed to leave quest group:', error);
         this._messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors du retrait du groupe', life: 2000 });
       },
+    });
+  }
+
+  joinAdjacentGroup(group: QuestGroupOutputDTO): void {
+    if (this._connectivity.isOffline() || this.quest?.questGroupId) return;
+
+    const updatedQuest: QuestUpdateDTO = { ...this.quest, questGroupId: group.id };
+    this._questService.updateQuest(updatedQuest).subscribe({
+      next: quest => {
+        this.quest = quest;
+        this.adjacentGroups = [];
+        this._messageService.add({ severity: 'success', summary: 'Groupe rejoint', detail: group.name, life: 2000 });
+      },
+      error: error => {
+        console.error('Failed to join quest group:', error);
+        this._messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la jonction au groupe', life: 2000 });
+      },
+    });
+  }
+
+  // Finds every distinct group among this quest's currently-occupied neighboring hexes, excluding
+  // its own (there is none, since this is only ever called for an ungrouped quest - see ngOnInit
+  // and leaveGroup). Requires a fresh assignments fetch (rather than anything cached) for the same
+  // reason group creation's flood-fill does: MapComponent.hexes isn't reachable from here. Also
+  // fetches the group list fresh rather than trusting QuestGroupService's cached signal, which is
+  // only ever populated by MapComponent - this dialog can be opened without the map having loaded
+  // first (e.g. from the quest list page), leaving that cache empty or stale.
+  private refreshAdjacentGroups(): void {
+    if (!this.resolvedHexAssignmentId || this.quest?.questGroupId) {
+      this.adjacentGroups = [];
+      return;
+    }
+
+    this._hexService.getAllAssignments().subscribe({
+      next: assignments => {
+        const seed = assignments.find(a => a.id === this.resolvedHexAssignmentId);
+        if (!seed) {
+          this.adjacentGroups = [];
+          return;
+        }
+
+        const assignmentByCoord = new Map(assignments.map(a => [`${a.q},${a.r},${a.s}`, a]));
+        const questsById = new Map(this._questService.quests().map(q => [q.id, q]));
+
+        const neighborGroupIds = new Set<string>();
+        for (const n of this._mapGrid.neighborsOf(seed, 1)) {
+          const neighborAssignment = assignmentByCoord.get(`${n.q},${n.r},${n.s}`);
+          const neighborQuest = neighborAssignment && questsById.get(neighborAssignment.questId);
+          if (neighborQuest?.questGroupId) {
+            neighborGroupIds.add(neighborQuest.questGroupId);
+          }
+        }
+
+        if (neighborGroupIds.size === 0) {
+          this.adjacentGroups = [];
+          return;
+        }
+
+        this._questGroupService.getAllQuestGroups().subscribe({
+          next: groups => {
+            const groupsById = new Map(groups.map(g => [g.id, g]));
+            this.adjacentGroups = [...neighborGroupIds].map(id => groupsById.get(id)).filter((g): g is QuestGroupOutputDTO => !!g);
+          },
+          error: error => console.error('Failed to load quest groups:', error),
+        });
+      },
+      error: error => console.error('Failed to compute adjacent groups:', error),
     });
   }
   //#endregion
@@ -141,6 +222,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         .pipe(catchError(() => of(null)))
         .subscribe(assignment => {
           this.resolvedHexAssignmentId = assignment?.id ?? null;
+          this.refreshAdjacentGroups();
         });
     }
   }
