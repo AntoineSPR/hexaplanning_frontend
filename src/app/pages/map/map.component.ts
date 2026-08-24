@@ -39,6 +39,7 @@ interface GroupOutline {
   labelY: number;
   nameLines: { text: string; y: number }[];
   actionsY: number;
+  titleBox: { x: number; y: number; width: number; height: number };
 }
 
 @Component({
@@ -270,7 +271,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
         // Quick-actions box sits a fixed gap above the topmost rendered line (not just above
         // labelY), so it clears a two-line name exactly as it did a one-line one.
         const actionsY = nameLines[0].y - this.size * 0.9;
-        return { id: group.id, pathD, color: group.color, name: group.name, labelX, labelY, nameLines, actionsY };
+        const titleBox = this.computeGroupTitleBox(nameLines, labelX);
+        return { id: group.id, pathD, color: group.color, name: group.name, labelX, labelY, nameLines, actionsY, titleBox };
       })
       .filter((g): g is GroupOutline => g !== null);
   }
@@ -304,6 +306,24 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     }
 
     return lines.map((text, i) => ({ text, y: labelY + (i - (lines.length - 1) / 2) * LINE_HEIGHT }));
+  }
+
+  // A clickable/hoverable box around the (possibly 2-line) title, sized to the text rather than a
+  // fixed size - width from a rough average glyph width for the label's 9px bold font (exact
+  // measurement would need a post-render getBBox() pass; this is close enough for a click target,
+  // not for pixel-perfect fit), height from the line count. Widens the effective click target for
+  // selecting a group well beyond the thin outline stroke or the text glyphs themselves.
+  private computeGroupTitleBox(nameLines: { text: string; y: number }[], labelX: number): { x: number; y: number; width: number; height: number } {
+    const FONT_SIZE = 9;
+    const CHAR_WIDTH = FONT_SIZE * 0.62;
+    const PAD_X = 6;
+    const PAD_Y = 4;
+
+    const maxChars = Math.max(...nameLines.map(l => l.text.length));
+    const width = maxChars * CHAR_WIDTH + PAD_X * 2;
+    const top = nameLines[0].y - FONT_SIZE / 2 - PAD_Y;
+    const bottom = nameLines[nameLines.length - 1].y + FONT_SIZE / 2 + PAD_Y;
+    return { x: labelX - width / 2, y: top, width, height: bottom - top };
   }
 
   // Anchors the label at an empty hex just above the group, checked against the live grid rather
@@ -758,6 +778,13 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   onHexPointerCancel(event: PointerEvent): void {
     this._drag.onPointerCancel(event);
+  }
+
+  // Starts a group drag directly from its title - see hex-drag.controller.ts. Subsequent
+  // pointermove/up/cancel for this gesture reuse the same onHexPointer* handlers above (generic,
+  // hex-agnostic), the same way a single hex's own pointer capture routes them back here.
+  onGroupTitlePointerDown(groupId: string, event: PointerEvent): void {
+    this._drag.onGroupTitlePointerDown(groupId, event);
   }
 
   isLandedHex(hex: Hex): boolean {

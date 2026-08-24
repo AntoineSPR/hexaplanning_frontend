@@ -32,8 +32,12 @@ export class QuestGroupModalComponent {
 
   @ViewChild('nameInput') nameInputRef?: ElementRef<HTMLInputElement>;
 
+  // Matches --neon-glow-color, the app's own default accent - a fresh group starts out matching
+  // the theme rather than an arbitrary color.
+  private readonly DEFAULT_COLOR = '#7c3aed';
+
   name = '';
-  color = '#39ff14';
+  color = this.DEFAULT_COLOR;
 
   constructor() {
     effect(() => {
@@ -44,7 +48,7 @@ export class QuestGroupModalComponent {
         this.color = state.color;
       } else {
         this.name = '';
-        this.color = '#39ff14';
+        this.color = this.DEFAULT_COLOR;
       }
       // Same pattern as quest-details' own title autofocus: wait a frame for the dialog's open
       // transition to actually render the input before focusing it.

@@ -2,8 +2,8 @@
   <div class="group-edit-dialog">
     <h3>{{ title }}</h3>
     <div class="group-edit-fields">
-      <label for="groupModalNameInput">Nom :</label>
-      <input #nameInput id="groupModalNameInput" type="text" pInputText [(ngModel)]="name" maxlength="50" />
+      <label for="groupTitleField">Nom :</label>
+      <input #nameInput id="groupTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
       <div class="group-color-row">
         <label for="groupModalColorInput">Couleur :</label>
         <p-colorPicker id="groupModalColorInput" [(ngModel)]="color" format="hex" [appendTo]="'body'" [baseZIndex]="1000" />

@@ -160,17 +160,35 @@
         [class.quest-group-selected]="selectedGroupId === group.id"
         (pointerdown)="$event.stopPropagation()"
         (click)="selectGroup(group.id, $event)" />
-      <text
-        [attr.fill]="group.color"
-        class="quest-group-label"
-        text-anchor="middle"
-        dominant-baseline="middle"
-        (pointerdown)="$event.stopPropagation()"
+      <!-- Grouped under one element so the hover effect (see .quest-group-title-box) reacts to
+         hovering either the box or the text glyphs identically - handling them as two separate
+         hoverable siblings meant the effect flickered on/off as the cursor crossed between glyph
+         ink (hitting the text) and the gaps between letters (hitting the rect) within what reads
+         as a single control. Also doubles as a drag handle for the whole group (see
+         HexDragController.onGroupTitlePointerDown) - pointerdown here starts a group drag exactly
+         like one starting on a member hex would, without needing the group already selected. -->
+      <g
+        class="quest-group-title hex-drag-surface"
+        (pointerdown)="onGroupTitlePointerDown(group.id, $event)"
+        (pointermove)="onHexPointerMove($event)"
+        (pointerup)="onHexPointerUp($event)"
+        (pointercancel)="onHexPointerCancel($event)"
         (click)="selectGroup(group.id, $event)">
-        @for (line of group.nameLines; track $index) {
-          <tspan [attr.x]="group.labelX" [attr.y]="line.y">{{ line.text }}</tspan>
-        }
-      </text>
+        <rect
+          class="quest-group-title-box"
+          [attr.x]="group.titleBox.x"
+          [attr.y]="group.titleBox.y"
+          [attr.width]="group.titleBox.width"
+          [attr.height]="group.titleBox.height"
+          rx="4"
+          [attr.stroke]="group.color"
+          [attr.fill]="group.color" />
+        <text [attr.fill]="group.color" class="quest-group-label" text-anchor="middle" dominant-baseline="middle">
+          @for (line of group.nameLines; track $index) {
+            <tspan [attr.x]="group.labelX" [attr.y]="line.y">{{ line.text }}</tspan>
+          }
+        </text>
+      </g>
     }
 
     <!-- Live preview while dragging a whole selected group: the precomputed boundary path,
@@ -320,7 +338,7 @@
 
 <!-- Drag a quest here to put it back instead of dropping it on a hex - see HexDragController's
    overCancelZone/isPointOverCancelZone. -->
-@if (draggingHex) {
+@if (draggingHex || draggingGroupMembers) {
   <div #cancelZone class="drag-cancel-zone" [class.active]="overCancelZone">
     <i class="pi pi-undo"></i>
   </div>

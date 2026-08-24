@@ -201,11 +201,34 @@
   font-size: 9px;
   font-weight: bold;
   pointer-events: auto;
-  cursor: pointer;
   paint-order: stroke;
   stroke: black;
   stroke-width: 2px;
   stroke-linejoin: round;
+}
+
+// Wraps the title box + text (see the <g class="quest-group-title"> in the template) - the hover
+// effect below is keyed off hovering this whole group rather than the rect alone, so it doesn't
+// flicker on/off as the cursor crosses between the text glyphs (which sit on top of the rect and
+// would otherwise "steal" the hover away from it) and the gaps between them.
+.quest-group-title {
+  cursor: pointer;
+}
+
+// Sized to the title text (see MapComponent.computeGroupTitleBox), sitting just behind it - a
+// bigger, more obvious click/drag target than the text glyphs alone, transparent until hovered.
+.quest-group-title-box {
+  fill-opacity: 0;
+  stroke-width: 1;
+  stroke-opacity: 0.6;
+  transition:
+    fill-opacity 0.15s ease,
+    stroke-opacity 0.15s ease;
+}
+
+.quest-group-title:hover .quest-group-title-box {
+  fill-opacity: 0.15;
+  stroke-opacity: 1;
 }
 
 .quest-group-actions {
