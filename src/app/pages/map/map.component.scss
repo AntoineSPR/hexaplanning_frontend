@@ -160,7 +160,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 20px;
+  // Bigger hit target - isPointOverCancelZone (hex-drag.controller.ts) reads this element's own
+  // getBoundingClientRect() directly, so growing the visual circle grows the actual drop target
+  // by the same amount, no separate hit-radius to keep in sync.
+  padding: 28px;
   border-radius: 50%;
   background-color: var(--background-color);
   border: 1px solid var(--neon-glow-color);
@@ -171,7 +174,7 @@
   transition: all 0.15s ease;
 
   i {
-    font-size: 20px;
+    font-size: 28px;
   }
 
   &.active {

@@ -34,7 +34,9 @@
           [disabled]="!isEdit"
           optionLabel="name"
           optionValue="id"
-          [styleClass]="'custom-select'">
+          [styleClass]="'custom-select'"
+          [appendTo]="'body'"
+          [baseZIndex]="1000">
           <ng-template let-option pTemplate="selectedItem">
             <span class="flex align-items-center gap-2">
               <app-status-hex-icon [status]="statusKindFor(option.id)" [alt]="option.name" [size]="22" />
@@ -72,73 +74,71 @@
       }
     }
 
-    @if (!isNew) {
-      <div class="flex flex-column align-content-center theme-field">
-        <!-- THEME -->
-        <label for="theme" [class]="!isEdit ? 'visually-hidden' : ''">Thème :</label>
-        @if (isEdit) {
-          <p-select
-            id="theme"
-            formControlName="themeId"
-            [options]="themeOptions"
-            [showClear]="true"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="Aucun thème"
-            [styleClass]="'custom-select'"
-            [panelStyleClass]="'theme-select-panel'"
-            [appendTo]="'body'"
-            [baseZIndex]="1000"
-            scrollHeight="280px"
-            (onChange)="onThemeSelectChange($event.value)">
-            <ng-template let-option pTemplate="selectedItem">
+    <div class="flex flex-column align-content-center theme-field">
+      <!-- THEME -->
+      <label for="theme" [class]="!isEdit ? 'visually-hidden' : ''">Thème :</label>
+      @if (isEdit) {
+        <p-select
+          id="theme"
+          formControlName="themeId"
+          [options]="themeOptions"
+          [showClear]="true"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Aucun thème"
+          [styleClass]="'custom-select'"
+          [panelStyleClass]="'theme-select-panel'"
+          [appendTo]="'body'"
+          [baseZIndex]="1000"
+          scrollHeight="280px"
+          (onChange)="onThemeSelectChange($event.value)">
+          <ng-template let-option pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2 theme-option-row">
+              <app-theme-icon [color]="option.color" [alt]="option.name" [size]="24" />
+              <span class="theme-option-label">{{ option.name }}</span>
+            </div>
+          </ng-template>
+          <!-- "Créer un thème" is the first real entry in themeOptions (see
+             CREATE_THEME_OPTION_ID) rather than a pinned header, so it scrolls away with the
+             rest of the list instead of staying fixed. Styled to blend in with the other rows
+             (theme-option-label's own font/spacing) - only the plus icon sets it apart. Only
+             creation lives here - rename/recolor/delete are handled from the theme manager in
+             Settings only, so a quest's theme selector can't accidentally mutate/remove a theme
+             other quests may also be using. -->
+          <ng-template let-option pTemplate="item">
+            @if (option.id === CREATE_THEME_OPTION_ID) {
+              <span class="theme-option-label theme-create-option"><i class="pi pi-plus"></i>{{ option.name }}</span>
+            } @else {
               <div class="flex align-items-center gap-2 theme-option-row">
-                <app-theme-icon [color]="option.color" [alt]="option.name" [size]="24" />
+                <app-theme-icon [color]="option.color" [alt]="option.name" [size]="18" />
                 <span class="theme-option-label">{{ option.name }}</span>
               </div>
-            </ng-template>
-            <!-- "Créer un thème" is the first real entry in themeOptions (see
-               CREATE_THEME_OPTION_ID) rather than a pinned header, so it scrolls away with the
-               rest of the list instead of staying fixed. Styled to blend in with the other rows
-               (theme-option-label's own font/spacing) - only the plus icon sets it apart. Only
-               creation lives here - rename/recolor/delete are handled from the theme manager in
-               Settings only, so a quest's theme selector can't accidentally mutate/remove a theme
-               other quests may also be using. -->
-            <ng-template let-option pTemplate="item">
-              @if (option.id === CREATE_THEME_OPTION_ID) {
-                <span class="theme-option-label theme-create-option"><i class="pi pi-plus"></i>{{ option.name }}</span>
-              } @else {
-                <div class="flex align-items-center gap-2 theme-option-row">
-                  <app-theme-icon [color]="option.color" [alt]="option.name" [size]="18" />
-                  <span class="theme-option-label">{{ option.name }}</span>
-                </div>
-              }
-            </ng-template></p-select
-          >
-
-          @if (questForm.get('themeId')?.value) {
-            <div class="theme-role-toggle">
-              <label for="themeRoleToggle" [class.theme-role-active]="!isPrimaryToggleOn">Secondaire</label>
-              <p-toggleswitch
-                id="themeRoleToggle"
-                [ngModel]="isPrimaryToggleOn"
-                [ngModelOptions]="{ standalone: true }"
-                (onChange)="onThemeRoleToggle($event.checked)"
-                ariaLabel="Rôle du thème : principale ou secondaire" />
-              <label for="themeRoleToggle" [class.theme-role-active]="isPrimaryToggleOn">Principale</label>
-            </div>
-          }
-        } @else {
-          <div class="flex align-items-center gap-2">
-            <app-theme-icon [color]="themeColor" [alt]="selectedTheme?.name ?? 'Aucun thème'" [size]="24" />
-            <span class="italic">{{ selectedTheme?.name ?? 'Aucun thème' }}</span>
-            @if (selectedTheme) {
-              <span class="italic">({{ quest.isPrimaryTheme ? 'principale' : 'secondaire' }})</span>
             }
+          </ng-template></p-select
+        >
+
+        @if (questForm.get('themeId')?.value) {
+          <div class="theme-role-toggle">
+            <label for="themeRoleToggle" [class.theme-role-active]="!isPrimaryToggleOn">Secondaire</label>
+            <p-toggleswitch
+              id="themeRoleToggle"
+              [ngModel]="isPrimaryToggleOn"
+              [ngModelOptions]="{ standalone: true }"
+              (onChange)="onThemeRoleToggle($event.checked)"
+              ariaLabel="Rôle du thème : principale ou secondaire" />
+            <label for="themeRoleToggle" [class.theme-role-active]="isPrimaryToggleOn">Principale</label>
           </div>
         }
-      </div>
-    }
+      } @else {
+        <div class="flex align-items-center gap-2">
+          <app-theme-icon [color]="themeColor" [alt]="selectedTheme?.name ?? 'Aucun thème'" [size]="24" />
+          <span class="italic">{{ selectedTheme?.name ?? 'Aucun thème' }}</span>
+          @if (selectedTheme) {
+            <span class="italic">({{ quest.isPrimaryTheme ? 'principale' : 'secondaire' }})</span>
+          }
+        </div>
+      }
+    </div>
 
     <!-- TEMPS ESTIME -->
     <!-- @if (isEdit || hasEstimatedTime) {
