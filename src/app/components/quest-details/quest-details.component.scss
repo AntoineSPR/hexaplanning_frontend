@@ -174,61 +174,6 @@ input {
   }
 }
 
-// Quest group (create/leave) affordance, shown below the main form once the quest is on the map.
-.quest-group-panel {
-  width: 18rem;
-  margin: 0 auto 1rem;
-  padding: 0 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-// Text + icon button, same outline/glow language as .icon-button (styles.scss) but sized for a
-// label rather than an icon alone. Colors read from --accent-color when a button sets it (the
-// "join this adjacent group" buttons and the theme edit/delete buttons), falling back to the
-// theme's own accent for every other .text-button (create/leave group, create theme), which
-// don't set it.
-.text-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: transparent;
-  color: var(--accent-color, var(--neon-glow-color));
-  border: 1px solid var(--accent-color, var(--neon-glow-color));
-  box-shadow: 0 0 6px var(--accent-color, var(--neon-glow-color));
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: var(--neon-glow-shadow-light);
-    box-shadow:
-      0 0 8px var(--accent-color, var(--neon-glow-color)),
-      0 0 16px var(--neon-glow-shadow);
-    transform: scale(1.03);
-  }
-
-  &:active {
-    transform: scale(0.97);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    box-shadow: none;
-
-    &:hover {
-      background: transparent;
-      transform: none;
-    }
-  }
-}
-
 .p-error {
   color: #e24c4c;
   font-size: 0.875rem;

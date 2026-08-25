@@ -229,7 +229,7 @@
   cursor: pointer;
 }
 
-// Sized to the title text (see MapComponent.computeGroupTitleBox), sitting just behind it - a
+// Sized to the title text (see MapComponent.computeGroupLabel), sitting just behind it - a
 // bigger, more obvious click/drag target than the text glyphs alone, transparent until hovered.
 .quest-group-title-box {
   fill-opacity: 0;

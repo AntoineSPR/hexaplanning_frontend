@@ -29,7 +29,7 @@ import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
 import { QuestModalService } from '../../services/quest-modal.service';
-import { QuestGroupModalService } from '../../services/quest-group-modal.service';
+import { GroupActionsModalService } from '../../services/group-actions-modal.service';
 import { QuestGroupService } from '../../services/quest-group.service';
 import { ThemeService } from '../../services/theme.service';
 import { ThemeModalService } from '../../services/theme-modal.service';
@@ -81,7 +81,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   private readonly _cdr = inject(ChangeDetectorRef);
   private readonly _questService = inject(QuestService);
   private readonly _questModalService = inject(QuestModalService);
-  private readonly _questGroupModalService = inject(QuestGroupModalService);
+  private readonly _groupActionsModalService = inject(GroupActionsModalService);
   private readonly _questGroupService = inject(QuestGroupService);
   private readonly _themeService = inject(ThemeService);
   private readonly _themeModalService = inject(ThemeModalService);
@@ -128,6 +128,27 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     return !!this.quest?.questGroupId;
   }
 
+  // The quest's own current group (name/color, for display - see currentGroup's own use in the
+  // group-actions modal), resolved fresh whenever the quest has a questGroupId - see
+  // refreshCurrentGroup/ngOnInit. Fetched the same way adjacentGroups is (a fresh
+  // getAllQuestGroups() call, not the cached signal) for the same reason: this dialog can be
+  // opened without the map having loaded groups first.
+  currentGroup: QuestGroupOutputDTO | null = null;
+
+  private refreshCurrentGroup(): void {
+    const groupId = this.quest?.questGroupId;
+    if (!groupId) {
+      this.currentGroup = null;
+      return;
+    }
+    this._questGroupService.getAllQuestGroups().subscribe({
+      next: groups => {
+        this.currentGroup = groups.find(g => g.id === groupId) ?? null;
+      },
+      error: error => console.error('Failed to load quest groups:', error),
+    });
+  }
+
   // Groups this quest is adjacent to but isn't a member of - populated once by
   // refreshAdjacentGroups (see ngOnInit). Only ever non-empty while ungrouped: a quest that's
   // adjacent to exactly one group already auto-joins it (see QuestAssignmentService's
@@ -136,57 +157,30 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   // two (or more) different groups at once, adjacent to all of them, joining none automatically.
   adjacentGroups: QuestGroupOutputDTO[] = [];
 
-  // Opens the shared create/edit group modal (see QuestGroupModalService) seeded with this
-  // quest's hex, and closes this dialog first so the two modals are never open at once.
-  openGroupCreationModal(): void {
-    if (this._connectivity.isOffline() || !this.resolvedHexAssignmentId) return;
-    this._questGroupModalService.openCreate(this.resolvedHexAssignmentId);
-    this.closeDialog.emit();
-  }
-
-  leaveGroup(): void {
-    if (this._connectivity.isOffline() || !this.quest?.questGroupId) return;
-
-    const updatedQuest: QuestUpdateDTO = { ...this.quest, questGroupId: undefined };
-    this._questService.updateQuest(updatedQuest).subscribe({
-      next: quest => {
-        this.quest = quest;
-        this._messageService.add({ severity: 'success', summary: 'Quête retirée du groupe', detail: this.quest.title, life: 2000 });
-        this.refreshAdjacentGroups();
-      },
-      error: error => {
-        console.error('Failed to leave quest group:', error);
-        this._messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors du retrait du groupe', life: 2000 });
-      },
-    });
-  }
-
-  joinAdjacentGroup(group: QuestGroupOutputDTO): void {
-    if (this._connectivity.isOffline() || this.quest?.questGroupId) return;
-
-    const updatedQuest: QuestUpdateDTO = { ...this.quest, questGroupId: group.id };
-    this._questService.updateQuest(updatedQuest).subscribe({
-      next: quest => {
-        this.quest = quest;
-        this.adjacentGroups = [];
-        this._messageService.add({ severity: 'success', summary: 'Groupe rejoint', detail: group.name, life: 2000 });
-      },
-      error: error => {
-        console.error('Failed to join quest group:', error);
-        this._messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la jonction au groupe', life: 2000 });
-      },
+  // Opens the group-actions modal (leave/create/join - see GroupActionsModalService) seeded with
+  // this quest's current membership/adjacency. Fully self-contained: it makes its own API calls
+  // and only tells quest-details to close once an action actually succeeds (see onSuccess) -
+  // canceling out of it leaves quest-details untouched, exactly as it was.
+  openGroupActionsModal(): void {
+    this._groupActionsModalService.open({
+      currentGroup: this.currentGroup,
+      adjacentGroups: this.adjacentGroups,
+      quest: this.quest,
+      hexAssignmentId: this.resolvedHexAssignmentId,
+      onSuccess: () => this.closeDialog.emit(),
     });
   }
 
   // Finds every distinct group among this quest's currently-occupied neighboring hexes, excluding
-  // its own (there is none, since this is only ever called for an ungrouped quest - see ngOnInit
-  // and leaveGroup). Requires a fresh assignments fetch (rather than anything cached) for the same
-  // reason group creation's flood-fill does: MapComponent.hexes isn't reachable from here. Also
-  // fetches the group list fresh rather than trusting QuestGroupService's cached signal, which is
-  // only ever populated by MapComponent - this dialog can be opened without the map having loaded
-  // first (e.g. from the quest list page), leaving that cache empty or stale.
+  // its own (if any - a grouped quest can still be adjacent to a different group, which the
+  // group-actions modal offers as a direct "Quitter le groupe et rejoindre <name>" shortcut).
+  // Requires a fresh assignments fetch (rather than anything cached) for the same reason group
+  // creation's flood-fill does: MapComponent.hexes isn't reachable from here. Also fetches the
+  // group list fresh rather than trusting QuestGroupService's cached signal, which is only ever
+  // populated by MapComponent - this dialog can be opened without the map having loaded first
+  // (e.g. from the quest list page), leaving that cache empty or stale.
   private refreshAdjacentGroups(): void {
-    if (!this.resolvedHexAssignmentId || this.quest?.questGroupId) {
+    if (!this.resolvedHexAssignmentId) {
       this.adjacentGroups = [];
       return;
     }
@@ -206,7 +200,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
         for (const n of this._mapGrid.neighborsOf(seed, 1)) {
           const neighborAssignment = assignmentByCoord.get(`${n.q},${n.r},${n.s}`);
           const neighborQuest = neighborAssignment && questsById.get(neighborAssignment.questId);
-          if (neighborQuest?.questGroupId) {
+          if (neighborQuest?.questGroupId && neighborQuest.questGroupId !== this.quest?.questGroupId) {
             neighborGroupIds.add(neighborQuest.questGroupId);
           }
         }
@@ -302,6 +296,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
           this.resolvedHexAssignmentId = assignment?.id ?? null;
           this.refreshAdjacentGroups();
         });
+      this.refreshCurrentGroup();
     }
   }
 

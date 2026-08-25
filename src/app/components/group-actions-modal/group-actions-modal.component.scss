@@ -1,0 +1,109 @@
+// Box styling (border/background/glow) comes entirely from the app-wide .p-dialog rule already
+// applied to every p-dialog's .p-dialog-content - this must not also carry .confirmation-dialog
+// (or redeclare that border/background/shadow itself), which would nest one bordered/glowing box
+// inside another identically-styled one and read as two overlapping modals.
+.group-actions-dialog {
+  min-width: 16rem;
+  // .p-dialog-content already carries its own 0.5rem (see the app-wide .p-dialog rule) - this adds
+  // the rest.
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+  }
+
+  label {
+    font-weight: bold;
+    text-align: center;
+    color: var(--light-theme-color);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+
+  .group-edit-fields {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    input[type='text'] {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+  }
+
+  // Color picking itself (picker/hex label/favorite star) is app-color-picker's own concern -
+  // see color-picker.component.scss - this just lays out the row it sits in.
+  .group-color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    label {
+      margin-bottom: 0;
+    }
+  }
+
+  // Same layout as quest-details' own button-group, for visual consistency with every other
+  // form-style modal in the app.
+  .button-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+}
+
+// "Quitter « name »" / "Rejoindre « name »" / "Créer un groupe" - text + icon button, same
+// outline/glow language as .icon-button (styles.scss) but sized for a label rather than an icon
+// alone. Border/glow read from --accent-color when a button sets it (quitter/rejoindre, colored
+// by the group in question), falling back to the theme's own accent for "Créer un groupe", which
+// doesn't set it. Text/icon color stays a plain neutral white regardless - a group's own color can
+// be anything (including pale, low-contrast hues against this dark background), so only the
+// border carries it; the label needs to stay legible no matter what that color is.
+.text-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--accent-color, var(--neon-glow-color));
+  box-shadow: 0 0 6px var(--accent-color, var(--neon-glow-color));
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--neon-glow-shadow-light);
+    box-shadow:
+      0 0 8px var(--accent-color, var(--neon-glow-color)),
+      0 0 16px var(--neon-glow-shadow);
+    transform: scale(1.03);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+
+    &:hover {
+      background: transparent;
+      transform: none;
+    }
+  }
+}
