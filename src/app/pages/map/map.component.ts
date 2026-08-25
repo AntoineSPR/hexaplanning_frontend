@@ -262,13 +262,19 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   // directly is correct immediately after either kind of change.
   recomputeGroupOutlines(): void {
     const groupIdByQuestId = new Map(this._questService.quests().map(q => [q.id, q.questGroupId]));
+    // Threaded through computeGroupLabelPosition below so each group's label search also avoids
+    // whatever hex an earlier group in this same pass already claimed for its own label - without
+    // this, two adjacent groups' labels can both land on the same (or a directly overlapping)
+    // empty hex, since each search only ever checked for an occupied QUEST there, not another
+    // group's already-placed title.
+    const claimedLabelCoords = new Set<string>();
     this.groupOutlines = this._questGroupService
       .questGroups()
       .map(group => {
         const members = this.hexes.filter(h => h.quest?.id && groupIdByQuestId.get(h.quest.id) === group.id);
         if (members.length === 0) return null;
         const pathD = this._questGroupGeometry.getGroupBoundaryPath(members, this.size);
-        const { labelX, labelY } = this.computeGroupLabelPosition(members);
+        const { labelX, labelY } = this.computeGroupLabelPosition(members, claimedLabelCoords);
         const nameLines = this.layoutGroupNameLines(group.name, labelY);
         // Quick-actions box sits a fixed gap above the topmost rendered line (not just above
         // labelY), so it clears a two-line name exactly as it did a one-line one.
@@ -338,10 +344,13 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   // neighbor) are tried, nearest-and-most-central first, and only the first one actually unoccupied
   // is used; if the group is completely hemmed in from above, it falls back to a fixed offset
   // above the topmost row rather than searching indefinitely.
-  private computeGroupLabelPosition(members: Hex[]): { labelX: number; labelY: number } {
-    const isOccupied = (q: number, r: number, s: number): boolean => {
+  private computeGroupLabelPosition(members: Hex[], claimedLabelCoords: Set<string>): { labelX: number; labelY: number } {
+    const isBlocked = (q: number, r: number, s: number): boolean => {
       const hex = this.hexes.find(h => h.q === q && h.r === r && h.s === s);
-      return !!hex?.quest;
+      if (hex?.quest) return true;
+      // Already claimed by an earlier group's own label in this same recompute pass - see
+      // recomputeGroupOutlines.
+      return claimedLabelCoords.has(`${q},${r},${s}`);
     };
 
     const centroidX = members.reduce((sum, m) => sum + m.cx, 0) / members.length;
@@ -353,8 +362,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       ])
       .sort((a, b) => a.cy - b.cy || Math.abs(a.cx - centroidX) - Math.abs(b.cx - centroidX));
 
-    const best = candidates.find(c => !isOccupied(c.q, c.r, c.s));
-    if (best) return { labelX: best.cx, labelY: best.cy };
+    const best = candidates.find(c => !isBlocked(c.q, c.r, c.s));
+    if (best) {
+      claimedLabelCoords.add(`${best.q},${best.r},${best.s}`);
+      return { labelX: best.cx, labelY: best.cy };
+    }
 
     const minCy = Math.min(...members.map(m => m.cy));
     return { labelX: centroidX, labelY: minCy - this.size * 3 };
