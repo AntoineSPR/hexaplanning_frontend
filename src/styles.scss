@@ -33,6 +33,24 @@
   font-family: 'Inter', sans-serif;
 }
 
+// Mobile gets a brighter version of the app's two darkest colors - see the map's own
+// getHexColor/getHexStrokeColor (map.component.ts) for why: --theme-color's #37007f fill and
+// --base-hex-color's #1d1e1e empty-hex border (barely 8 RGB units off the map's own #151515
+// background) read as too dark on phone screens. Same device-conditional feature
+// GlowPreferenceService already uses to default glow off on touch-primary devices - matching it
+// here keeps "what counts as mobile" consistent between the two. --dark-theme-color moves
+// proportionally so occupied vs. done-status hexes (and status icons, which read directly off
+// these two variables - see status-hex-icon.component.html) keep the same relative contrast to
+// each other, just both brighter. The bright end of the palette (--light-theme-color,
+// --neon-glow-color, etc.) isn't touched - only the dark colors were reported as a problem.
+@media (pointer: coarse) {
+  :root {
+    --theme-color: #5c0fc9;
+    --dark-theme-color: #3d0089;
+    --base-hex-color: #34373a;
+  }
+}
+
 // ngx-colors' own internal ".bg-white" class (its surface background, correctly wired to
 // --ngx-colors-surface above) collides by name with PrimeFlex's unrelated public ".bg-white"
 // utility, which forces `background-color: #fff !important`. PrimeFlex's !important wins over
