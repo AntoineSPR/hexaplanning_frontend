@@ -429,10 +429,12 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this.closeDialog.emit();
   }
 
-  // Whether discarding right now would silently lose something: a brand-new quest that hasn't
-  // been saved yet, or edits made to an existing one that haven't been submitted.
+  // Whether discarding right now would silently lose something: a brand-new quest whose form has
+  // actually been typed into, or edits made to an existing one that haven't been submitted. Just
+  // opening the creation form (still at its untouched defaults - see _setFormValues's own
+  // markAsPristine) isn't itself a change worth confirming.
   hasUnsavedChanges(): boolean {
-    return this.isNew || (this.isEdit && this.questForm.dirty);
+    return (this.isNew || this.isEdit) && this.questForm.dirty;
   }
 
   // Single entry point for every way of leaving the form (the return button, clicking outside
