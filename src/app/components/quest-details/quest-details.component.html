@@ -193,39 +193,17 @@
       </button>
       <button type="button" (click)="onDelete()" class="icon-button" aria-label="Supprimer" title="Supprimer"><i class="pi pi-trash"></i></button>
       <button type="button" (click)="onEdit()" class="icon-button" aria-label="Éditer" title="Éditer"><i class="pi pi-pencil"></i></button>
+      <!-- Opens the group-actions modal (leave/create/join - see GroupActionsModalComponent)
+         instead of an inline panel here, which used to grow past the form's own scroll budget
+         with several "Rejoindre" buttons (see the modal's own component for the full history). -->
+      @if (isOnMap) {
+        <button type="button" (click)="openGroupActionsModal()" class="icon-button" aria-label="Groupe" title="Groupe">
+          <i class="pi pi-th-large"></i>
+        </button>
+      }
     </div>
   }
 </form>
-
-<!-- Groupe de quêtes : "Créer un groupe" et "Quitter le groupe" sont mutuellement exclusifs. Les
-   boutons "Rejoindre..." (un par groupe voisin) n'apparaissent que pour une quête non groupée
-   placée entre plusieurs groupes à la fois - le cas ambigu que le rattachement automatique laisse
-   volontairement de côté (voir reconcileGroupMembership). Hidden entirely in edit mode - these
-   act immediately (not part of the form's own save/cancel flow), which read as out of place
-   alongside fields the user is actively mid-edit on. -->
-@if (isOnMap && !isNew && !isEdit) {
-  <div class="quest-group-panel">
-    @if (isGrouped) {
-      <button type="button" class="text-button" [disabled]="_connectivity.isOffline()" (click)="leaveGroup()">
-        <i class="pi pi-sign-out"></i> Quitter le groupe
-      </button>
-    } @else {
-      <button type="button" class="text-button" [disabled]="_connectivity.isOffline()" (click)="openGroupCreationModal()">
-        <i class="pi pi-objects-column"></i> Créer un groupe
-      </button>
-      @for (group of adjacentGroups; track group.id) {
-        <button
-          type="button"
-          class="text-button"
-          [style.--accent-color]="group.color"
-          [disabled]="_connectivity.isOffline()"
-          (click)="joinAdjacentGroup(group)">
-          <i class="pi pi-sign-in"></i> Rejoindre « {{ group.name }} »
-        </button>
-      }
-    }
-  </div>
-}
 
 <!-- Confirmation de supression -->
 <p-confirmdialog #cd>

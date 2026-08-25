@@ -285,6 +285,7 @@ export class QuestAssignmentService {
 
   // Compute the moved hex's occupied neighbors' distinct group ids and auto-attach/detach/move
   // the moved quest accordingly:
+  // - the sole member of its own group -> no change (see below)
   // - still adjacent to its own group -> no change
   // - adjacent to exactly one distinct OTHER group (whether it was grouped or not) -> attach to
   //   that group - this is what lets a drag move a quest straight from one group to another, not
@@ -296,6 +297,18 @@ export class QuestAssignmentService {
   private reconcileGroupMembership(movedHex: Hex, allHexes: Hex[], size: number): Observable<void> {
     const quest = movedHex.quest;
     if (!quest) return of(void 0);
+
+    // A solo-member group has no other member to be "adjacent to" by definition, so the
+    // neighbor-based logic below would always either strand it (detach, and the backend deletes
+    // the now-empty group) or silently reassign it into whatever group it happens to land beside
+    // - neither of which reads as "just moving the quest". Dragging a lone member around the map
+    // is effectively dragging its (single-member) group: membership stays exactly as it was,
+    // wherever it lands - joining a different group from here is still available explicitly via
+    // the group-actions modal's own "Rejoindre" button.
+    if (quest.questGroupId) {
+      const memberCount = this._questService.quests().filter(q => q.questGroupId === quest.questGroupId).length;
+      if (memberCount <= 1) return of(void 0);
+    }
 
     const neighborGroupIds = new Set<string>();
     for (const n of this._mapGrid.neighborsOf(movedHex, size)) {

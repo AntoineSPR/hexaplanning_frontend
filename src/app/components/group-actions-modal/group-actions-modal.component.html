@@ -1,0 +1,55 @@
+<p-dialog modal headless [dismissableMask]="true" [focusOnShow]="false" [visible]="isVisible" (visibleChange)="handleVisibleChange($event)">
+  <div class="group-actions-dialog">
+    @if (view === 'picker') {
+      <h3>Groupe</h3>
+      @if (currentGroup) {
+        <button
+          type="button"
+          class="text-button"
+          [style.--accent-color]="currentGroup.color"
+          [disabled]="_connectivity.isOffline()"
+          (click)="leaveGroup()">
+          <i class="pi pi-sign-out"></i> Quitter « {{ currentGroup.name }} »
+        </button>
+      }
+      @for (group of adjacentGroups; track group.id) {
+        <button
+          type="button"
+          class="text-button"
+          [style.--accent-color]="group.color"
+          [disabled]="_connectivity.isOffline()"
+          (click)="joinGroup(group)">
+          <i class="pi pi-sign-in"></i> Rejoindre « {{ group.name }} »
+        </button>
+      }
+      <button type="button" class="text-button" [disabled]="_connectivity.isOffline() || !hexAssignmentId" (click)="openCreateView()">
+        <i class="pi pi-plus"></i> Créer un groupe
+      </button>
+      <div class="button-group">
+        <button type="button" class="icon-button" (click)="close()" aria-label="Fermer" title="Fermer"><i class="pi pi-times"></i></button>
+      </div>
+    } @else {
+      <h3>Créer un groupe</h3>
+      <div class="group-edit-fields">
+        <label for="groupTitleField">Titre :</label>
+        <input #nameInput id="groupTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
+        <div class="group-color-row">
+          <label for="groupModalColorInput">Couleur :</label>
+          <app-color-picker inputId="groupModalColorInput" [color]="color" (colorChange)="color = $event" />
+        </div>
+      </div>
+      <div class="button-group">
+        <button type="button" class="icon-button" (click)="close()" aria-label="Annuler" title="Annuler"><i class="pi pi-times"></i></button>
+        <button
+          type="button"
+          class="icon-button"
+          [disabled]="!name.trim() || _connectivity.isOffline()"
+          (click)="createGroup()"
+          aria-label="Confirmer"
+          title="Confirmer">
+          <i class="pi pi-check"></i>
+        </button>
+      </div>
+    }
+  </div>
+</p-dialog>

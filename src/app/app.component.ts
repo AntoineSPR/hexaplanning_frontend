@@ -4,6 +4,7 @@ import { QuestContainerComponent } from './components/quest-container/quest-cont
 import { QuestGroupModalComponent } from './components/quest-group-modal/quest-group-modal.component';
 import { ThemeModalComponent } from './components/theme-modal/theme-modal.component';
 import { ThemeManagerModalComponent } from './components/theme-manager-modal/theme-manager-modal.component';
+import { GroupActionsModalComponent } from './components/group-actions-modal/group-actions-modal.component';
 import { UserService } from './services/user.service';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -14,7 +15,15 @@ import { FavoriteColorService } from './services/favorite-color.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, QuestContainerComponent, QuestGroupModalComponent, ThemeModalComponent, ThemeManagerModalComponent, ToastModule],
+  imports: [
+    RouterModule,
+    QuestContainerComponent,
+    QuestGroupModalComponent,
+    ThemeModalComponent,
+    ThemeManagerModalComponent,
+    GroupActionsModalComponent,
+    ToastModule,
+  ],
   providers: [MessageService],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

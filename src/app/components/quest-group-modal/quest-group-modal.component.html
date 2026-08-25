@@ -1,6 +1,6 @@
 <p-dialog modal headless [dismissableMask]="true" [focusOnShow]="false" [visible]="isVisible" (visibleChange)="handleVisibleChange($event)">
   <div class="group-edit-dialog">
-    <h3>{{ title }}</h3>
+    <h3>Modifier le groupe</h3>
     <div class="group-edit-fields">
       <label for="groupTitleField">Titre :</label>
       <input #nameInput id="groupTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
