@@ -2,7 +2,6 @@ import { Component, ElementRef, ViewChild, effect, inject } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { Dialog } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { ColorPicker } from 'primeng/colorpicker';
 import { MessageService } from 'primeng/api';
 import { QuestGroupModalService } from '../../services/quest-group-modal.service';
 import { QuestGroupService } from '../../services/quest-group.service';
@@ -10,6 +9,7 @@ import { QuestGroupGeometryService } from '../../services/quest-group-geometry.s
 import { HexService } from '../../services/hex.service';
 import { QuestService } from '../../services/quest.service';
 import { ConnectivityService } from '../../services/connectivity.service';
+import { ColorPickerComponent } from '../color-picker/color-picker.component';
 
 // Single shared modal for both creating a group (from quest-details, seeded by flood-fill from
 // the quest's hex) and editing one (from the map). Mounted once at the app root - see
@@ -17,7 +17,7 @@ import { ConnectivityService } from '../../services/connectivity.service';
 @Component({
   selector: 'app-quest-group-modal',
   standalone: true,
-  imports: [FormsModule, Dialog, InputTextModule, ColorPicker],
+  imports: [FormsModule, Dialog, InputTextModule, ColorPickerComponent],
   templateUrl: './quest-group-modal.component.html',
   styleUrl: './quest-group-modal.component.scss',
 })

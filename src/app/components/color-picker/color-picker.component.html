@@ -1,0 +1,20 @@
+<ngx-colors
+  ngxColorsTrigger
+  [id]="inputId"
+  [ngModel]="color"
+  (ngModelChange)="onColorPicked($event)"
+  outputModel="HEXA"
+  [lockValues]="{ alpha: 1 }"
+  theme="dark"
+  [palette]="paletteColors" />
+<span class="color-hex-label">{{ color }}</span>
+<button
+  type="button"
+  class="icon-button favorite-toggle"
+  [class.active]="isFavoriteColor"
+  [disabled]="_connectivity.isOffline()"
+  (click)="toggleFavoriteColor()"
+  [attr.aria-label]="isFavoriteColor ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+  [title]="isFavoriteColor ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+  <i class="pi" [class.pi-star-fill]="isFavoriteColor" [class.pi-star]="!isFavoriteColor"></i>
+</button>

@@ -38,6 +38,8 @@
     }
   }
 
+  // Color picking itself (picker/hex label/favorite star) is app-color-picker's own concern -
+  // see color-picker.component.scss - this just lays out the row it sits in.
   .group-color-row {
     display: flex;
     align-items: center;

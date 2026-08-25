@@ -6,7 +6,7 @@
       <input #nameInput id="themeTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
       <div class="theme-color-row">
         <label for="themeModalColorInput">Couleur :</label>
-        <p-colorPicker id="themeModalColorInput" [(ngModel)]="color" format="hex" [appendTo]="'body'" [baseZIndex]="1000" />
+        <app-color-picker inputId="themeModalColorInput" [color]="color" (colorChange)="color = $event" />
       </div>
       @if (colorAlreadyUsed) {
         <small class="theme-color-warning">Un autre thème utilise déjà cette couleur.</small>
