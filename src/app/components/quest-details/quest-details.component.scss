@@ -28,8 +28,16 @@
   overflow-y: auto;
   flex: 1 1 auto;
   min-height: 0;
-  // Pushes the scrollbar track off the field content
-  padding-right: 0.75rem;
+  // Padding on every side, not just the right: `overflow-y: auto` alone implicitly forces
+  // `overflow-x` to `auto` too (a browser default for any box where only one axis is set to
+  // non-visible), so this container clips horizontally as well as vertically even though only
+  // vertical scrolling was ever intended. A focused field's own ring (`box-shadow: 0 0 0 2px`,
+  // see *:focus-visible in styles.scss) sitting flush against any edge of this box - the left/right
+  // edges for every field, and the top/bottom edges for whichever field is first/last - had that
+  // side of its ring clipped clean off with no padding there to give it room. The 0.75rem on the
+  // right already existed to push the scrollbar track off the field content; the same value on the
+  // other sides both fixes the clipping and keeps the inset visually consistent all the way around.
+  padding: 0.75rem;
 }
 
 .done_checkbox {
