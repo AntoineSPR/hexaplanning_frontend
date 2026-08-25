@@ -283,12 +283,16 @@ export class QuestAssignmentService {
     );
   }
 
-  // Compute the moved hex's occupied neighbors' distinct group ids and auto-attach/detach the
-  // moved quest accordingly:
-  // - was grouped, no longer adjacent to that group -> detach
-  // - was ungrouped, adjacent to exactly one distinct group -> attach
-  // - otherwise (0 neighboring groups, 2+ distinct ones while ungrouped, or still adjacent to its
-  //   own group) -> no change
+  // Compute the moved hex's occupied neighbors' distinct group ids and auto-attach/detach/move
+  // the moved quest accordingly:
+  // - still adjacent to its own group -> no change
+  // - adjacent to exactly one distinct OTHER group (whether it was grouped or not) -> attach to
+  //   that group - this is what lets a drag move a quest straight from one group to another, not
+  //   just detach it and leave it stranded
+  // - was grouped, no longer adjacent to that group, and no single other group to replace it
+  //   with -> detach
+  // - otherwise (ungrouped with 0 or 2+ distinct neighboring groups) -> no change, left for the
+  //   quest-details panel's own "Rejoindre <group>" buttons to resolve the ambiguity manually
   private reconcileGroupMembership(movedHex: Hex, allHexes: Hex[], size: number): Observable<void> {
     const quest = movedHex.quest;
     if (!quest) return of(void 0);
@@ -302,14 +306,19 @@ export class QuestAssignmentService {
     }
 
     const currentGroupId = quest.questGroupId;
+    if (currentGroupId && neighborGroupIds.has(currentGroupId)) {
+      return of(void 0); // still adjacent to its own group - no change
+    }
+
     let nextGroupId: string | undefined;
-    if (currentGroupId) {
-      if (neighborGroupIds.has(currentGroupId)) return of(void 0); // still adjacent - no change
-      nextGroupId = undefined; // detach
-    } else if (neighborGroupIds.size === 1) {
-      nextGroupId = [...neighborGroupIds][0]; // attach
+    if (neighborGroupIds.size === 1) {
+      // Exactly one distinct neighboring group - and, per the check above, never its own group -
+      // so this covers both a plain attach (was ungrouped) and a move into a different group.
+      nextGroupId = [...neighborGroupIds][0];
+    } else if (currentGroupId) {
+      nextGroupId = undefined; // detach - no longer adjacent to its own group, nothing unambiguous to join instead
     } else {
-      return of(void 0); // 0 or 2+ distinct neighboring groups - do nothing
+      return of(void 0); // was ungrouped, still 0 or 2+ distinct neighboring groups - no change
     }
 
     const updatedQuest: QuestUpdateDTO = { ...quest, questGroupId: nextGroupId };
