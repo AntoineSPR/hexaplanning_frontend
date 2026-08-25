@@ -456,6 +456,16 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
 
   ngOnInit(): void {
+    // recomputeGroupOutlines (see its own comment) deliberately reads group membership from
+    // _questService.quests() rather than from each hex's own quest, so it's only ever as fresh as
+    // this signal - and nothing else on this page ever populates it (only the dashboard page
+    // calls getAllQuests()). Without this, a device that lands on /map without visiting the
+    // dashboard first computes outlines from whatever's cached in this device's own localStorage
+    // (possibly empty, or stale from before a quest was joined/moved into a group elsewhere) - the
+    // quest's hex position/membership itself is still correct (loadAssignmentsIntoHexes below is
+    // its own always-fresh fetch), so the group's "leave" button already works, but the outline
+    // just never grows to visually include it until some other page refreshes this signal.
+    this._questService.getAllQuests().subscribe();
     this._questService.getAllUnassignedPendingQuests().subscribe();
     this._questGroupService.getAllQuestGroups().subscribe();
     this._themeService.getAllThemes().subscribe();
