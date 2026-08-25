@@ -25,7 +25,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { DEFAULT_ESTIMATED_TIME, QuestUpdateDTO, QuestCreateDTO } from '../../models/quest.model';
 import { QuestGroupOutputDTO } from '../../models/quest-group.model';
 import { ThemeOutputDTO } from '../../models/theme.model';
-import { STATUS_COLORS } from '../../models/status-colors';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
 import { QuestService } from '../../services/quest.service';
@@ -42,6 +41,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { Router } from '@angular/router';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { ThemeIconComponent } from '../theme-icon/theme-icon.component';
+import { StatusHexIconComponent, QuestStatusKind } from '../status-hex-icon/status-hex-icon.component';
 
 @Component({
   selector: 'app-quest-details',
@@ -63,6 +63,7 @@ import { ThemeIconComponent } from '../theme-icon/theme-icon.component';
     SliderModule,
     ProgressBarModule,
     ThemeIconComponent,
+    StatusHexIconComponent,
   ],
   providers: [ConfirmationService],
   templateUrl: './quest-details.component.html',
@@ -601,8 +602,15 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     return '17c07323-d5b4-4568-b773-de3487ff30b1';
   }
 
-  get statusColor() {
-    return STATUS_COLORS[this.quest.statusId] ?? '#f7f6f6ff';
+  // Maps a status id to the kind app-status-hex-icon draws - mirrors the same on-hold/done/
+  // in-progress distinctions the map itself uses (see isInProgress above and getHexColor/
+  // showsCornerMarker in map.component.ts), so a quest's status reads the same way here as it
+  // does on its actual map tile.
+  statusKindFor(statusId: string): QuestStatusKind {
+    if (statusId === this._questService.statusDoneId) return 'done';
+    if (statusId === this._questService.statusOnHoldId) return 'on-hold';
+    if (statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') return 'in-progress';
+    return 'pending';
   }
 
   getStatusName(statusId: string): string {

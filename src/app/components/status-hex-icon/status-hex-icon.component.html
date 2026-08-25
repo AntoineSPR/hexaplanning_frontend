@@ -1,0 +1,45 @@
+<svg viewBox="-4 -4 48 48" role="img" [attr.aria-label]="alt">
+  <defs>
+    <clipPath [attr.id]="uid + '-hex'">
+      <polygon points="33.86,12 33.86,28 20,36 6.14,28 6.14,12 20,4" />
+    </clipPath>
+  </defs>
+
+  <!-- Base hex: dark fill once done, same theme-color fill as the map otherwise. Strokes are
+       drawn heavier than the map's own (2 units here vs. 1 there) - at icon scale a map-accurate
+       stroke width falls under a pixel and anti-aliases into a blur instead of a clean edge. -->
+  <polygon
+    points="33.86,12 33.86,28 20,36 6.14,28 6.14,12 20,4"
+    stroke="black"
+    stroke-width="2"
+    [attr.fill]="isDone ? 'var(--dark-theme-color)' : 'var(--theme-color)'" />
+
+  <!-- In-progress: the same radial progress wedge the map itself draws (see getProgressPath in
+       map-grid.service.ts - identical formula, cx=cy=20, size=16, clipped by the same hex
+       shape), fixed at a representative 35% since this icon has no specific quest/advancement to
+       read from and would otherwise always look identical to "pending" at 0%. -->
+  @if (isInProgress) {
+    <path d="M 20 20 L 20 4 A 16 16 0 0 1 32.94 29.40 Z" fill="var(--dark-theme-color)" [attr.clip-path]="'url(#' + uid + '-hex)'" />
+  }
+
+  <!-- Corner-dot ring: on-hold and done both get it, mirroring the map's own on-hold/done
+       marker. Done shows just the connecting ring (no dots) - a plain inner hex, distinct from
+       on-hold's dotted one. The color switches to a light tone for done specifically (rather
+       than reusing the map's own dark-on-dark + glow combo) - dark-theme-color would sit on a
+       dark-theme-color fill at matching value, and at icon scale there isn't enough room for a
+       soft glow to carry that contrast the way it does on a full-size map hex. -->
+  @if (showsCornerMarker) {
+    <g [attr.stroke]="markerColor" stroke-width="2">
+      @if (isDone) {
+        <polygon points="29.7,14.4 29.7,25.6 20,31.2 10.3,25.6 10.3,14.4 20,8.8" fill="none" />
+      } @else {
+        <circle cx="29.7" cy="14.4" r="3" [attr.fill]="markerColor" stroke="none" />
+        <circle cx="29.7" cy="25.6" r="3" [attr.fill]="markerColor" stroke="none" />
+        <circle cx="20" cy="31.2" r="3" [attr.fill]="markerColor" stroke="none" />
+        <circle cx="10.3" cy="25.6" r="3" [attr.fill]="markerColor" stroke="none" />
+        <circle cx="10.3" cy="14.4" r="3" [attr.fill]="markerColor" stroke="none" />
+        <circle cx="20" cy="8.8" r="3" [attr.fill]="markerColor" stroke="none" />
+      }
+    </g>
+  }
+</svg>

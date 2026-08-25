@@ -35,15 +35,22 @@
           optionLabel="name"
           optionValue="id"
           [styleClass]="'custom-select'">
+          <ng-template let-option pTemplate="selectedItem">
+            <span class="flex align-items-center gap-2">
+              <app-status-hex-icon [status]="statusKindFor(option.id)" [alt]="option.name" [size]="22" />
+              <span>{{ option.name }}</span>
+            </span>
+          </ng-template>
           <ng-template let-option pTemplate="item">
-            <span>
-              {{ option.name }}
+            <span class="flex align-items-center gap-2">
+              <app-status-hex-icon [status]="statusKindFor(option.id)" [alt]="option.name" [size]="18" />
+              <span>{{ option.name }}</span>
             </span>
           </ng-template></p-select
         >
       } @else {
         <span class="flex align-items-center gap-2">
-          <span class="status-dot" [style.background]="statusColor" [style.box-shadow]="'0 0 4px ' + statusColor"></span>
+          <app-status-hex-icon [status]="statusKindFor(quest.statusId)" [alt]="getStatusName(quest.statusId)" [size]="22" />
           <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
         </span>
       }
