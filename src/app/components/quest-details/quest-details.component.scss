@@ -88,10 +88,11 @@ input {
 }
 
 // Theme select + role toggle + create affordance, replacing the old fixed-priority picker.
-// --accent-color is set inline per option (see the template) from the theme's own color, same
-// pattern as the quest-group panel below. align-items:center is set explicitly rather than relying
-// on the shared "flex flex-column align-content-center" utility classes used elsewhere in this
-// template - align-content has no effect on a single-line flex container, so those only ever
+// A theme's color is shown via its icon (app-theme-icon, see the template) rather than tinting
+// the option text - a colored word can be low-contrast/hard to read depending on the hue, where a
+// small swatch icon doesn't have that problem. align-items:center is set explicitly rather than
+// relying on the shared "flex flex-column align-content-center" utility classes used elsewhere in
+// this template - align-content has no effect on a single-line flex container, so those only ever
 // "centered" earlier fields (STATUT, the old PRIORITE) because their own content happened to be
 // full-width; this field's narrower rows (role toggle, actions) need a real align-items to center.
 .theme-field {
@@ -102,14 +103,15 @@ input {
 
   // Keeps a long theme name from growing past the select's own width and covering the clear
   // ("x") button - min-width:0 lets this flex row actually shrink below its content's natural
-  // size (flex items default to min-width:auto, which is what let it overflow before).
-  .theme-selected-row {
+  // size (flex items default to min-width:auto, which is what let it overflow before). Shared by
+  // both the closed field's own selectedItem row and each option row in the open list (see the
+  // template) - the latter needs the same treatment mirrored in the portaled panel rule below.
+  .theme-option-row {
     min-width: 0;
     overflow: hidden;
   }
 
   .theme-option-label {
-    color: var(--accent-color, inherit);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -254,6 +256,14 @@ input {
 
   .p-select-option {
     overflow: hidden;
+
+    // Same shrink/ellipsis rules as .theme-field .theme-option-row/.theme-option-label above,
+    // duplicated here rather than shared: those require .theme-field as a DOM ancestor, which a
+    // portaled (appendTo="body") list row never has, so they'd silently never match here.
+    .theme-option-row {
+      min-width: 0;
+      overflow: hidden;
+    }
 
     .theme-option-label {
       overflow: hidden;

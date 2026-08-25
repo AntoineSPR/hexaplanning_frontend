@@ -50,6 +50,16 @@ ngx-colors-overlay ._palette-controls {
   gap: 0.75rem;
 }
 
+// ngx-colors hardcodes z-index:2000 on its own overlay host, which is too low once it's opened
+// from inside an already-stacked PrimeNG dialog (e.g. creating a theme from within quest-details:
+// quest-details' own dialog, then the theme-creation dialog on top of that, each bumping
+// PrimeNG's auto-incrementing z-index further - observed as high as ~4200 two dialogs deep). Once
+// that exceeds 2000 the color picker renders visually behind the modal it belongs to and becomes
+// unreachable. Forced well above any realistic PrimeNG stacking depth.
+ngx-colors-overlay {
+  z-index: 100000 !important;
+}
+
 * {
   margin: 0;
   padding: 0;
