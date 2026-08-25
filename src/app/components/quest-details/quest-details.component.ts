@@ -274,6 +274,13 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this._themeModalService.openCreate(theme => {
       this._lastRealThemeId = theme.id;
       this.questForm.patchValue({ themeId: theme.id, isPrimaryTheme: false });
+      // patchValue() alone doesn't mark the control dirty (only a real UI-driven change does,
+      // e.g. picking an existing theme from the select) - without this, hasUnsavedChanges()
+      // wouldn't see the newly-created theme as a pending change, and closing right after
+      // creating it (without hitting Valider) would silently discard the assignment with no
+      // confirmation.
+      this.questForm.get('themeId')?.markAsDirty();
+      this.questForm.get('isPrimaryTheme')?.markAsDirty();
     });
   }
   //#endregion
