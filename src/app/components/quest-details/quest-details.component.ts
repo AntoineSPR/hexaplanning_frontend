@@ -74,6 +74,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   @Output() closeDialog = new EventEmitter<void>();
   @ViewChildren(Textarea) textareas!: QueryList<Textarea>;
   @ViewChild('titleTextarea') titleTextarea!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('formEl') formEl!: ElementRef<HTMLFormElement>;
 
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _cdr = inject(ChangeDetectorRef);
@@ -94,11 +95,17 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   statusOptions = this._questService.statuses();
   isEdit: boolean = false;
 
+  // Sentinel id for the synthetic "Créer un thème" row prepended to themeOptions below - lets it
+  // sit inside the actual scrollable options list (so it scrolls away with the rest, rather than
+  // staying pinned like a real header would) while still visually reading as the first entry.
+  readonly CREATE_THEME_OPTION_ID = '__create-theme__';
+
   // A getter (not a field snapshot) so a theme created mid-session - e.g. via
   // openThemeCreationModal below - immediately appears as a selectable/displayable option,
   // instead of the p-select being stuck with whatever the signal held at component construction.
   get themeOptions(): ThemeOutputDTO[] {
-    return this._themeService.themes();
+    const createOption: ThemeOutputDTO = { id: this.CREATE_THEME_OPTION_ID, name: 'Créer un thème', color: '', questIds: [] };
+    return [createOption, ...this._themeService.themes()];
   }
 
   //#region Quest groups
@@ -224,7 +231,8 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   //#region Themes
   get selectedTheme(): ThemeOutputDTO | null {
     const themeId = this.questForm.get('themeId')?.value;
-    return this.themeOptions?.find(t => t.id === themeId) ?? null;
+    if (!themeId || themeId === this.CREATE_THEME_OPTION_ID) return null;
+    return this._themeService.themes().find(t => t.id === themeId) ?? null;
   }
 
   get themeColor(): string {
@@ -241,11 +249,29 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     this.questForm.patchValue({ isPrimaryTheme: checked });
   }
 
+  // Remembers the last real (non-sentinel) themeId selection, so picking "Créer un thème" from
+  // the dropdown (see onThemeSelectChange) can revert to it rather than leaving the form on the
+  // sentinel value while the creation modal is open.
+  private _lastRealThemeId: string | null = null;
+
+  // Intercepts the synthetic "Créer un thème" row (see themeOptions/CREATE_THEME_OPTION_ID):
+  // selecting it shouldn't actually persist as the quest's theme, so revert the form immediately
+  // and open the creation modal instead. A real selection just updates the remembered value.
+  onThemeSelectChange(value: string | null): void {
+    if (value === this.CREATE_THEME_OPTION_ID) {
+      this.questForm.patchValue({ themeId: this._lastRealThemeId }, { emitEvent: false });
+      this.openThemeCreationModal();
+      return;
+    }
+    this._lastRealThemeId = value;
+  }
+
   // Rename/recolor/delete are only ever done from the theme manager in Settings (see
   // ThemeManagerModalComponent) - a quest's own theme selector only ever creates.
   openThemeCreationModal(): void {
     if (this._connectivity.isOffline()) return;
     this._themeModalService.openCreate(theme => {
+      this._lastRealThemeId = theme.id;
       this.questForm.patchValue({ themeId: theme.id, isPrimaryTheme: false });
     });
   }
@@ -279,8 +305,11 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       this._cdr.detectChanges();
     }, 100);
 
-    // Focus management to override PrimeNG Dialog's automatic focus
-    if (this.isEdit || this.isNew) {
+    // Focus management to override PrimeNG Dialog's automatic focus - new quests only (resetForm
+    // is what sets isEdit alongside isNew at mount time, so isEdit alone never reaches here;
+    // written as isNew to make that explicit rather than implicit in resetForm's side effect).
+    // Editing an existing quest deliberately does NOT autofocus the title - see onEdit().
+    if (this.isNew) {
       this.setTitleFocus();
     }
   }
@@ -483,8 +512,13 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     if (this._connectivity.isOffline()) return;
 
     this.isEdit = true;
-    // Focus on title when entering edit mode
-    this.setTitleFocus();
+    // Doesn't snap focus into the title itself (removed on request) - but focusing the form
+    // container (tabindex="-1" in the template) keeps the very first Tab press landing on the
+    // title anyway, instead of wherever the browser falls back to once the just-clicked "Éditer"
+    // button is removed from the DOM (document.activeElement reverts to <body>, and Tab from
+    // there follows the whole page's DOM order, not this dialog's). A programmatic focus() on a
+    // non-interactive container doesn't trigger :focus-visible, so this stays invisible.
+    requestAnimationFrame(() => this.formEl?.nativeElement.focus());
   }
 
   //#region Date & Time
@@ -535,6 +569,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       statusId: this.quest?.statusId ?? this.defaultStatus,
       advancement: this.quest?.advancement ?? 0,
     });
+    this._lastRealThemeId = this.quest?.themeId ?? null;
     // setValue() doesn't clear the dirty flag on its own; without this, hasUnsavedChanges()
     // would keep reporting stale edits as "unsaved" after they've just been reverted here
     // (e.g. edit -> cancel -> re-edit -> cancel again with no new changes).

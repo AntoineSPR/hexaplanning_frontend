@@ -9,6 +9,13 @@
   // component's own scroll region (.scrollable-content) engages before the dialog's would -
   // that's what keeps .button-group pinned in view instead of scrolling with long content.
   max-height: 80vh;
+
+  // Programmatic focus target for onEdit()'s tab-order anchor (tabindex="-1" in the template) -
+  // invisible by design, but pinned explicitly in case a browser's :focus-visible heuristic ever
+  // treats a scripted focus() as visible.
+  &:focus {
+    outline: none;
+  }
 }
 
 // Everything except the button bar; scrolls on its own once the form exceeds max-height.
@@ -132,14 +139,19 @@ input {
       }
     }
   }
+}
 
-  .theme-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.9rem;
+// "Créer un thème" is a real row inside the select's own scrollable option list (see
+// CREATE_THEME_OPTION_ID in the template), styled to blend in with the other rows - only the
+// plus icon sets it apart, instead of a standalone pill/glow button.
+.theme-create-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit;
+
+  i {
+    color: var(--neon-glow-color);
   }
 }
 
