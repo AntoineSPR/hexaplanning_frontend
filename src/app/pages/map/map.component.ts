@@ -262,24 +262,21 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   // directly is correct immediately after either kind of change.
   recomputeGroupOutlines(): void {
     const groupIdByQuestId = new Map(this._questService.quests().map(q => [q.id, q.questGroupId]));
-    // Threaded through computeGroupLabelPosition below so each group's label search also avoids
-    // whatever hex an earlier group in this same pass already claimed for its own label - without
-    // this, two adjacent groups' labels can both land on the same (or a directly overlapping)
-    // empty hex, since each search only ever checked for an occupied QUEST there, not another
-    // group's already-placed title.
-    const claimedLabelCoords = new Set<string>();
+    // Threaded through computeGroupLabel below so each group's title search also avoids whatever
+    // space an earlier group in this same pass already claimed for its own title - without this,
+    // two groups' titles could still overlap each other even though each individually avoided the
+    // hex grid.
+    const claimedTitleBoxes: { x: number; y: number; width: number; height: number }[] = [];
     this.groupOutlines = this._questGroupService
       .questGroups()
       .map(group => {
         const members = this.hexes.filter(h => h.quest?.id && groupIdByQuestId.get(h.quest.id) === group.id);
         if (members.length === 0) return null;
         const pathD = this._questGroupGeometry.getGroupBoundaryPath(members, this.size);
-        const { labelX, labelY } = this.computeGroupLabelPosition(members, claimedLabelCoords);
-        const nameLines = this.layoutGroupNameLines(group.name, labelY);
+        const { labelX, labelY, nameLines, titleBox } = this.computeGroupLabel(members, group.name, claimedTitleBoxes);
         // Quick-actions box sits a fixed gap above the topmost rendered line (not just above
         // labelY), so it clears a two-line name exactly as it did a one-line one.
         const actionsY = nameLines[0].y - this.size * 0.9;
-        const titleBox = this.computeGroupTitleBox(nameLines, labelX);
         return { id: group.id, pathD, color: group.color, name: group.name, labelX, labelY, nameLines, actionsY, titleBox };
       })
       .filter((g): g is GroupOutline => g !== null);
@@ -287,89 +284,174 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   // Splits a group name onto two lines once it's long enough to risk overrunning its neighbors,
   // breaking at whichever space falls closest to the middle (a hard mid-string split if the name
-  // has no space to break at), and returns each line's absolute y so they end up centered as a
-  // block on `labelY` - capped at two lines regardless of length, matching what was asked for
-  // rather than wrapping indefinitely.
-  private layoutGroupNameLines(name: string, labelY: number): { text: string; y: number }[] {
+  // has no space to break at) - capped at two lines regardless of length, matching what was asked
+  // for rather than wrapping indefinitely.
+  private wrapGroupName(name: string): string[] {
     const MAX_SINGLE_LINE = 12;
-    const LINE_HEIGHT = 11;
+    if (name.length <= MAX_SINGLE_LINE) return [name];
 
-    let lines: string[];
-    if (name.length <= MAX_SINGLE_LINE) {
-      lines = [name];
-    } else {
-      const mid = Math.floor(name.length / 2);
-      let splitIndex = -1;
-      let bestDistance = Infinity;
-      for (let i = 0; i < name.length; i++) {
-        if (name[i] === ' ') {
-          const distance = Math.abs(i - mid);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            splitIndex = i;
-          }
+    const mid = Math.floor(name.length / 2);
+    let splitIndex = -1;
+    let bestDistance = Infinity;
+    for (let i = 0; i < name.length; i++) {
+      if (name[i] === ' ') {
+        const distance = Math.abs(i - mid);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          splitIndex = i;
         }
       }
-      lines = splitIndex === -1 ? [name.slice(0, mid), name.slice(mid)] : [name.slice(0, splitIndex).trim(), name.slice(splitIndex + 1).trim()];
     }
-
-    return lines.map((text, i) => ({ text, y: labelY + (i - (lines.length - 1) / 2) * LINE_HEIGHT }));
+    return splitIndex === -1 ? [name.slice(0, mid), name.slice(mid)] : [name.slice(0, splitIndex).trim(), name.slice(splitIndex + 1).trim()];
   }
 
-  // A clickable/hoverable box around the (possibly 2-line) title, sized to the text rather than a
-  // fixed size - width from a rough average glyph width for the label's 9px bold font (exact
-  // measurement would need a post-render getBBox() pass; this is close enough for a click target,
-  // not for pixel-perfect fit), height from the line count. Widens the effective click target for
-  // selecting a group well beyond the thin outline stroke or the text glyphs themselves.
-  private computeGroupTitleBox(nameLines: { text: string; y: number }[], labelX: number): { x: number; y: number; width: number; height: number } {
+  // Size of the (possibly 2-line) title box, from a rough average glyph width for the label's 9px
+  // bold font (exact measurement would need a post-render getBBox() pass; this is close enough
+  // for both the click target and the overlap search below, not for pixel-perfect fit) and the
+  // line count. Independent of where the box actually ends up - computeGroupLabel below positions
+  // it once a clear spot is found.
+  private measureTitleBox(lines: string[]): { width: number; height: number } {
     const FONT_SIZE = 9;
     const CHAR_WIDTH = FONT_SIZE * 0.62;
     const PAD_X = 6;
     const PAD_Y = 4;
+    const LINE_HEIGHT = 11;
 
-    const maxChars = Math.max(...nameLines.map(l => l.text.length));
+    const maxChars = Math.max(...lines.map(l => l.length));
     const width = maxChars * CHAR_WIDTH + PAD_X * 2;
-    const top = nameLines[0].y - FONT_SIZE / 2 - PAD_Y;
-    const bottom = nameLines[nameLines.length - 1].y + FONT_SIZE / 2 + PAD_Y;
-    return { x: labelX - width / 2, y: top, width, height: bottom - top };
+    const height = (lines.length - 1) * LINE_HEIGHT + FONT_SIZE + PAD_Y * 2;
+    return { width, height };
   }
 
-  // Anchors the label at an empty hex just above the group, checked against the live grid rather
-  // than assumed. Right after the group is created, every such spot is guaranteed empty (flood-
-  // fill already swept up any occupied neighbor), but a later whole-group drag can validly land
-  // the group flush against an unrelated quest (dragging a group never auto-merges it with
-  // whatever it lands next to - see the constructor comment on reconcileGroupMembership, which
-  // only runs for single-quest moves), so the "just above" spot can no longer be assumed empty by
-  // construction alone. Every member's two upward neighbors (NE/NW - this grid has no straight-up
-  // neighbor) are tried, nearest-and-most-central first, and only the first one actually unoccupied
-  // is used; if the group is completely hemmed in from above, it falls back to a fixed offset
-  // above the topmost row rather than searching indefinitely.
-  private computeGroupLabelPosition(members: Hex[], claimedLabelCoords: Set<string>): { labelX: number; labelY: number } {
-    const isBlocked = (q: number, r: number, s: number): boolean => {
-      const hex = this.hexes.find(h => h.q === q && h.r === r && h.s === s);
-      if (hex?.quest) return true;
-      // Already claimed by an earlier group's own label in this same recompute pass - see
-      // recomputeGroupOutlines.
-      return claimedLabelCoords.has(`${q},${r},${s}`);
+  private rectsOverlap(
+    a: { x: number; y: number; width: number; height: number },
+    b: { x: number; y: number; width: number; height: number }
+  ): boolean {
+    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  }
+
+  // Places a group's title (and sizes its click-target box - see measureTitleBox) somewhere that
+  // doesn't visually collide with anything: a hex cell (the box is drawn with no fill of its own,
+  // so a hex sitting behind it - occupied or not - would show right through), or another group's
+  // already-placed title in this same recompute pass (see claimedTitleBoxes/recomputeGroupOutlines).
+  //
+  // Right after a group is created every hex just above it is guaranteed empty (flood-fill already
+  // swept up any occupied neighbor), but a later whole-group drag can validly land the group flush
+  // against an unrelated quest (dragging a group never auto-merges it with whatever it lands next
+  // to - see the constructor comment on reconcileGroupMembership, which only runs for single-quest
+  // moves), and a long enough name's box can span past whichever single hex it's centered on
+  // regardless - so "just above" can no longer be assumed clear by construction alone, checked
+  // fully instead. Every member's two upward neighbors (NE/NW - this grid has no straight-up
+  // neighbor) are tried first, nearest-and-most-central first; if none is clear, the search
+  // escalates straight up in increasing steps. This always terminates: `this.hexes` only covers
+  // the map's fixed generated extent, so going up far enough eventually exits it into guaranteed
+  // hex-free canvas - sitting outside the map's own boundaries isn't a special case, just where
+  // this search naturally ends up once nothing closer works.
+  private computeGroupLabel(
+    members: Hex[],
+    name: string,
+    claimedTitleBoxes: { x: number; y: number; width: number; height: number }[]
+  ): { labelX: number; labelY: number; nameLines: { text: string; y: number }[]; titleBox: { x: number; y: number; width: number; height: number } } {
+    const LINE_HEIGHT = 11;
+    const lines = this.wrapGroupName(name);
+    const { width, height } = this.measureTitleBox(lines);
+
+    const place = (labelX: number, labelY: number) => {
+      const nameLines = lines.map((text, i) => ({ text, y: labelY + (i - (lines.length - 1) / 2) * LINE_HEIGHT }));
+      const titleBox = { x: labelX - width / 2, y: labelY - height / 2, width, height };
+      return { labelX, labelY, nameLines, titleBox };
+    };
+
+    const overlapsClaimed = (titleBox: { x: number; y: number; width: number; height: number }): boolean =>
+      claimedTitleBoxes.some(box => this.rectsOverlap(titleBox, box));
+
+    const halfWidth = (this.size * Math.sqrt(3)) / 2;
+    const hexWidth = halfWidth * 2;
+    // How many extra hexes to each side of a candidate's own anchor the title's actual width
+    // reaches, so a long name is checked against every hex it would visually span, not just the
+    // single hex its anchor happens to sit on.
+    const spanRadius = Math.max(0, Math.round((width / hexWidth - 1) / 2));
+
+    // Resolves a candidate pixel position to its nearest grid coordinate (MapGridService's own
+    // inverse of hexToPixel) and checks that hex and the `spanRadius` ones beside it for occupancy
+    // - grid coordinates rather than a rectangle-vs-rectangle test, because adjacent hexes' bounding
+    // rectangles overlap each other near their points even though the actual hexagon shapes don't,
+    // which would otherwise flag a genuinely clear spot as blocked just because it touches an
+    // occupied neighbor's rectangle.
+    //
+    // If clear, only the Y half of the final placement snaps to that row's own exact center
+    // (hexToPixel again) - the escalation search below steps in fixed pixel increments that don't
+    // line up with the grid's actual row spacing, so without this the title's vertical gap above
+    // whatever hex is below it could end up inconsistent/cramped. X is deliberately left as the
+    // candidate's own (not also snapped to that same hex's center): snapping X too would pull the
+    // title sideways to align with whichever hex the vertical search happened to land near, instead
+    // of keeping it above the group itself - dx already defaults to 0 (directly above the group's
+    // own centroid) and only shifts sideways via the ring search below when something is actually
+    // in the way, so leaving X alone here keeps that "stay above the group unless blocked" behavior
+    // intact.
+    const tryCandidate = (cx: number, cy: number): ReturnType<typeof place> | null => {
+      const { q, r } = this._mapGrid.pixelToAxial(cx, cy, this.size);
+      for (let dq = -spanRadius; dq <= spanRadius; dq++) {
+        const hex = this.hexes.find(h => h.q === q + dq && h.r === r && h.s === -(q + dq) - r);
+        if (hex?.quest) return null;
+      }
+      const rowCy = this._mapGrid.hexToPixel(q, r, this.size).cy;
+      const result = place(cx, rowCy);
+      return overlapsClaimed(result.titleBox) ? null : result;
     };
 
     const centroidX = members.reduce((sum, m) => sum + m.cx, 0) / members.length;
-    const halfWidth = (this.size * Math.sqrt(3)) / 2;
     const candidates = members
       .flatMap(m => [
-        { q: m.q, r: m.r - 1, s: m.s + 1, cx: m.cx - halfWidth, cy: m.cy - this.size * 1.5 }, // NW
-        { q: m.q + 1, r: m.r - 1, s: m.s, cx: m.cx + halfWidth, cy: m.cy - this.size * 1.5 }, // NE
+        { cx: m.cx - halfWidth, cy: m.cy - this.size * 1.5 }, // NW
+        { cx: m.cx + halfWidth, cy: m.cy - this.size * 1.5 }, // NE
       ])
       .sort((a, b) => a.cy - b.cy || Math.abs(a.cx - centroidX) - Math.abs(b.cx - centroidX));
 
-    const best = candidates.find(c => !isBlocked(c.q, c.r, c.s));
-    if (best) {
-      claimedLabelCoords.add(`${best.q},${best.r},${best.s}`);
-      return { labelX: best.cx, labelY: best.cy };
+    for (const c of candidates) {
+      const result = tryCandidate(c.cx, c.cy);
+      if (result) {
+        claimedTitleBoxes.push(result.titleBox);
+        return result;
+      }
     }
 
+    // No spot immediately above the group works - widen the search outward in a 2D neighborhood
+    // (both sideways and further up) rather than only ever climbing straight up above the group's
+    // own centroid: a purely-vertical escalation can walk right past clear space just to the side
+    // (e.g. blocked by an unrelated group's own title directly above, with open space beside it)
+    // and end up needlessly far from the group. Candidates are generated in a widening diamond and
+    // tried nearest-first (actual pixel distance), so whichever direction - up, or to either side -
+    // actually has the closest clear spot wins.
     const minCy = Math.min(...members.map(m => m.cy));
-    return { labelX: centroidX, labelY: minCy - this.size * 3 };
+    const baseCy = minCy - this.size * 3;
+    const HORIZONTAL_STEP = width * 0.6;
+    const VERTICAL_STEP = this.size * 1.2;
+    const RING_COUNT = 20;
+
+    const escalationCandidates: { cx: number; cy: number; dist: number }[] = [];
+    for (let ring = 1; ring <= RING_COUNT; ring++) {
+      for (let sx = -ring; sx <= ring; sx++) {
+        const dx = sx * HORIZONTAL_STEP;
+        const dy = ring * VERTICAL_STEP;
+        escalationCandidates.push({ cx: centroidX + dx, cy: baseCy - dy, dist: Math.hypot(dx, dy) });
+      }
+    }
+    escalationCandidates.sort((a, b) => a.dist - b.dist);
+
+    for (const cand of escalationCandidates) {
+      const result = tryCandidate(cand.cx, cand.cy);
+      if (result) {
+        claimedTitleBoxes.push(result.titleBox);
+        return result;
+      }
+    }
+
+    // Give up searching (guarantees termination) - by this point the candidate is far above and
+    // beyond the group, comfortably past the fixed grid's own extent in any realistically-sized map.
+    const result = place(centroidX, minCy - this.size * 40);
+    claimedTitleBoxes.push(result.titleBox);
+    return result;
   }
 
   selectGroup(id: string, event: Event): void {
