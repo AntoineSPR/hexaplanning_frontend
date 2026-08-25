@@ -22,7 +22,32 @@
   --input-bg: var(--light-hex-color);
   --input-text-color: var(--text-color);
   --input-border-color: #5a5666;
+
+  // ngx-colors' own documented global theming hooks (not a component-scoped leak - this is the
+  // library's intended configuration point) - matches the app's dark/purple palette instead of
+  // its own default light theme.
+  --ngx-colors-surface: var(--background-color);
+  --ngx-colors-text: var(--text-color);
+  --ngx-colors-border: var(--neon-glow-color);
+
   font-family: 'Inter', sans-serif;
+}
+
+// ngx-colors' own internal ".bg-white" class (its surface background, correctly wired to
+// --ngx-colors-surface above) collides by name with PrimeFlex's unrelated public ".bg-white"
+// utility, which forces `background-color: #fff !important`. PrimeFlex's !important wins over
+// ngx-colors' own (non-!important, if more specific) rule regardless of the dark theme being
+// correctly active - this is what still shows white despite [theme]="dark". Fight !important
+// with !important, scoped narrowly to ngx-colors' own overlay so nothing else is affected.
+ngx-colors-overlay .bg-white {
+  background-color: var(--ngx-colors-surface) !important;
+}
+
+// The back arrow (returning from the expanded sliders view to the palette) sits directly against
+// the ACCEPT/CANCEL buttons in ngx-colors' own layout, with no gap between its flex-grow
+// navigation area and the buttons group - add breathing room between them.
+ngx-colors-overlay ._palette-controls {
+  gap: 0.75rem;
 }
 
 * {

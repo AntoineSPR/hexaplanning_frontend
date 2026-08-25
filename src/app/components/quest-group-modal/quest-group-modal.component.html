@@ -6,7 +6,7 @@
       <input #nameInput id="groupTitleField" type="text" pInputText [(ngModel)]="name" maxlength="50" />
       <div class="group-color-row">
         <label for="groupModalColorInput">Couleur :</label>
-        <p-colorPicker id="groupModalColorInput" [(ngModel)]="color" format="hex" [appendTo]="'body'" [baseZIndex]="1000" />
+        <app-color-picker inputId="groupModalColorInput" [color]="color" (colorChange)="color = $event" />
       </div>
     </div>
     <div class="button-group">

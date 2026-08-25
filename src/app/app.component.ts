@@ -9,6 +9,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { QuestService } from './services/quest.service';
 import { ConnectivityService } from './services/connectivity.service';
+import { FavoriteColorService } from './services/favorite-color.service';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +23,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly _userService = inject(UserService);
   private readonly _questService = inject(QuestService);
   private readonly _connectivity = inject(ConnectivityService);
+  private readonly _favoriteColorService = inject(FavoriteColorService);
 
   // Ctrl+scroll and trackpad pinch-zoom both surface as `wheel` events with `ctrlKey: true`.
   // Blocked everywhere, including over the map's SVG: this doesn't stop d3-zoom's own listener
@@ -43,6 +45,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // load statuses
     this._questService.loadStatuses().subscribe();
+    this._favoriteColorService.getAllFavoriteColors().subscribe();
 
     if (!localStorage.getItem('user') || !localStorage.getItem('token')) {
       return;

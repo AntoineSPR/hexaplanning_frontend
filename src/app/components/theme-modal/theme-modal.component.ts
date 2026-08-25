@@ -2,11 +2,11 @@ import { Component, ElementRef, ViewChild, effect, inject } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { Dialog } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { ColorPicker } from 'primeng/colorpicker';
 import { MessageService } from 'primeng/api';
 import { ThemeModalService } from '../../services/theme-modal.service';
 import { ThemeService } from '../../services/theme.service';
 import { ConnectivityService } from '../../services/connectivity.service';
+import { ColorPickerComponent } from '../color-picker/color-picker.component';
 
 // Single shared modal for both creating and editing a theme, mirroring QuestGroupModalComponent.
 // Unlike a group, a theme isn't spatial - there's no flood-fill/assignment-fetch branch, creation
@@ -14,7 +14,7 @@ import { ConnectivityService } from '../../services/connectivity.service';
 @Component({
   selector: 'app-theme-modal',
   standalone: true,
-  imports: [FormsModule, Dialog, InputTextModule, ColorPicker],
+  imports: [FormsModule, Dialog, InputTextModule, ColorPickerComponent],
   templateUrl: './theme-modal.component.html',
   styleUrl: './theme-modal.component.scss',
 })

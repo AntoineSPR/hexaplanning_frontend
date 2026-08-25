@@ -1,0 +1,23 @@
+// Lets this component's 3 elements flow directly into whatever flex row the caller wraps it in
+// (e.g. .group-color-row/.theme-color-row), instead of <app-color-picker> itself becoming an
+// extra flex item that needs its own layout rules.
+:host {
+  display: contents;
+}
+
+// Shows the picked value at a glance (ngx-colors' own trigger is just a swatch button, no hex
+// readout of its own).
+.color-hex-label {
+  font-family: monospace;
+  font-size: 0.9rem;
+  min-width: 4.5rem;
+}
+
+// .icon-button's default state already carries the glow/color - the outline-vs-filled star icon
+// itself (see the template) is what signals favorited/not, this just sizes it down to sit
+// compactly in the row.
+.favorite-toggle {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
