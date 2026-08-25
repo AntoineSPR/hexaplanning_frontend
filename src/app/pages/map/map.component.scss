@@ -483,6 +483,25 @@ path {
   filter: none !important;
 }
 
+// Without glow, .hex-onhold-marker's default dark-theme-color (stroke + circle fill above) is
+// normally kept visible by its own drop-shadow blur - suppressed by the rule above. A done
+// quest's marker (its inner ring + 6 dots) and the same marker revealed within an in-progress
+// quest's completed arc both sit on a dark-theme-color fill (see getHexColor/the progress path's
+// own fill), so with no glow to lift them they'd be the same color as their own background and
+// vanish entirely. Swapping to the glow's own tint color (rather than re-enabling the blur) keeps
+// them visible while staying inside the no-glow performance budget. This only covers the corner
+// dots and connecting-line traces, which never carry a quest theme's own color (glow on or off) -
+// the ring itself is colored per-hex in the template via getDoneMarkerColor (map.component.ts),
+// which already accounts for no-glow AND keeps a primary theme's color intact, so it isn't forced
+// here.
+#hexmap.no-glow .hex-done-marker {
+  stroke: var(--theme-color) !important;
+}
+
+#hexmap.no-glow .hex-done-marker circle {
+  fill: var(--theme-color) !important;
+}
+
 ::ng-deep .select-dialog {
   .p-dialog {
     width: 80%;

@@ -456,6 +456,16 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
 
   ngOnInit(): void {
+    // recomputeGroupOutlines (see its own comment) deliberately reads group membership from
+    // _questService.quests() rather than from each hex's own quest, so it's only ever as fresh as
+    // this signal - and nothing else on this page ever populates it (only the dashboard page
+    // calls getAllQuests()). Without this, a device that lands on /map without visiting the
+    // dashboard first computes outlines from whatever's cached in this device's own localStorage
+    // (possibly empty, or stale from before a quest was joined/moved into a group elsewhere) - the
+    // quest's hex position/membership itself is still correct (loadAssignmentsIntoHexes below is
+    // its own always-fresh fetch), so the group's "leave" button already works, but the outline
+    // just never grows to visually include it until some other page refreshes this signal.
+    this._questService.getAllQuests().subscribe();
     this._questService.getAllUnassignedPendingQuests().subscribe();
     this._questGroupService.getAllQuestGroups().subscribe();
     this._themeService.getAllThemes().subscribe();
@@ -837,6 +847,16 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
     return !!hex?.quest && hex.quest.statusId !== this._questService.statusDoneId;
   }
 
+  // A primary theme member's own color, or null if this hex doesn't have one - shared by
+  // getInnerHexColor and getDoneMarkerColor below so both agree on when a theme override applies.
+  private getPrimaryThemeColor(hex: Hex | null): string | null {
+    if (hex?.quest?.themeId && hex.quest.isPrimaryTheme) {
+      const theme = this._themeService.themes()?.find(t => t.id === hex.quest!.themeId);
+      if (theme) return theme.color;
+    }
+    return null;
+  }
+
   // Color of the "inner hex" ring - the near-edge .hex-inner-outline for a normal quest, or the
   // near-center ring connecting the corner-marker's own dots for a done one (see
   // showsInnerOutline/getInnerRingPoints and their template usage). A primary theme member takes
@@ -844,11 +864,17 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   // is unrelated to the hex's own fill (getHexColor, still status-driven) and to the outer border
   // below (getHexBorderColor) - "inner hex" refers specifically to this ring.
   getInnerHexColor(hex: Hex | null): string {
-    if (hex?.quest?.themeId && hex.quest.isPrimaryTheme) {
-      const theme = this._themeService.themes()?.find(t => t.id === hex.quest!.themeId);
-      if (theme) return theme.color;
-    }
-    return 'var(--dark-theme-color)';
+    return this.getPrimaryThemeColor(hex) ?? 'var(--dark-theme-color)';
+  }
+
+  // Ring color for a done (or in-progress-completed) marker specifically - a primary theme's
+  // color wins exactly as it does with glow on. Only the flat, unthemed default changes: with
+  // glow off, that ring sits on a dark-theme-color fill (getHexColor) with no blur left to lift it
+  // off that matching color, so the default falls back to the glow's own tint instead (see the
+  // no-glow .hex-done-marker rule in map.component.scss, which handles the corner dots the same
+  // way - those never carry a theme color, glow on or off).
+  getDoneMarkerColor(hex: Hex | null): string {
+    return this.getPrimaryThemeColor(hex) ?? (this._glowPreference.enabled() ? 'var(--dark-theme-color)' : 'var(--theme-color)');
   }
 
   // The per-quest colored border priority used to draw here is gone along with priority itself;

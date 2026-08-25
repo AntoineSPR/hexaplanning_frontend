@@ -1,4 +1,4 @@
-<form [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group">
+<form #formEl [formGroup]="questForm" (ngSubmit)="onSubmit()" class="quest-form-group" tabindex="-1">
   <div class="scrollable-content">
     <!-- TITRE -->
     <div class="title">
@@ -35,15 +35,22 @@
           optionLabel="name"
           optionValue="id"
           [styleClass]="'custom-select'">
+          <ng-template let-option pTemplate="selectedItem">
+            <span class="flex align-items-center gap-2">
+              <app-status-hex-icon [status]="statusKindFor(option.id)" [alt]="option.name" [size]="22" />
+              <span>{{ option.name }}</span>
+            </span>
+          </ng-template>
           <ng-template let-option pTemplate="item">
-            <span>
-              {{ option.name }}
+            <span class="flex align-items-center gap-2">
+              <app-status-hex-icon [status]="statusKindFor(option.id)" [alt]="option.name" [size]="18" />
+              <span>{{ option.name }}</span>
             </span>
           </ng-template></p-select
         >
       } @else {
         <span class="flex align-items-center gap-2">
-          <span class="status-dot" [style.background]="statusColor" [style.box-shadow]="'0 0 4px ' + statusColor"></span>
+          <app-status-hex-icon [status]="statusKindFor(quest.statusId)" [alt]="getStatusName(quest.statusId)" [size]="22" />
           <span class="font-bold">{{ getStatusName(quest.statusId) }}</span>
         </span>
       }
@@ -79,15 +86,33 @@
             optionValue="id"
             placeholder="Aucun thème"
             [styleClass]="'custom-select'"
-            [panelStyleClass]="'theme-select-panel'">
+            [panelStyleClass]="'theme-select-panel'"
+            [appendTo]="'body'"
+            [baseZIndex]="1000"
+            scrollHeight="280px"
+            (onChange)="onThemeSelectChange($event.value)">
             <ng-template let-option pTemplate="selectedItem">
-              <div class="flex align-items-center gap-2 theme-selected-row">
+              <div class="flex align-items-center gap-2 theme-option-row">
                 <app-theme-icon [color]="option.color" [alt]="option.name" [size]="24" />
-                <span [style.--accent-color]="option.color" class="theme-option-label">{{ option.name }}</span>
+                <span class="theme-option-label">{{ option.name }}</span>
               </div>
             </ng-template>
+            <!-- "Créer un thème" is the first real entry in themeOptions (see
+               CREATE_THEME_OPTION_ID) rather than a pinned header, so it scrolls away with the
+               rest of the list instead of staying fixed. Styled to blend in with the other rows
+               (theme-option-label's own font/spacing) - only the plus icon sets it apart. Only
+               creation lives here - rename/recolor/delete are handled from the theme manager in
+               Settings only, so a quest's theme selector can't accidentally mutate/remove a theme
+               other quests may also be using. -->
             <ng-template let-option pTemplate="item">
-              <span [style.--accent-color]="option.color" class="theme-option-label">{{ option.name }}</span>
+              @if (option.id === CREATE_THEME_OPTION_ID) {
+                <span class="theme-option-label theme-create-option"><i class="pi pi-plus"></i>{{ option.name }}</span>
+              } @else {
+                <div class="flex align-items-center gap-2 theme-option-row">
+                  <app-theme-icon [color]="option.color" [alt]="option.name" [size]="18" />
+                  <span class="theme-option-label">{{ option.name }}</span>
+                </div>
+              }
             </ng-template></p-select
           >
 
@@ -103,15 +128,6 @@
               <label for="themeRoleToggle" [class.theme-role-active]="isPrimaryToggleOn">Principale</label>
             </div>
           }
-
-          <!-- Only creation lives here - rename/recolor/delete are handled from the theme manager
-             in Settings only, so a quest's theme selector can't accidentally mutate/remove a
-             theme other quests may also be using. -->
-          <div class="theme-actions">
-            <button type="button" class="text-button" [disabled]="_connectivity.isOffline()" (click)="openThemeCreationModal()">
-              <i class="pi pi-plus"></i> Créer un thème
-            </button>
-          </div>
         } @else {
           <div class="flex align-items-center gap-2">
             <app-theme-icon [color]="themeColor" [alt]="selectedTheme?.name ?? 'Aucun thème'" [size]="24" />
@@ -125,7 +141,7 @@
     }
 
     <!-- TEMPS ESTIME -->
-    @if (isEdit || hasEstimatedTime) {
+    <!-- @if (isEdit || hasEstimatedTime) {
       <div class="quest-field py-2">
         <label for="estimatedTime">Temps estimé <span [class]="!isEdit && !isNew ? 'invisible' : 'italic'">(facultatif)</span> :</label>
         @if (isEdit) {
@@ -147,7 +163,7 @@
           </span>
         }
       </div>
-    }
+    } -->
 
     <!-- DETAILS -->
     @if (isEdit || hasDescription) {
