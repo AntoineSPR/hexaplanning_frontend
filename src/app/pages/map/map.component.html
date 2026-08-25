@@ -72,12 +72,12 @@
          partially painted over by the ring's own edges. -->
       @if (showsCornerMarker(h)) {
         @let marker = getHexOnHoldMarker(h.cx, h.cy);
-        <g class="hex-onhold-marker">
+        <g class="hex-onhold-marker" [class.hex-done-marker]="isDone(h)">
           @for (trace of marker.traces; track $index) {
             <path [attr.d]="trace" fill="none" />
           }
           @if (isDone(h)) {
-            <polygon [attr.points]="getInnerRingPoints(marker.pads)" [attr.stroke]="getInnerHexColor(h)" fill="none" />
+            <polygon [attr.points]="getInnerRingPoints(marker.pads)" [attr.stroke]="getDoneMarkerColor(h)" fill="none" />
           }
           @for (pad of marker.pads; track $index) {
             <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
@@ -100,11 +100,11 @@
            the done case above), but only revealed within the progress arc - as the quest
            advances, more of it shows, like it's slowly becoming done. -->
         @let progressMarker = getHexOnHoldMarker(h.cx, h.cy);
-        <g class="hex-onhold-marker" [attr.clip-path]="'url(#' + getProgressClipId(h) + ')'">
+        <g class="hex-onhold-marker hex-done-marker" [attr.clip-path]="'url(#' + getProgressClipId(h) + ')'">
           @for (trace of progressMarker.traces; track $index) {
             <path [attr.d]="trace" fill="none" />
           }
-          <polygon [attr.points]="getInnerRingPoints(progressMarker.pads)" [attr.stroke]="getInnerHexColor(h)" fill="none" />
+          <polygon [attr.points]="getInnerRingPoints(progressMarker.pads)" [attr.stroke]="getDoneMarkerColor(h)" fill="none" />
           @for (pad of progressMarker.pads; track $index) {
             <circle [attr.cx]="pad.x" [attr.cy]="pad.y" [attr.r]="pad.r" />
           }
