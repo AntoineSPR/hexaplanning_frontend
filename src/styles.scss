@@ -104,7 +104,14 @@ body {
 }
 
 app-root {
+  // 100vh is a one-time snapshot: on mobile, backgrounding the app (e.g. behind a modal) and
+  // returning can change how much of the screen the browser chrome (address bar/toolbar) covers
+  // without firing a resize the app reacts to, leaving app-root taller than the real visible
+  // viewport - the fixed bottom menu (menu.component.scss's .menubar) then sits below the fold.
+  // 100dvh tracks the actual visible viewport live, so it self-corrects; kept after the 100vh
+  // fallback for browsers that don't support dvh.
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 }
 
