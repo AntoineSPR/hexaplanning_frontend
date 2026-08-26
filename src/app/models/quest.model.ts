@@ -7,6 +7,7 @@ export type QuestCreateDTO = {
 
 export type QuestUpdateDTO = {
   id: string;
+  createdAt: string;
   title: string;
   description?: string;
   estimatedTime: number;

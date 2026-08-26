@@ -6,6 +6,30 @@ import { environment } from '../../environments/environment.development';
 import { HexService } from './hex.service';
 import { Status } from '../models/status';
 import { ConnectivityService } from './connectivity.service';
+import { QuestStatusKind } from '../components/status-hex-icon/status-hex-icon.component';
+
+export const STATUS_IN_PROGRESS_ID = '2281c955-b3e1-49dc-be62-6a7912bb46b3';
+export const STATUS_PENDING_ID = '17c07323-d5b4-4568-b773-de3487ff30b1';
+export const STATUS_ON_HOLD_ID = 'b34563d0-1ae5-42f9-950a-beffa4e27dce';
+export const STATUS_DONE_ID = '6662dfc1-9c40-4d78-806f-34cd22e07023';
+
+// Fixed order for the pending tab's three live statuses - Terminée is excluded, it never appears
+// in any view this drives.
+export const PENDING_STATUS_ORDER: ReadonlyArray<{ id: string; label: string; kind: QuestStatusKind }> = [
+  { id: STATUS_IN_PROGRESS_ID, label: 'En cours', kind: 'in-progress' },
+  { id: STATUS_PENDING_ID, label: 'À accomplir', kind: 'pending' },
+  { id: STATUS_ON_HOLD_ID, label: 'En attente', kind: 'on-hold' },
+];
+
+export function getStatusOrder(statusId: string): number {
+  const idx = PENDING_STATUS_ORDER.findIndex(s => s.id === statusId);
+  return idx === -1 ? PENDING_STATUS_ORDER.length : idx;
+}
+
+export function statusKindFor(statusId: string): QuestStatusKind {
+  if (statusId === STATUS_DONE_ID) return 'done';
+  return PENDING_STATUS_ORDER.find(s => s.id === statusId)?.kind ?? 'pending';
+}
 
 @Injectable({ providedIn: 'root' })
 export class QuestService {
@@ -48,9 +72,9 @@ export class QuestService {
 
   //status
   statuses = signal<Status[] | null>(this._loadCached('hexaplanning.statuses.v1', null));
-  statusDoneId = '6662dfc1-9c40-4d78-806f-34cd22e07023';
-  statusPendingId = '17c07323-d5b4-4568-b773-de3487ff30b1';
-  statusOnHoldId = 'b34563d0-1ae5-42f9-950a-beffa4e27dce';
+  statusDoneId = STATUS_DONE_ID;
+  statusPendingId = STATUS_PENDING_ID;
+  statusOnHoldId = STATUS_ON_HOLD_ID;
 
   refreshAllQuestLists(): void {
     this.getAllQuests().subscribe();

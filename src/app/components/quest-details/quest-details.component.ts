@@ -27,7 +27,7 @@ import { QuestGroupOutputDTO } from '../../models/quest-group.model';
 import { ThemeOutputDTO } from '../../models/theme.model';
 import { NgClass } from '@angular/common';
 import { TimePipe } from '../../pipes/time.pipe';
-import { QuestService } from '../../services/quest.service';
+import { QuestService, statusKindFor as computeStatusKind } from '../../services/quest.service';
 import { QuestModalService } from '../../services/quest-modal.service';
 import { GroupActionsModalService } from '../../services/group-actions-modal.service';
 import { QuestGroupService } from '../../services/quest-group.service';
@@ -611,10 +611,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
   // showsCornerMarker in map.component.ts), so a quest's status reads the same way here as it
   // does on its actual map tile.
   statusKindFor(statusId: string): QuestStatusKind {
-    if (statusId === this._questService.statusDoneId) return 'done';
-    if (statusId === this._questService.statusOnHoldId) return 'on-hold';
-    if (statusId === '2281c955-b3e1-49dc-be62-6a7912bb46b3') return 'in-progress';
-    return 'pending';
+    return computeStatusKind(statusId);
   }
 
   getStatusName(statusId: string): string {

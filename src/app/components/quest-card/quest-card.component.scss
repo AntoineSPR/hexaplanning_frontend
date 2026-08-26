@@ -33,9 +33,27 @@
     margin-left: 10px;
   }
 
+  // Same 32px footprint as app-theme-icon so swapping between the hex badge and the dot doesn't
+  // shift the dot's visual center relative to the hex's own center.
+  .theme-dot-wrapper {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .theme-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
   // Ensure text and elements are readable over the progress background
   .quest-checkbox,
-  app-theme-icon {
+  app-theme-icon,
+  .theme-dot-wrapper {
     position: relative;
     z-index: 1;
   }

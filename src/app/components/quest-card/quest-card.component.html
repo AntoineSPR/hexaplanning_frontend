@@ -29,5 +29,11 @@
     <i class="pi pi-pause on-hold-icon" aria-label="En attente" title="En attente"></i>
   }
 
-  <app-theme-icon [color]="themeColor" [alt]="themeAltText" [size]="32" />
+  @if (isSecondaryTheme) {
+    <span class="theme-dot-wrapper" [attr.aria-label]="themeAltText" [title]="themeAltText">
+      <span class="theme-dot" [style.background]="themeColor" [style.boxShadow]="'0 0 4px ' + themeColor"></span>
+    </span>
+  } @else {
+    <app-theme-icon [color]="themeColor" [alt]="themeAltText" [size]="32" />
+  }
 </button>
