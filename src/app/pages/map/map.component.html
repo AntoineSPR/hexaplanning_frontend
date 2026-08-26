@@ -366,10 +366,15 @@
 </div>
 
 <!-- Drag a quest here to put it back instead of dropping it on a hex - see HexDragController's
-   overCancelZone/isPointOverCancelZone. -->
+   overCancelZone/isPointOverCancelZone, which reads #cancelZone's own bounding rect as the drop
+   target. That outer element is the invisible, generously-sized hit area; .drag-cancel-zone-visual
+   inside it is the actual on-screen circle, kept at its original size so the target doesn't look
+   oversized even though it's more forgiving to hit. -->
 @if (draggingHex || draggingGroupMembers) {
   <div #cancelZone class="drag-cancel-zone" [class.active]="overCancelZone">
-    <i class="pi pi-undo"></i>
+    <div class="drag-cancel-zone-visual">
+      <i class="pi pi-undo"></i>
+    </div>
   </div>
 }
 

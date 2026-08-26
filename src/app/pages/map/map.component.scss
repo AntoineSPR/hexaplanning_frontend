@@ -146,9 +146,14 @@
 // hex-drag.controller.ts. Centered directly on top of the bottom nav's "+" button (see
 // menu.component.scss's .losange, the middle item of the 5-column .menubar) rather than floating
 // above it - doesn't eat into hex space that way, and "drag down onto the plus button" is a more
-// natural, thumb-reachable cancel target than empty space above the nav. Its own opaque background
-// fully covers the "+" underneath while a drag is in progress; z-index above .menubar's 1000 (and
-// still below .quest-drag-overlay's 2000 so the floating preview stays on top while dragged here).
+// natural, thumb-reachable cancel target than empty space above the nav.
+//
+// This outer element is the actual drop target - isPointOverCancelZone (hex-drag.controller.ts)
+// reads ITS bounding rect, not the visible circle's - so it's sized generously for a forgiving hit
+// area, but stays fully transparent/unstyled itself so growing it doesn't also grow what's on
+// screen (and overflow the viewport near the bottom of the page, which just making the visible
+// circle itself bigger did). .drag-cancel-zone-visual below carries all the actual appearance, at
+// its original, on-screen-appropriate size.
 .drag-cancel-zone {
   position: fixed;
   left: 50%;
@@ -157,32 +162,44 @@
   // translateY(50%) (on top of the existing horizontal centering) re-centers this element on that
   // point regardless of its own size.
   transform: translate(-50%, 50%);
+  // Exactly as wide as the losange's own grid column (menu.component.scss's .menubar is a
+  // 5-column grid spanning the full viewport width, one column per nav icon) - the widest this
+  // can go without reaching into the "list"/"map" icons' own columns on either side.
+  width: 20vw;
+  height: 100px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  // Bigger hit target - isPointOverCancelZone (hex-drag.controller.ts) reads this element's own
-  // getBoundingClientRect() directly, so growing the visual circle grows the actual drop target
-  // by the same amount, no separate hit-radius to keep in sync.
-  padding: 28px;
+  justify-content: center;
+  z-index: 1500;
+}
+
+// The visible circle - its own opaque background fully covers the "+" underneath while a drag is
+// in progress; z-index above .menubar's 1000 (and still below .quest-drag-overlay's 2000 so the
+// floating preview stays on top while dragged here) comes from the parent's z-index, which this
+// inherits by virtue of being a normal child, no z-index of its own needed.
+.drag-cancel-zone-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
   border-radius: 50%;
   background-color: var(--background-color);
   border: 1px solid var(--neon-glow-color);
   box-shadow: 0 0 6px var(--neon-glow-color);
   color: var(--neon-glow-color);
   font-weight: bold;
-  z-index: 1500;
   transition: all 0.15s ease;
 
   i {
-    font-size: 28px;
+    font-size: 20px;
   }
+}
 
-  &.active {
-    box-shadow:
-      0 0 10px var(--neon-glow-color),
-      0 0 20px var(--neon-glow-shadow);
-    transform: translate(-50%, 50%) scale(1.1);
-  }
+.drag-cancel-zone.active .drag-cancel-zone-visual {
+  box-shadow:
+    0 0 10px var(--neon-glow-color),
+    0 0 20px var(--neon-glow-shadow);
+  transform: scale(1.1);
 }
 
 .hex_text_wrapper {
