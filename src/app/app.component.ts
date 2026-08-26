@@ -46,11 +46,28 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly _blockSafariGesture = (event: Event) => {
     event.preventDefault();
   };
+  // Mobile Safari sometimes keeps rendering against its pre-backgrounding viewport metrics after
+  // the app is resumed from the background/app-switcher (fixed-position elements like the bottom
+  // menu land in the wrong place, and the page reads as taller than the screen) even though CSS
+  // dvh units and JS-read innerHeight are already correct - it's a stale paint, not a stale value.
+  // Opening a p-dialog incidentally fixes it because PrimeNG adds a class to <body>, which forces
+  // a real layout pass; toggling display here does the same on purpose, without any visible
+  // effect since nothing is ever actually rendered as removed.
+  private readonly _forceViewportReflow = () => {
+    if (document.visibilityState !== 'visible') return;
+    const { body } = document;
+    const previousDisplay = body.style.display;
+    body.style.display = 'none';
+    void body.offsetHeight;
+    body.style.display = previousDisplay;
+  };
 
   ngOnInit() {
     document.addEventListener('wheel', this._blockPageZoom, { passive: false });
     document.addEventListener('gesturestart', this._blockSafariGesture, { passive: false });
     document.addEventListener('gesturechange', this._blockSafariGesture, { passive: false });
+    document.addEventListener('visibilitychange', this._forceViewportReflow);
+    window.addEventListener('pageshow', this._forceViewportReflow);
 
     // load statuses
     this._questService.loadStatuses().subscribe();
@@ -68,5 +85,7 @@ export class AppComponent implements OnInit, OnDestroy {
     document.removeEventListener('wheel', this._blockPageZoom);
     document.removeEventListener('gesturestart', this._blockSafariGesture);
     document.removeEventListener('gesturechange', this._blockSafariGesture);
+    document.removeEventListener('visibilitychange', this._forceViewportReflow);
+    window.removeEventListener('pageshow', this._forceViewportReflow);
   }
 }
