@@ -3,10 +3,13 @@ export type QuestCreateDTO = {
   description?: string;
   estimatedTime: number;
   statusId: string;
+  themeId?: string;
+  isPrimaryTheme?: boolean;
 };
 
 export type QuestUpdateDTO = {
   id: string;
+  createdAt: string;
   title: string;
   description?: string;
   estimatedTime: number;

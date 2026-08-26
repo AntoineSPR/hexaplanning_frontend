@@ -9,11 +9,68 @@
       aria-label="Navigation entre les types de quêtes" />
   </div>
   @if (this.activeItem === this.menuItems[0]) {
+  <div class="sort-toolbar">
+    <label for="sortMode" class="sort-toolbar-label">Trier par :</label>
+    <p-select
+      id="sortMode"
+      [options]="sortModeOptions"
+      [ngModel]="sortMode()"
+      [ngModelOptions]="{ standalone: true }"
+      (ngModelChange)="onSortModeChange($event)"
+      optionLabel="label"
+      optionValue="value"
+      [styleClass]="'custom-select'"
+      [appendTo]="'body'"
+      [baseZIndex]="1000">
+    </p-select>
+    @if (sortMode() !== 'dateAdded') {
+    <button
+      type="button"
+      class="collapse-all-button"
+      (click)="toggleCollapseAll()"
+      [attr.aria-label]="areAllCategoriesCollapsed() ? 'Tout déplier' : 'Tout replier'"
+      [title]="areAllCategoriesCollapsed() ? 'Tout déplier' : 'Tout replier'">
+      <i class="pi" [ngClass]="areAllCategoriesCollapsed() ? 'pi-angle-down' : 'pi-angle-up'"></i>
+    </button>
+    }
+  </div>
+  @if (sortMode() === 'dateAdded') {
   <div class="active-quests">
-    @for (pendingQuest of pendingQuests; track pendingQuest.id) {
+    @for (pendingQuest of flatPendingQuests(); track pendingQuest.id) {
     <app-quest-card [quest]="pendingQuest"> </app-quest-card>
     }
   </div>
+  } @else {
+  <div class="active-quests quest-categories">
+    @for (category of pendingQuestCategories(); track category.key) {
+    <section class="quest-category">
+      <button
+        type="button"
+        class="quest-category-header"
+        (click)="toggleCategory(category.key)"
+        [attr.aria-expanded]="!isCategoryCollapsed(category.key)">
+        <span class="quest-category-chevron" [class.collapsed]="isCategoryCollapsed(category.key)">▾</span>
+        @if (categoryStatusIcon(category); as statusIcon) {
+        <app-status-hex-icon [status]="statusIcon" [size]="18" />
+        } @else {
+          @if (categoryThemeColor(category); as themeColor) {
+          <app-theme-icon [color]="themeColor" [size]="18" />
+          }
+        }
+        <span class="quest-category-label">{{ category.label }}</span>
+        <span class="quest-category-count">{{ category.quests.length }}</span>
+      </button>
+      @if (!isCategoryCollapsed(category.key)) {
+      <div class="quest-category-body">
+        @for (categoryQuest of category.quests; track categoryQuest.id) {
+        <app-quest-card [quest]="categoryQuest"> </app-quest-card>
+        }
+      </div>
+      }
+    </section>
+    }
+  </div>
+  }
   } @else if (this.activeItem === this.menuItems[1]) {
   <div class="completed-quests">
     @for (completedQuest of completedQuests; track completedQuest.id) {

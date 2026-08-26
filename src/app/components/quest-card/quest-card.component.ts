@@ -76,4 +76,10 @@ export class QuestCardComponent {
   get isOnHold(): boolean {
     return this.quest?.statusId === this._questService.statusOnHoldId;
   }
+
+  // Primary quests keep the full hex badge; secondary ones get a plain dot in the same theme
+  // color so the two roles read apart at a glance without needing to open the quest.
+  get isSecondaryTheme(): boolean {
+    return !!this.quest?.themeId && !this.quest?.isPrimaryTheme;
+  }
 }
