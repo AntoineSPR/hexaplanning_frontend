@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpEventType, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { catchError, switchMap, tap, throwError } from 'rxjs';
 import { UserService } from '../services/user.service';
 import { ConnectivityService } from '../services/connectivity.service';
@@ -11,6 +12,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   const userService = inject(UserService);
   const router = inject(Router);
   const connectivity = inject(ConnectivityService);
+  const messageService = inject(MessageService);
 
   const token = localStorage.getItem('token');
   const authReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
@@ -39,7 +41,12 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
         switchMap(response => next(req.clone({ setHeaders: { Authorization: `Bearer ${response.token}` } }))),
         catchError(() => {
           // Refresh itself failed (refresh token expired/revoked/reused) - the session is truly
-          // over, so log out and send the user back to the login page.
+          // over, so log out, tell the user why, and send them back to the login page.
+          messageService.add({
+            severity: 'warn',
+            summary: 'Session expirée',
+            detail: 'Veuillez vous reconnecter.',
+          });
           userService.logoutUser();
           router.navigate(['/login']);
           return throwError(() => error);

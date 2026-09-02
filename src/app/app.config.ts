@@ -6,6 +6,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import Aura from '@primeng/themes/aura';
 import { providePrimeNG } from 'primeng/config';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { MessageService } from 'primeng/api';
 import { tokenInterceptor } from './interceptors/token.interceptor';
 import { AuraBaseDesignTokens } from '@primeng/themes/aura/base';
 import { Preset } from '@primeng/themes/types';
@@ -45,5 +46,6 @@ export const appConfig: ApplicationConfig = {
     }),
     provideAnimations(),
     { provide: LOCALE_ID, useValue: 'fr-FR' },
+    MessageService,
   ],
 };

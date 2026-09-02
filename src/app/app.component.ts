@@ -7,7 +7,6 @@ import { ThemeManagerModalComponent } from './components/theme-manager-modal/the
 import { GroupActionsModalComponent } from './components/group-actions-modal/group-actions-modal.component';
 import { UserService } from './services/user.service';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
 import { QuestService } from './services/quest.service';
 import { ConnectivityService } from './services/connectivity.service';
 import { FavoriteColorService } from './services/favorite-color.service';
@@ -24,7 +23,6 @@ import { FavoriteColorService } from './services/favorite-color.service';
     GroupActionsModalComponent,
     ToastModule,
   ],
-  providers: [MessageService],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
