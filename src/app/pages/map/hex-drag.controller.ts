@@ -301,14 +301,16 @@ export class HexDragController {
       this.groupDragOffsetX = 0;
       this.groupDragOffsetY = 0;
       this.groupDragPathD = this.groupGeometry.getGroupBoundaryPath(this.draggingGroupMembers, this.host.size);
-      // Reference point for the delta math below (see updateGroupDragPreview): wherever the
-      // pointer resolves to right now, whether or not that's actually where a member hex sits -
-      // for a hex-started drag this lands on (or extremely close to) that hex's own coordinate
-      // anyway, since the movement so far is capped at DRAG_START_THRESHOLD_PX.
-      const startLocal = this.clientPointToHexLocal(event.clientX, event.clientY);
-      drag.startAxial = startLocal
-        ? this.mapGrid.pixelToAxial(startLocal.x, startLocal.y, this.host.size)
-        : (drag.hex ?? { q: 0, r: 0, s: 0 });
+      // Reference point for the delta math below (see updateGroupDragPreview): any member hex's
+      // own coordinate works identically, since the whole group always moves by one rigid delta
+      // vector applied to every member alike. Deliberately NOT derived from the pointer's own
+      // screen position: that resolves to (or extremely close to) the dragged hex's own coordinate
+      // for a hex-started drag, but the group's title renders above/outside its members' own cells
+      // (see the template), so for a title-started drag it would resolve to a fictitious cell
+      // beyond the map's edge - silently capping how far the group could be dragged toward that
+      // edge, since the delta needed to reach a real position from a start point that never
+      // corresponded to one wouldn't itself be a real, reachable target.
+      drag.startAxial = drag.hex ?? this.draggingGroupMembers[0] ?? { q: 0, r: 0, s: 0 };
     } else {
       this.draggingGroupMembers = null;
       this.groupDragPathD = null;
