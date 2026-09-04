@@ -7,6 +7,7 @@ import { UserLoginDTO } from '../models/userLoginDTO.model';
 import { LoginResponseDTO } from '../models/loginResponseDTO.model';
 import { UserResponseDTO } from '../models/userResponseDTO.model';
 import { ChangePasswordDTO } from '../models/changePasswordDTO.model';
+import { UpdateNameDTO } from '../models/updateNameDTO.model';
 import { ForgotPasswordDTO } from '../models/forgotPasswordDTO.model';
 import { ResetPasswordDTO } from '../models/resetPasswordDTO.model';
 
@@ -59,6 +60,16 @@ export class UserService {
 
   changePassword(passwordData: ChangePasswordDTO): Observable<any> {
     return this._http.put(`${this._apiUrl}/change-password`, passwordData);
+  }
+
+  updateName(name: string): Observable<UserResponseDTO> {
+    const body: UpdateNameDTO = { name };
+    return this._http.put<UserResponseDTO>(`${this._apiUrl}/name`, body).pipe(
+      tap(updatedUser => {
+        this.user.set(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      })
+    );
   }
 
   forgotPassword(forgotPasswordData: ForgotPasswordDTO): Observable<any> {

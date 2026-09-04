@@ -1,34 +1,61 @@
 <main>
   <h1 class="page-title">Paramètres</h1>
 
-  <div class="settings-card">
-    <div class="settings-row">
-      <label class="settings-label" for="glow-toggle">Effets lumineux sur la carte</label>
-      <p-toggleswitch
-        id="glow-toggle"
-        [ngModel]="glowEnabled()"
-        (onChange)="onGlowToggle($event.checked)"
-        ariaLabel="Activer les effets lumineux sur la carte" />
-    </div>
-    <p class="settings-hint">Affecte la performance - désactivé par défaut pour les appareils mobiles.</p>
-  </div>
+  <section class="settings-section">
+    <h2 class="settings-section-title">Quêtes</h2>
 
-  <div class="settings-buttons">
-    <p-button
-      label="Gérer les thèmes"
-      (click)="openThemeManager()"
-      variant="outlined"
-      icon="pi pi-palette"
-      aria-label="Ouvrir la gestion des thèmes" />
-    <p-button
-      label="Modifier le mot de passe"
-      (click)="openPasswordModal()"
-      variant="outlined"
-      icon="pi pi-lock"
-      [disabled]="_connectivity.isOffline()"
-      aria-label="Ouvrir le formulaire de modification de mot de passe" />
-    <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" aria-label="Se déconnecter de l'application" />
-  </div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <label class="settings-label" for="glow-toggle">Effets lumineux sur la carte</label>
+        <p-toggleswitch
+          id="glow-toggle"
+          [ngModel]="glowEnabled()"
+          (onChange)="onGlowToggle($event.checked)"
+          ariaLabel="Activer les effets lumineux sur la carte" />
+      </div>
+      <p class="settings-hint">Affecte la performance - désactivé par défaut pour les appareils mobiles.</p>
+    </div>
+
+    <div class="settings-buttons">
+      <p-button
+        label="Gérer les thèmes"
+        (click)="openThemeManager()"
+        variant="outlined"
+        icon="pi pi-palette"
+        aria-label="Ouvrir la gestion des thèmes" />
+      <p-button
+        label="Retirer les quêtes accomplies de la carte"
+        (click)="clearCompletedQuestsFromMap()"
+        variant="outlined"
+        icon="pi pi-eraser"
+        [disabled]="_connectivity.isOffline()"
+        aria-label="Retirer toutes les quêtes accomplies de la carte" />
+    </div>
+  </section>
+
+  <hr class="settings-divider" />
+
+  <section class="settings-section">
+    <h2 class="settings-section-title">Utilisateur</h2>
+
+    <div class="settings-buttons">
+      <p-button
+        label="Modifier le mot de passe"
+        (click)="openPasswordModal()"
+        variant="outlined"
+        icon="pi pi-lock"
+        [disabled]="_connectivity.isOffline()"
+        aria-label="Ouvrir le formulaire de modification de mot de passe" />
+      <p-button
+        label="Changer le nom d'utilisateur"
+        (click)="openUsernameModal()"
+        variant="outlined"
+        icon="pi pi-user-edit"
+        [disabled]="_connectivity.isOffline()"
+        aria-label="Ouvrir le formulaire de changement de nom d'utilisateur" />
+      <p-button label="Se déconnecter" (click)="logout()" variant="outlined" icon="pi pi-power-off" aria-label="Se déconnecter de l'application" />
+    </div>
+  </section>
 </main>
 
 <!-- Password Change Modal -->
@@ -135,19 +162,88 @@
   </ng-template>
 </p-dialog>
 
+<!-- Username Change Modal -->
+<p-dialog
+  class="password-dialog"
+  [(visible)]="usernameModalVisible"
+  [modal]="true"
+  [dismissableMask]="true"
+  [closable]="true"
+  (onHide)="closeUsernameModal()"
+  role="dialog"
+  aria-labelledby="username-modal-title"
+  [focusTrap]="true">
+  <ng-template pTemplate="header">
+    <h3 id="username-modal-title">Changer le nom d'utilisateur</h3>
+  </ng-template>
+
+  <div class="password-container">
+    <form [formGroup]="usernameForm" (ngSubmit)="onSubmitUsernameChange()" class="password-form" role="form">
+      <div class="form-field">
+        <label for="username" class="form-label">Nom d'utilisateur *</label>
+        <input
+          id="username"
+          type="text"
+          pInputText
+          formControlName="name"
+          placeholder="Entrez votre nom d'utilisateur"
+          [class.p-invalid]="hasUsernameError"
+          [attr.aria-describedby]="hasUsernameError ? 'username-error' : null"
+          [attr.aria-invalid]="hasUsernameError"
+          class="form-input" />
+        @if (hasUsernameError) {
+          <small class="p-error" id="username-error" role="alert" aria-live="polite">
+            {{ usernameError }}
+          </small>
+        }
+      </div>
+    </form>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      (click)="closeUsernameModal()"
+      styleClass="p-button-text"
+      type="button"
+      aria-label="Fermer le formulaire de changement de nom d'utilisateur">
+    </p-button>
+    <p-button
+      label="Modifier"
+      icon="pi pi-check"
+      (click)="onSubmitUsernameChange()"
+      [disabled]="isUsernameLoading || _connectivity.isOffline()"
+      [loading]="isUsernameLoading"
+      type="button"
+      [attr.aria-label]="isUsernameLoading ? 'Modification en cours...' : 'Confirmer le changement de nom d\'utilisateur'">
+    </p-button>
+  </ng-template>
+</p-dialog>
+
 <app-menu></app-menu>
 
 <p-confirmdialog #cd>
   <ng-template #headless let-message let-onAccept="onAccept" let-onReject="onReject">
     <div class="confirmation-dialog" role="dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
-      <h4 id="confirm-title" class="visually-hidden">Confirmation de déconnexion</h4>
+      <h4 id="confirm-title" class="visually-hidden">Confirmation</h4>
       <p id="confirm-message">{{ message.message }}</p>
       <div class="flex items-center gap-2">
-        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32" aria-label="Annuler la déconnexion">
-          Annuler
+        <button
+          type="button"
+          class="cancel-confirmation-button"
+          (click)="onReject()"
+          styleClass="w-32"
+          [attr.aria-label]="message.rejectLabel">
+          {{ message.rejectLabel }}
         </button>
-        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32" aria-label="Confirmer la déconnexion">
-          Déconnexion
+        <button
+          type="button"
+          class="accept-confirmation-button"
+          (click)="onAccept()"
+          styleClass="w-32"
+          [attr.aria-label]="message.acceptLabel">
+          {{ message.acceptLabel }}
         </button>
       </div>
     </div>

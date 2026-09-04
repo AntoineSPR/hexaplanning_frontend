@@ -1,15 +1,46 @@
 main {
-  padding-top: 1rem;
+  // justify-content was previously "center", which worked while every setting fit in one short
+  // list - now that there are two sections, content can exceed this fixed height, and centering a
+  // flex container's overflow can leave content unreachable by scrolling both above and below the
+  // visible box (browser behavior here is inconsistent) rather than just needing to scroll down to
+  // it. flex-start plus overflow-y keeps this reliable: content simply grows downward and scrolls
+  // within the space already reserved above the bottom nav (the calc(100vh - 80px) below).
+  padding: 1rem 0 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   height: calc(100vh - 80px);
+  overflow-y: auto;
 }
 
 h1 {
   text-align: center;
   margin-bottom: 2rem;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.settings-section-title {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--light-theme-color);
+}
+
+.settings-divider {
+  width: 100%;
+  max-width: 400px;
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid var(--neon-glow-color);
+  box-shadow: 0 0 6px var(--neon-glow-color);
 }
 
 .settings-buttons {
@@ -52,7 +83,7 @@ h1 {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.25rem 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   border-radius: 8px;
   background-color: var(--background-color);
   border: 1px solid var(--neon-glow-color);
@@ -211,6 +242,29 @@ h1 {
 
 .form-input {
   width: 100%;
+
+  // Plain text input (e.g. the username field) - same visual language as the p-password input
+  // below, just without needing ::ng-deep since pInputText's host is the <input> itself, not a
+  // wrapper component.
+  &.p-inputtext {
+    padding: 0.75rem;
+    border: 2px solid var(--dark-theme-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: transparent;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+
+    &:focus {
+      border-color: var(--focus-color);
+      box-shadow: 0 0 0 3px var(--neon-glow-shadow-light);
+      outline: none;
+    }
+
+    &.p-invalid {
+      border-color: var(--error-color);
+    }
+  }
 
   ::ng-deep .p-password {
     width: 100%;

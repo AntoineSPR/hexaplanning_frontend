@@ -3,7 +3,7 @@ import { HexService } from './hex.service';
 import { QuestService } from './quest.service';
 import { MapGridService } from './map-grid.service';
 import { Hex } from '../models/hex.model';
-import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { catchError, Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { QuestUpdateDTO } from '../models/quest.model';
 import { HexAssignment } from '../models/hexAssignment.model';
 import { ConnectivityService } from './connectivity.service';
@@ -154,6 +154,48 @@ export class QuestAssignmentService {
         // was just deleted, so a stale id here could resurrect it.
         const updatedQuest: QuestUpdateDTO = { ...quest, hexAssignmentId: undefined, questGroupId: undefined };
         return this._questService.updateQuest(updatedQuest).pipe(map(() => void 0));
+      })
+    );
+  }
+
+  // Unassigns every finished quest currently on the map, wherever it's actually placed - callable
+  // from anywhere (e.g. the settings page) without the map's own hex grid being loaded, unlike
+  // deleteQuestFromHex above which needs a live Hex from that grid. Cross-references the raw
+  // assignments (which only carry a questId, not status) against the completed-quests list to
+  // find which ones qualify, then builds a minimal Hex-shaped object per match (cx/cy/level are
+  // unused by deleteQuestFromHex, which only reads q/r/s/quest) so the actual unassign - including
+  // its group-membership cleanup - is the exact same, already-tested logic as removing one quest
+  // from the map by hand. Each unassignment is independent, so one failing doesn't stop the rest.
+  clearCompletedQuestsFromMap(): Observable<{ succeeded: number; failed: number }> {
+    return forkJoin({
+      assignments: this._hexService.getAllAssignments(),
+      completedQuests: this._questService.getAllCompletedQuests(),
+    }).pipe(
+      switchMap(({ assignments, completedQuests }) => {
+        const completedById = new Map(completedQuests.map(q => [q.id, q]));
+        const targetHexes: Hex[] = assignments
+          .map((a): Hex | null => {
+            const quest = completedById.get(a.questId);
+            if (!quest) return null;
+            return { q: a.q, r: a.r, s: a.s, cx: 0, cy: 0, level: 0, quest, hexAssignmentId: a.id };
+          })
+          .filter((h): h is Hex => h !== null);
+
+        if (targetHexes.length === 0) {
+          return of({ succeeded: 0, failed: 0 });
+        }
+
+        return forkJoin(
+          targetHexes.map(hex =>
+            this.deleteQuestFromHex(hex).pipe(
+              map(() => true),
+              catchError(err => {
+                console.error('Failed to remove completed quest from hex:', err);
+                return of(false);
+              })
+            )
+          )
+        ).pipe(map(results => ({ succeeded: results.filter(Boolean).length, failed: results.filter(ok => !ok).length })));
       })
     );
   }
