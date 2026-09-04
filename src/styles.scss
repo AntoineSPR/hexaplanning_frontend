@@ -104,7 +104,14 @@ body {
 }
 
 app-root {
+  // 100vh is based on the largest possible viewport (as if the mobile browser's address bar were
+  // already hidden), so it's typically a bit taller than what's actually visible - forcing the
+  // whole app to at least that height then leaves a few pixels of pointless outer page scroll on
+  // top of whatever a page's own internal scroll region (e.g. settings-page's main) already
+  // provides. 100dvh tracks the real, current visible area instead; kept as a second declaration
+  // (not a replacement) so browsers without dvh support silently keep the 100vh fallback above.
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 }
 
