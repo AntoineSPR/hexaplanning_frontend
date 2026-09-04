@@ -9,6 +9,7 @@ const SIZE = 40;
 function makeQuest(id: string, questGroupId?: string): QuestUpdateDTO {
   return {
     id,
+    createdAt: new Date(0).toISOString(),
     title: `Quest ${id}`,
     estimatedTime: 0,
     statusId: 'status',
