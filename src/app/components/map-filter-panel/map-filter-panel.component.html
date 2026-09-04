@@ -1,0 +1,158 @@
+<p-dialog class="filter-dialog" [visible]="visible" (visibleChange)="setVisible($event)" [modal]="true" [dismissableMask]="true">
+  <ng-template #header>
+    <div class="filter-header-row">
+      <h3>Filtrer la carte</h3>
+      <button
+        type="button"
+        class="filter-collapse-all-btn"
+        (click)="toggleCollapseAllSections()"
+        [attr.aria-label]="areAllSectionsCollapsed() ? 'Tout déplier' : 'Tout replier'"
+        [title]="areAllSectionsCollapsed() ? 'Tout déplier' : 'Tout replier'">
+        <i [class]="'pi ' + (areAllSectionsCollapsed() ? 'pi-angle-down' : 'pi-angle-up')"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="filter-panel">
+    <section class="filter-section">
+      <div class="filter-section-header-row">
+        <button
+          type="button"
+          class="filter-section-header"
+          (click)="toggleSection('status')"
+          [attr.aria-expanded]="!isSectionCollapsed('status')">
+          <span class="filter-section-chevron" [class.collapsed]="isSectionCollapsed('status')">▾</span>
+          <span class="filter-section-title">Statuts</span>
+        </button>
+        <button
+          type="button"
+          class="filter-section-visibility-toggle"
+          (click)="_mapFilter.toggleAllStatuses()"
+          [attr.aria-label]="_mapFilter.hasHiddenStatuses() ? 'Afficher tous les statuts' : 'Masquer tous les statuts'"
+          [title]="_mapFilter.hasHiddenStatuses() ? 'Afficher tous les statuts' : 'Masquer tous les statuts'">
+          <i [class]="'pi ' + (_mapFilter.hasHiddenStatuses() ? 'pi-eye' : 'pi-eye-slash')"></i>
+        </button>
+      </div>
+      @if (!isSectionCollapsed('status')) {
+        @for (status of allStatuses; track status.id) {
+          <div class="filter-row">
+            <app-status-hex-icon [status]="statusKindFor(status.id)" [alt]="status.name" [size]="20" />
+            <span class="filter-row-label">{{ status.name }}</span>
+            <p-toggleswitch
+              [ngModel]="!_mapFilter.isStatusHidden(status.id)"
+              (onChange)="_mapFilter.toggleStatusVisibility(status.id)"
+              [ariaLabel]="'Afficher le statut ' + status.name" />
+          </div>
+        }
+        <!-- Action permanente associée au statut "Terminée" juste au-dessus : masquer via le
+           toggle est réversible, ce bouton retire réellement les quêtes accomplies de la carte. -->
+        <button
+          type="button"
+          class="filter-clear-action"
+          (click)="clearCompletedQuests.emit()"
+          [disabled]="_connectivity.isOffline()"
+          aria-label="Retirer toutes les quêtes accomplies de la carte">
+          <i class="pi pi-eraser"></i>
+          Retirer les quêtes accomplies de la carte
+        </button>
+      }
+    </section>
+
+    <section class="filter-section">
+      <div class="filter-section-header-row">
+        <button
+          type="button"
+          class="filter-section-header"
+          (click)="toggleSection('group')"
+          [attr.aria-expanded]="!isSectionCollapsed('group')">
+          <span class="filter-section-chevron" [class.collapsed]="isSectionCollapsed('group')">▾</span>
+          <span class="filter-section-title">Groupes</span>
+        </button>
+        <button
+          type="button"
+          class="filter-section-visibility-toggle"
+          (click)="_mapFilter.toggleAllGroups()"
+          [attr.aria-label]="_mapFilter.hasHiddenGroups() ? 'Afficher tous les groupes' : 'Masquer tous les groupes'"
+          [title]="_mapFilter.hasHiddenGroups() ? 'Afficher tous les groupes' : 'Masquer tous les groupes'">
+          <i [class]="'pi ' + (_mapFilter.hasHiddenGroups() ? 'pi-eye' : 'pi-eye-slash')"></i>
+        </button>
+      </div>
+      @if (!isSectionCollapsed('group')) {
+        @for (group of _questGroupService.questGroups(); track group.id) {
+          <div class="filter-row">
+            <span class="filter-color-dot" [style.background]="group.color"></span>
+            <span class="filter-row-label">{{ group.name }}</span>
+            <p-toggleswitch
+              [ngModel]="!_mapFilter.isGroupHidden(group.id)"
+              (onChange)="_mapFilter.toggleGroupVisibility(group.id)"
+              [ariaLabel]="'Afficher le groupe ' + group.name" />
+          </div>
+        }
+        <div class="filter-row">
+          <span class="filter-color-dot filter-color-dot-empty"></span>
+          <span class="filter-row-label">Sans groupe</span>
+          <p-toggleswitch
+            [ngModel]="!_mapFilter.isGroupHidden(NO_GROUP_KEY)"
+            (onChange)="_mapFilter.toggleGroupVisibility(NO_GROUP_KEY)"
+            ariaLabel="Afficher les quêtes sans groupe" />
+        </div>
+      }
+    </section>
+
+    <section class="filter-section">
+      <div class="filter-section-header-row">
+        <button
+          type="button"
+          class="filter-section-header"
+          (click)="toggleSection('theme')"
+          [attr.aria-expanded]="!isSectionCollapsed('theme')">
+          <span class="filter-section-chevron" [class.collapsed]="isSectionCollapsed('theme')">▾</span>
+          <span class="filter-section-title">Thèmes</span>
+        </button>
+        <button
+          type="button"
+          class="filter-section-visibility-toggle"
+          (click)="_mapFilter.toggleAllThemes()"
+          [attr.aria-label]="_mapFilter.hasHiddenThemes() ? 'Afficher tous les thèmes' : 'Masquer tous les thèmes'"
+          [title]="_mapFilter.hasHiddenThemes() ? 'Afficher tous les thèmes' : 'Masquer tous les thèmes'">
+          <i [class]="'pi ' + (_mapFilter.hasHiddenThemes() ? 'pi-eye' : 'pi-eye-slash')"></i>
+        </button>
+      </div>
+      @if (!isSectionCollapsed('theme')) {
+        @for (theme of _themeService.themes(); track theme.id) {
+          <div class="filter-row">
+            <app-theme-icon [color]="theme.color" [alt]="theme.name" [size]="20" />
+            <span class="filter-row-label">{{ theme.name }}</span>
+            <p-toggleswitch
+              [ngModel]="!_mapFilter.isThemeHidden(theme.id)"
+              (onChange)="_mapFilter.toggleThemeVisibility(theme.id)"
+              [ariaLabel]="'Afficher le thème ' + theme.name" />
+          </div>
+        }
+        <div class="filter-row">
+          <span class="filter-color-dot filter-color-dot-empty"></span>
+          <span class="filter-row-label">Sans thème</span>
+          <p-toggleswitch
+            [ngModel]="!_mapFilter.isThemeHidden(NO_THEME_KEY)"
+            (onChange)="_mapFilter.toggleThemeVisibility(NO_THEME_KEY)"
+            ariaLabel="Afficher les quêtes sans thème" />
+        </div>
+      }
+    </section>
+  </div>
+
+  <ng-template #footer>
+    <button type="button" class="icon-button" (click)="setVisible(false)" aria-label="Retour" title="Retour">
+      <i class="pi pi-chevron-left"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="_mapFilter.resetFilters()"
+      [disabled]="!_mapFilter.hasActiveFilters()"
+      aria-label="Tout afficher"
+      title="Tout afficher">
+      <i class="pi pi-eye"></i>
+    </button>
+  </ng-template>
+</p-dialog>
