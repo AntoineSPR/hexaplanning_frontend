@@ -421,6 +421,7 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
       } else if (this.isEdit) {
         this._setFormValues();
         this.isEdit = false;
+        this._resizeTextareasAfterRender();
       }
     });
   }
@@ -524,6 +525,24 @@ export class QuestDetailsComponent implements OnInit, AfterViewInit {
     // there follows the whole page's DOM order, not this dialog's). A programmatic focus() on a
     // non-interactive container doesn't trigger :focus-visible, so this stays invisible.
     requestAnimationFrame(() => this.formEl?.nativeElement.focus());
+    this._resizeTextareasAfterRender();
+  }
+
+  // Re-measures every autoResize textarea (title/description) once the DOM has caught up with
+  // whatever just changed isEdit - leaving the readonly<->editable class toggle (see
+  // quest-readonly in the stylesheet) unaccounted for otherwise. quest-readonly strips the
+  // textarea's border, which - combined with the app's global box-sizing:border-box - widens its
+  // content box just enough to change how the text wraps. PrimeNG's autoResize (see
+  // Textarea.resize()) bakes the height it measures into an inline style once and never revisits
+  // it on its own; it also always sets overflow:hidden on itself rather than ever letting its own
+  // scrollbar appear (see that method), so once the border comes back in edit mode and the text
+  // rewraps onto more lines than the cached height has room for, the last lines are cut off inside
+  // the textarea's own hidden overflow - unreachable by scrolling the dialog around it, since that
+  // scroll region already fits entirely around the (now too-short) textarea box. A plain
+  // `requestAnimationFrame` is enough to run this after Angular has applied the class change (it
+  // doesn't need to wait on anything slower than that, unlike a genuine layout/animation delay).
+  private _resizeTextareasAfterRender(): void {
+    requestAnimationFrame(() => this.textareas?.forEach(textarea => textarea.resize()));
   }
 
   //#region Date & Time
