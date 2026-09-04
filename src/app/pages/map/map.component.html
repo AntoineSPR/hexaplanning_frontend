@@ -8,9 +8,7 @@
   style="user-select: none; touch-action: none"
   (pointermove)="onMapPointerMove($event)"
   (pointerleave)="onMapPointerLeave()"
-  (pointerdown)="onMapPointerDown()"
-  (pointerup)="onMapPointerUp()"
-  (pointercancel)="onMapPointerUp()">
+  (pointerdown)="onMapPointerDown($event)">
   <defs>
     <!-- Cursor-following highlight (desktop only, see onMapPointerMove) -->
     @for (n of cursorLightNeighbors; track $index) {

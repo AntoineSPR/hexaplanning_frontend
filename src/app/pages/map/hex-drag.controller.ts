@@ -141,24 +141,28 @@ export class HexDragController {
   // styling and, on release, aborts the drag instead of resolving dragOverHex.
   overCancelZone = false;
 
-  // Tracks total active pointers across the whole map (see onGlobalPointerDown/Up, wired to the
-  // svg root) so a second finger arriving mid-gesture can abort whatever single-pointer drag/pan
-  // state the first finger started - this only ever tracks one pointer, so left alone it fights
-  // d3-zoom's own pinch handling for that same finger.
-  private activePointerCount = 0;
-
-  onGlobalPointerDown(): void {
-    this.activePointerCount++;
-    if (this.activePointerCount > 1 && this.pointerDrag) {
+  // Aborts whatever single-pointer drag/pan state the first finger started as soon as a second
+  // finger touches down (wired to the svg root's pointerdown, see map.component.html), so left
+  // alone it doesn't fight d3-zoom's own pinch handling for that same finger.
+  //
+  // Deliberately keyed off PointerEvent.isPrimary rather than a manually incremented/decremented
+  // pointer counter: a counter needs both its pointerdown AND its matching pointerup/pointercancel
+  // to be delivered to stay balanced, and the matching pointerup/pointercancel isn't guaranteed to
+  // bubble here - if the element holding pointer capture (see setPointerCapture in onPointerDown/
+  // onGroupTitlePointerDown) gets destroyed and recreated by Angular mid-gesture (e.g. the hex grid
+  // re-rendering while a finger is still down), the browser can fail to deliver it at all. A stuck
+  // "still down" count would then permanently mistake every future single-finger gesture for a
+  // second concurrent pointer, aborting it immediately - drag-and-drop would stay broken until a
+  // full page reload. `isPrimary` carries no such state: it's computed fresh by the browser from
+  // its own pointer bookkeeping on every single pointerdown, so a missed event elsewhere can never
+  // desync it.
+  onGlobalPointerDown(event: PointerEvent): void {
+    if (!event.isPrimary && this.pointerDrag) {
       this.pointerDrag = null;
       this.armedHex = null;
       this.resetDragState();
       this.overCancelZone = false;
     }
-  }
-
-  onGlobalPointerUp(): void {
-    this.activePointerCount = Math.max(0, this.activePointerCount - 1);
   }
 
   onPointerDown(hex: Hex, event: PointerEvent): void {
