@@ -3,32 +3,46 @@
 
   <div class="stats-card">
     <div class="stats-headline">
-      <span class="stats-number">{{ activeQuestsNumber() }}</span>
-      <span class="stats-label">quête{{ activeQuestsNumber() > 1 ? 's' : '' }} active{{ activeQuestsNumber() > 1 ? 's' : '' }}</span>
-    </div>
-
-    <div class="stats-breakdown">
-      <div class="stats-row">
-        <i class="pi pi-play"></i>
-        <span class="stats-row-label">En cours</span>
-        <span class="stats-row-count">{{ inProgressCount() }}</span>
-      </div>
-      <div class="stats-row">
-        <i class="pi pi-pause"></i>
-        <span class="stats-row-label">En attente</span>
-        <span class="stats-row-count">{{ onHoldCount() }}</span>
-      </div>
-      <div class="stats-row">
-        <i class="pi pi-circle"></i>
-        <span class="stats-row-label">À accomplir</span>
-        <span class="stats-row-count">{{ toDoCount() }}</span>
-      </div>
+      @if (doneCount() > 0) {
+        <span class="stats-number">{{ doneCount() }}</span>
+        <span class="stats-label">quête{{ doneCount() > 1 ? 's' : '' }} accomplie{{ doneCount() > 1 ? 's' : '' }}</span>
+      } @else {
+        <span class="stats-label stats-empty-label">Aucune quête accomplie pour l'instant</span>
+      }
     </div>
 
     <div class="stats-footer">
-      <i class="pi pi-check-circle"></i>
-      {{ doneCount() }} quête{{ doneCount() > 1 ? 's' : '' }} déjà accomplie{{ doneCount() > 1 ? 's' : '' }}
+      <div>{{ workableQuestsNumber() }} quête{{ workableQuestsNumber() > 1 ? 's' : '' }} réalisable{{ workableQuestsNumber() > 1 ? 's' : '' }}</div>
     </div>
+
+    <button type="button" class="stats-details-toggle" (click)="toggleDetails()" [attr.aria-expanded]="detailsExpanded()">
+      <span class="stats-details-chevron" [class.collapsed]="!detailsExpanded()">▾</span>
+      Détails
+    </button>
+
+    @if (detailsExpanded()) {
+      <div class="stats-breakdown">
+        <div class="stats-row">
+          <i class="pi pi-play"></i>
+          <span class="stats-row-label">En cours</span>
+          <span class="stats-row-count">{{ inProgressCount() }}</span>
+        </div>
+        <div class="stats-row">
+          <i class="pi pi-pause"></i>
+          <span class="stats-row-label">En attente</span>
+          <span class="stats-row-count">{{ onHoldCount() }}</span>
+        </div>
+        <div class="stats-row">
+          <i class="pi pi-circle"></i>
+          <span class="stats-row-label">À accomplir</span>
+          <span class="stats-row-count">{{ toDoCount() }}</span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-row-label">Total</span>
+          <span class="stats-row-count">{{ activeQuestsNumber() }}</span>
+        </div>
+      </div>
+    }
   </div>
 </main>
 <app-menu></app-menu>

@@ -99,6 +99,7 @@
 }
 
 .camera-reset-btn {
+  position: relative;
   background-color: var(--neon-glow-color);
   color: white;
   border: none;
@@ -128,6 +129,20 @@
   i {
     font-size: 18px;
   }
+}
+
+// Small badge dot signaling an active group/theme filter, so it's not forgotten about once the
+// panel is closed - see MapComponent.hasActiveFilters.
+.camera-btn-active::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--error-color, #e24c4c);
+  box-shadow: 0 0 4px var(--error-color, #e24c4c);
 }
 
 .zoom-indicator {
@@ -596,5 +611,247 @@ path {
     box-shadow:
       0 0 6px var(--neon-glow-color),
       0 0 16px var(--neon-glow-shadow);
+  }
+}
+
+// Completely hides a hexagon (or a group's outline/title) whose group/theme/status is currently
+// filtered out - see isHexFiltered/isGroupHidden in map.component.ts. Applied to a <g> wrapping
+// everything that hexagon renders, so display:none removes its fill, border, text and markers
+// from both the page and hit-testing in one go - pointer-events:none is kept alongside as a
+// defensive second layer (display:none alone is already enough) rather than the whole effect.
+.hex-filtered {
+  display: none;
+  pointer-events: none;
+}
+
+// Neutral "something's here" marker shown only while a drag is in progress (see the @if guard in
+// the template) over a hex whose quest is currently hidden by a filter - warns against dropping
+// there without revealing what's actually underneath. Never a valid pointer target itself.
+.hex-filtered-occupied-hint {
+  fill: var(--error-color, #e24c4c);
+  fill-opacity: 0.35;
+  stroke: var(--error-color, #e24c4c);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+// Same header/content/footer chrome as .select-dialog above, reused for the group/theme filter
+// panel.
+::ng-deep .filter-dialog {
+  .p-dialog {
+    width: 80%;
+    max-width: 360px;
+  }
+  .p-dialog-header {
+    display: block !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    background-color: var(--background-color);
+    border: 1px solid var(--neon-glow-color);
+    border-radius: 0.5rem 0.5rem 0 0;
+    box-shadow:
+      0 0 6px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
+  }
+  .p-dialog-header-actions {
+    display: none;
+  }
+  h3 {
+    text-align: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .p-dialog-content {
+    padding: 0.5rem 1rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border: none !important;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .p-dialog-footer {
+    padding: 1rem;
+    margin-top: 0;
+    display: flex;
+    justify-content: space-between;
+    background-color: var(--background-color);
+    border: 1px solid var(--neon-glow-color);
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow:
+      0 0 6px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
+  }
+}
+
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.filter-section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+}
+
+.filter-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.filter-section-visibility-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+  color: var(--light-theme-color);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--neon-glow-shadow-light);
+    color: var(--text-color);
+  }
+}
+
+.filter-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  h3 {
+    flex: 1 1 auto;
+    text-align: center;
+    margin: 0;
+  }
+}
+
+// Same round outline+glow button language as .collapse-all-button in quest-list-page.component.scss.
+.filter-collapse-all-btn {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  color: var(--neon-glow-color);
+  border: 1px solid var(--neon-glow-color);
+  box-shadow: 0 0 5px var(--neon-glow-color);
+  border-radius: 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover {
+    background-color: var(--neon-glow-shadow-light);
+    box-shadow:
+      0 0 8px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
+  }
+}
+
+.filter-section-chevron {
+  color: var(--light-theme-color);
+  transition: transform 0.2s ease;
+
+  &.collapsed {
+    transform: rotate(-90deg);
+  }
+}
+
+.filter-section-title {
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--light-theme-color);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--shadow-gradient);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.filter-row-label {
+  flex: 1 1 auto;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-color-dot {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+
+  &.filter-color-dot-empty {
+    background: transparent;
+    border: 2px dashed var(--dark-theme-color);
+    box-shadow: none;
+  }
+}
+
+.filter-clear-action {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--neon-glow-color);
+  box-shadow: 0 0 5px var(--neon-glow-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: var(--neon-glow-shadow-light);
+    box-shadow:
+      0 0 8px var(--neon-glow-color),
+      0 0 16px var(--neon-glow-shadow);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  i {
+    flex: 0 0 auto;
   }
 }

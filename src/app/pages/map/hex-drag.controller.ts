@@ -44,6 +44,15 @@ export interface HexDragHost {
   // single-hex drag that auto-attached/detached). Optional so tests/hosts that don't care about
   // groups don't need to implement it.
   recomputeGroupOutlines?(): void;
+  // Whether `hex` is off-limits for dragging even though it's otherwise a normal, occupied cell -
+  // used for a hex whose quest is currently hidden by a visibility filter (reads as empty in the
+  // template, see MapComponent.getHexColor/getHexAriaLabel), so it can neither be picked up
+  // (onPointerDown, whether that pickup would have started a single-hex or a group drag) nor
+  // dropped onto (updateDragOverHex) - either way would act on a quest the user can't even see.
+  // Optional: a host with no such filtering concept has nothing to block. The drop side only
+  // matters for the single-hex path - a group drag already refuses to land on any occupied
+  // non-member cell regardless (see updateGroupDragPreview's own occupant check).
+  isHexBlockedForDrop?(hex: Hex): boolean;
 }
 
 // Drives the whole quest drag-and-drop gesture: long-press-to-arm, the drag itself, and the
@@ -166,7 +175,11 @@ export class HexDragController {
   }
 
   onPointerDown(hex: Hex, event: PointerEvent): void {
-    if (!hex.quest || event.button !== 0 || this.connectivity.isOffline()) {
+    // isHexBlockedForDrop is also (mis)used as the pickup guard here, not just the drop-target
+    // one its name suggests: a hex the host has blocked reads as empty in the template (see
+    // MapComponent.getHexColor/getHexAriaLabel), and picking up a quest hidden that way would be
+    // just as wrong as dropping one onto it.
+    if (!hex.quest || event.button !== 0 || this.connectivity.isOffline() || this.host.isHexBlockedForDrop?.(hex)) {
       return;
     }
     const isGroupDrag = this.host.selectedGroupId != null && hex.quest?.questGroupId === this.host.selectedGroupId;
@@ -487,7 +500,7 @@ export class HexDragController {
       // svgRoot not ready yet - fall back to DOM hit-testing rather than guessing blind.
       this.dragPreviewX = clientX;
       this.dragPreviewY = clientY;
-      this.dragOverHex = this.findHexAtPoint(clientX, clientY);
+      this.dragOverHex = this.resolveDropTarget(this.findHexAtPoint(clientX, clientY));
       this.dragTargetClamped = false;
       return;
     }
@@ -515,8 +528,20 @@ export class HexDragController {
     if (this.draggingGroupMembers && drag.startAxial) {
       this.updateGroupDragPreview(drag.startAxial, target);
     } else if (!this.draggingGroupMembers) {
-      this.dragOverHex = this.host.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
+      const candidate = this.host.hexes.find(h => h.q === target.q && h.r === target.r && h.s === target.s) ?? null;
+      this.dragOverHex = this.resolveDropTarget(candidate);
     }
+  }
+
+  // A hex the host has blocked (see HexDragHost.isHexBlockedForDrop - a quest currently hidden by
+  // a visibility filter) is never a valid single-hex drop target, even though it's really
+  // occupied: releasing there falls through to onPointerUp's "no target" branch instead of
+  // swapping with whatever's actually underneath.
+  private resolveDropTarget(candidate: Hex | null): Hex | null {
+    if (candidate && this.host.isHexBlockedForDrop?.(candidate)) {
+      return null;
+    }
+    return candidate;
   }
 
   // Validates the whole group's prospective rigid translation (startAxial -> target) each tick:

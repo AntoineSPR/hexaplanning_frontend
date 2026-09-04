@@ -6,6 +6,12 @@ import { QuestStatusKind } from '../components/status-hex-icon/status-hex-icon.c
 
 export type QuestSortMode = 'dateAdded' | 'status' | 'group' | 'theme';
 
+// Sentinel keys for the "doesn't belong to any real group/theme" bucket - shared with the map's
+// group/theme visibility filter (see map.component.ts) so both places agree on the same id for an
+// ungrouped/unthemed quest instead of each hand-rolling their own string.
+export const NO_GROUP_KEY = '__no_group__';
+export const NO_THEME_KEY = '__no_theme__';
+
 export type QuestCategory = {
   key: string;
   label: string;
@@ -49,7 +55,7 @@ export function categorizeQuestsByGroup(quests: QuestUpdateDTO[], groups: QuestG
   const groupIds = new Set(groups.map(g => g.id));
   const ungrouped = quests.filter(q => !q.questGroupId || !groupIds.has(q.questGroupId)).sort(byStatusThenDate);
   if (ungrouped.length > 0) {
-    categories.push({ key: '__no_group__', label: 'Sans groupe', icon: null, quests: ungrouped });
+    categories.push({ key: NO_GROUP_KEY, label: 'Sans groupe', icon: null, quests: ungrouped });
   }
 
   return categories.filter(category => category.quests.length > 0);
@@ -73,7 +79,7 @@ export function categorizeQuestsByTheme(quests: QuestUpdateDTO[], themes: ThemeO
   const themeIds = new Set(themes.map(t => t.id));
   const unthemed = quests.filter(q => !q.themeId || !themeIds.has(q.themeId)).sort(byStatusThenDate);
   if (unthemed.length > 0) {
-    categories.push({ key: '__no_theme__', label: 'Sans thème', icon: null, quests: unthemed });
+    categories.push({ key: NO_THEME_KEY, label: 'Sans thème', icon: null, quests: unthemed });
   }
 
   return categories.filter(category => category.quests.length > 0);

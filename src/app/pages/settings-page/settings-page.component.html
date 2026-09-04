@@ -2,7 +2,7 @@
   <h1 class="page-title">Paramètres</h1>
 
   <section class="settings-section">
-    <h2 class="settings-section-title">Quêtes</h2>
+    <!-- <h2 class="settings-section-title">Quêtes</h2> -->
 
     <div class="settings-card">
       <div class="settings-row">
@@ -23,20 +23,13 @@
         variant="outlined"
         icon="pi pi-palette"
         aria-label="Ouvrir la gestion des thèmes" />
-      <p-button
-        label="Retirer les quêtes accomplies de la carte"
-        (click)="clearCompletedQuestsFromMap()"
-        variant="outlined"
-        icon="pi pi-eraser"
-        [disabled]="_connectivity.isOffline()"
-        aria-label="Retirer toutes les quêtes accomplies de la carte" />
     </div>
   </section>
 
   <hr class="settings-divider" />
 
   <section class="settings-section">
-    <h2 class="settings-section-title">Utilisateur</h2>
+    <!-- <h2 class="settings-section-title">Utilisateur</h2> -->
 
     <div class="settings-buttons">
       <p-button
@@ -229,20 +222,10 @@
       <h4 id="confirm-title" class="visually-hidden">Confirmation</h4>
       <p id="confirm-message">{{ message.message }}</p>
       <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="cancel-confirmation-button"
-          (click)="onReject()"
-          styleClass="w-32"
-          [attr.aria-label]="message.rejectLabel">
+        <button type="button" class="cancel-confirmation-button" (click)="onReject()" styleClass="w-32" [attr.aria-label]="message.rejectLabel">
           {{ message.rejectLabel }}
         </button>
-        <button
-          type="button"
-          class="accept-confirmation-button"
-          (click)="onAccept()"
-          styleClass="w-32"
-          [attr.aria-label]="message.acceptLabel">
+        <button type="button" class="accept-confirmation-button" (click)="onAccept()" styleClass="w-32" [attr.aria-label]="message.acceptLabel">
           {{ message.acceptLabel }}
         </button>
       </div>

@@ -42,7 +42,13 @@
   <!-- Camera transform group -->
   <g #cameraGroup [attr.transform]="getCameraTransform()">
     @for (h of visibleHexes; track getHexClipId(h)) {
-      <!-- Base hexagon -->
+      <!-- Base hexagon - always rendered as its own element, even when isHexFiltered(h) (unlike
+         everything below, wrapped in .hex-filtered): a filtered hex must still show the grid's
+         normal thin empty-hex outline instead of leaving a hole where the polygon simply isn't
+         there. getHexColor/getHexStrokeColor/getHexAriaLabel/handleHexClick each already treat a
+         filtered hex exactly like a genuinely empty one, so this single element naturally reads
+         (and, via handleHexClick's own early return, behaves) as empty without needing a second,
+         separate "looks empty" copy of it. -->
       <polygon
         [attr.points]="getHexPoints(h.cx, h.cy)"
         [attr.data-hex-q]="h.q"
@@ -60,6 +66,9 @@
         [class.hex-armed]="armedHex === h"
         [class]="'hex-polygon ' + getDropHighlightClass(h) + (isLandedHex(h) ? ' hex-landed' : '')" />
 
+      <!-- Everything below is the quest's own decoration on top of the base hex above - hidden
+         entirely (not just its fill) when isHexFiltered(h), see .hex-filtered in the scss. -->
+      <g [class.hex-filtered]="isHexFiltered(h)">
       @if (showsInnerOutline(h)) {
         <polygon class="hex-inner-outline" [attr.points]="getHexPoints(h.cx, h.cy, -8)" [attr.stroke]="getInnerHexColor(h)" fill="none" />
       }
@@ -161,6 +170,15 @@
           </button>
         }
       </foreignObject>
+      </g>
+
+      <!-- Pendant un drag (n'importe lequel, pas seulement au survol de cet hexagone précis), un
+         hexagone masqué mais réellement occupé montre cet indicateur neutre - sinon rien ne
+         distinguerait visuellement un emplacement pris d'un emplacement libre, et déposer dessus
+         écraserait silencieusement la quête cachée (voir isHexFiltered/deleteQuestFromHex). -->
+      @if (isHexFiltered(h) && h.quest && (draggingHex || draggingGroupMembers)) {
+        <polygon class="hex-filtered-occupied-hint" [attr.points]="getHexPoints(h.cx, h.cy)" />
+      }
     }
 
     <!-- Quest group outlines/labels - traced around each group's member hexes (see
@@ -360,6 +378,13 @@
   <button class="camera-reset-btn" (click)="fitAllQuests()" title="Voir toutes les quêtes">
     <i class="pi pi-refresh"></i>
   </button>
+  <button
+    class="camera-reset-btn"
+    [class.camera-btn-active]="hasActiveFilters()"
+    (click)="openFilterPanel()"
+    title="Filtrer par groupe/thème">
+    <i class="pi pi-filter"></i>
+  </button>
   <div class="zoom-indicator">{{ (zoom * 100).toFixed(0) }}%</div>
 </div>
 
@@ -419,6 +444,157 @@
       aria-label="Assigner"
       title="Assigner">
       <i class="pi pi-check"></i>
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Filtres de visibilité par groupe/thème - voir MapComponent.hasActiveFilters/isHexFiltered. -->
+<p-dialog class="filter-dialog" [(visible)]="filterPanelVisible" [modal]="true" [dismissableMask]="true">
+  <ng-template #header>
+    <div class="filter-header-row">
+      <h3>Filtrer la carte</h3>
+      <button
+        type="button"
+        class="filter-collapse-all-btn"
+        (click)="toggleCollapseAllFilterSections()"
+        [attr.aria-label]="areAllFilterSectionsCollapsed() ? 'Tout déplier' : 'Tout replier'"
+        [title]="areAllFilterSectionsCollapsed() ? 'Tout déplier' : 'Tout replier'">
+        <i [class]="'pi ' + (areAllFilterSectionsCollapsed() ? 'pi-angle-down' : 'pi-angle-up')"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="filter-panel">
+    <section class="filter-section">
+      <div class="filter-section-header-row">
+        <button
+          type="button"
+          class="filter-section-header"
+          (click)="toggleFilterSection('status')"
+          [attr.aria-expanded]="!isFilterSectionCollapsed('status')">
+          <span class="filter-section-chevron" [class.collapsed]="isFilterSectionCollapsed('status')">▾</span>
+          <span class="filter-section-title">Statuts</span>
+        </button>
+        <button
+          type="button"
+          class="filter-section-visibility-toggle"
+          (click)="toggleAllStatuses()"
+          [attr.aria-label]="hasHiddenStatuses() ? 'Afficher tous les statuts' : 'Masquer tous les statuts'"
+          [title]="hasHiddenStatuses() ? 'Afficher tous les statuts' : 'Masquer tous les statuts'">
+          <i [class]="'pi ' + (hasHiddenStatuses() ? 'pi-eye' : 'pi-eye-slash')"></i>
+        </button>
+      </div>
+      @if (!isFilterSectionCollapsed('status')) {
+        @for (status of allStatuses; track status.id) {
+          <div class="filter-row">
+            <app-status-hex-icon [status]="statusKindFor(status.id)" [alt]="status.name" [size]="20" />
+            <span class="filter-row-label">{{ status.name }}</span>
+            <p-toggleswitch [ngModel]="!isStatusHidden(status.id)" (onChange)="toggleStatusVisibility(status.id)" [ariaLabel]="'Afficher le statut ' + status.name" />
+          </div>
+        }
+        <!-- Action permanente associée au statut "Terminée" juste au-dessus : masquer via le
+           toggle est réversible, ce bouton retire réellement les quêtes accomplies de la carte. -->
+        <button
+          type="button"
+          class="filter-clear-action"
+          (click)="clearCompletedQuestsFromMap()"
+          [disabled]="_connectivity.isOffline()"
+          aria-label="Retirer toutes les quêtes accomplies de la carte">
+          <i class="pi pi-eraser"></i>
+          Retirer les quêtes accomplies de la carte
+        </button>
+      }
+    </section>
+
+    <section class="filter-section">
+      <div class="filter-section-header-row">
+        <button
+          type="button"
+          class="filter-section-header"
+          (click)="toggleFilterSection('group')"
+          [attr.aria-expanded]="!isFilterSectionCollapsed('group')">
+          <span class="filter-section-chevron" [class.collapsed]="isFilterSectionCollapsed('group')">▾</span>
+          <span class="filter-section-title">Groupes</span>
+        </button>
+        <button
+          type="button"
+          class="filter-section-visibility-toggle"
+          (click)="toggleAllGroups()"
+          [attr.aria-label]="hasHiddenGroups() ? 'Afficher tous les groupes' : 'Masquer tous les groupes'"
+          [title]="hasHiddenGroups() ? 'Afficher tous les groupes' : 'Masquer tous les groupes'">
+          <i [class]="'pi ' + (hasHiddenGroups() ? 'pi-eye' : 'pi-eye-slash')"></i>
+        </button>
+      </div>
+      @if (!isFilterSectionCollapsed('group')) {
+        @for (group of _questGroupService.questGroups(); track group.id) {
+          <div class="filter-row">
+            <span class="filter-color-dot" [style.background]="group.color"></span>
+            <span class="filter-row-label">{{ group.name }}</span>
+            <p-toggleswitch [ngModel]="!isGroupHidden(group.id)" (onChange)="toggleGroupVisibility(group.id)" [ariaLabel]="'Afficher le groupe ' + group.name" />
+          </div>
+        }
+        <div class="filter-row">
+          <span class="filter-color-dot filter-color-dot-empty"></span>
+          <span class="filter-row-label">Sans groupe</span>
+          <p-toggleswitch
+            [ngModel]="!isGroupHidden(NO_GROUP_KEY)"
+            (onChange)="toggleGroupVisibility(NO_GROUP_KEY)"
+            ariaLabel="Afficher les quêtes sans groupe" />
+        </div>
+      }
+    </section>
+
+    <section class="filter-section">
+      <div class="filter-section-header-row">
+        <button
+          type="button"
+          class="filter-section-header"
+          (click)="toggleFilterSection('theme')"
+          [attr.aria-expanded]="!isFilterSectionCollapsed('theme')">
+          <span class="filter-section-chevron" [class.collapsed]="isFilterSectionCollapsed('theme')">▾</span>
+          <span class="filter-section-title">Thèmes</span>
+        </button>
+        <button
+          type="button"
+          class="filter-section-visibility-toggle"
+          (click)="toggleAllThemes()"
+          [attr.aria-label]="hasHiddenThemes() ? 'Afficher tous les thèmes' : 'Masquer tous les thèmes'"
+          [title]="hasHiddenThemes() ? 'Afficher tous les thèmes' : 'Masquer tous les thèmes'">
+          <i [class]="'pi ' + (hasHiddenThemes() ? 'pi-eye' : 'pi-eye-slash')"></i>
+        </button>
+      </div>
+      @if (!isFilterSectionCollapsed('theme')) {
+        @for (theme of _themeService.themes(); track theme.id) {
+          <div class="filter-row">
+            <app-theme-icon [color]="theme.color" [alt]="theme.name" [size]="20" />
+            <span class="filter-row-label">{{ theme.name }}</span>
+            <p-toggleswitch [ngModel]="!isThemeHidden(theme.id)" (onChange)="toggleThemeVisibility(theme.id)" [ariaLabel]="'Afficher le thème ' + theme.name" />
+          </div>
+        }
+        <div class="filter-row">
+          <span class="filter-color-dot filter-color-dot-empty"></span>
+          <span class="filter-row-label">Sans thème</span>
+          <p-toggleswitch
+            [ngModel]="!isThemeHidden(NO_THEME_KEY)"
+            (onChange)="toggleThemeVisibility(NO_THEME_KEY)"
+            ariaLabel="Afficher les quêtes sans thème" />
+        </div>
+      }
+    </section>
+  </div>
+
+  <ng-template #footer>
+    <button type="button" class="icon-button" (click)="filterPanelVisible = false" aria-label="Retour" title="Retour">
+      <i class="pi pi-chevron-left"></i>
+    </button>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="resetFilters()"
+      [disabled]="!hasActiveFilters()"
+      aria-label="Tout afficher"
+      title="Tout afficher">
+      <i class="pi pi-eye"></i>
     </button>
   </ng-template>
 </p-dialog>

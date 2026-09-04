@@ -1,11 +1,14 @@
-import { Component, effect, inject, NgZone, OnDestroy, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, effect, inject, NgZone, OnDestroy, OnInit, AfterViewInit, ElementRef, signal, ViewChild } from '@angular/core';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { QuestUpdateDTO } from 'src/app/models/quest.model';
-import { QuestService } from 'src/app/services/quest.service';
+import { Status } from 'src/app/models/status';
+import { QuestService, statusKindFor } from 'src/app/services/quest.service';
 import { QuestModalService } from 'src/app/services/quest-modal.service';
 import { MenuComponent } from '../../components/menu/menu.component';
 import { MapGridService } from 'src/app/services/map-grid.service';
@@ -16,11 +19,13 @@ import { SvgZoomService, SvgZoomHandle } from 'src/app/services/svg-zoom.service
 import { ConnectivityService } from 'src/app/services/connectivity.service';
 import { GlowPreferenceService } from 'src/app/services/glow-preference.service';
 import { ThemeIconComponent } from '../../components/theme-icon/theme-icon.component';
+import { StatusHexIconComponent } from '../../components/status-hex-icon/status-hex-icon.component';
 import { HexDragController, HexDragHost } from './hex-drag.controller';
 import { QuestGroupService } from 'src/app/services/quest-group.service';
 import { QuestGroupGeometryService } from 'src/app/services/quest-group-geometry.service';
 import { QuestGroupModalService } from 'src/app/services/quest-group-modal.service';
 import { ThemeService } from 'src/app/services/theme.service';
+import { NO_GROUP_KEY, NO_THEME_KEY } from 'src/app/utils/quest-sort.util';
 
 const MAP_WIDTH = 290;
 const MAP_HEIGHT = 490;
@@ -46,7 +51,7 @@ interface GroupOutline {
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule, ThemeIconComponent],
+  imports: [Dialog, FormsModule, RadioButtonModule, MenuComponent, ConfirmDialogModule, ToggleSwitchModule, ThemeIconComponent, StatusHexIconComponent],
   providers: [ConfirmationService],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -75,6 +80,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   zoomHandle?: SvgZoomHandle;
 
   private readonly _confirmationService = inject(ConfirmationService);
+  private readonly _messageService = inject(MessageService);
 
   // Drives the drag-and-drop gesture; this component implements HexDragHost so it can read/
   // drive camera and hex state. See hex-drag.controller.ts.
@@ -271,9 +277,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       .questGroups()
       .map(group => {
         const members = this.hexes.filter(h => h.quest?.id && groupIdByQuestId.get(h.quest.id) === group.id);
-        if (members.length === 0) return null;
-        const pathD = this._questGroupGeometry.getGroupBoundaryPath(members, this.size);
-        const { labelX, labelY, nameLines, titleBox } = this.computeGroupLabel(members, group.name, claimedTitleBoxes);
+        // Traced around only the currently-visible members - a member hidden by a group/theme/
+        // status filter (see isHexFiltered) would otherwise still pull the outline out to its
+        // position even though nothing is actually shown there. A group left with none visible
+        // gets no outline at all, same as one with no real members.
+        const visibleMembers = members.filter(h => !this.isHexFiltered(h));
+        if (visibleMembers.length === 0) return null;
+        const pathD = this._questGroupGeometry.getGroupBoundaryPath(visibleMembers, this.size);
+        const { labelX, labelY, nameLines, titleBox } = this.computeGroupLabel(visibleMembers, group.name, claimedTitleBoxes);
         // Quick-actions box sits a fixed gap above the topmost rendered line (not just above
         // labelY), so it clears a two-line name exactly as it did a one-line one.
         const actionsY = nameLines[0].y - this.size * 0.9;
@@ -483,6 +494,272 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
             this.recomputeGroupOutlines();
           },
           error: err => console.error('Failed to delete quest group:', err),
+        });
+      },
+    });
+
+    // Focus management for the confirmation dialog
+    setTimeout(() => {
+      const acceptButton = document.querySelector('.accept-confirmation-button') as HTMLElement;
+      if (acceptButton) {
+        acceptButton.focus();
+      }
+    }, 100);
+  }
+  //#endregion
+
+  //#region Visibility filters
+  // Lets the user completely hide a whole group/theme/status's quests: content and fill hidden
+  // (see .hex-filtered in the template/scss - display:none on a <g> wrapping everything that hex
+  // renders) and click/drag disabled, rather than just dimmed. Persisted so a filter set up once
+  // doesn't need to be redone on every visit.
+  private static readonly _HIDDEN_GROUPS_KEY = 'hexaplanning.mapHiddenGroups.v1';
+  private static readonly _HIDDEN_THEMES_KEY = 'hexaplanning.mapHiddenThemes.v1';
+  private static readonly _HIDDEN_STATUSES_KEY = 'hexaplanning.mapHiddenStatuses.v1';
+
+  hiddenGroupIds = signal<ReadonlySet<string>>(MapComponent._loadHiddenIds(MapComponent._HIDDEN_GROUPS_KEY));
+  hiddenThemeIds = signal<ReadonlySet<string>>(MapComponent._loadHiddenIds(MapComponent._HIDDEN_THEMES_KEY));
+  hiddenStatusIds = signal<ReadonlySet<string>>(MapComponent._loadHiddenIds(MapComponent._HIDDEN_STATUSES_KEY));
+  filterPanelVisible = false;
+  // Exposed for the template (see the filter panel's "Sans groupe"/"Sans thème" rows) - a
+  // module-level import can't be referenced directly from a template, only component members.
+  readonly NO_GROUP_KEY = NO_GROUP_KEY;
+  readonly NO_THEME_KEY = NO_THEME_KEY;
+  readonly statusKindFor = statusKindFor;
+
+  get allStatuses(): Status[] {
+    return this._questService.statuses() ?? [];
+  }
+
+  private static _loadHiddenIds(key: string): ReadonlySet<string> {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? new Set(parsed) : new Set();
+    } catch {
+      return new Set();
+    }
+  }
+
+  private _saveHiddenIds(key: string, ids: ReadonlySet<string>): void {
+    try {
+      localStorage.setItem(key, JSON.stringify([...ids]));
+    } catch {}
+  }
+
+  hasActiveFilters(): boolean {
+    return this.hiddenGroupIds().size > 0 || this.hiddenThemeIds().size > 0 || this.hiddenStatusIds().size > 0;
+  }
+
+  // Footer's global reset - shows everything regardless of category, for whenever going through
+  // each section's own toggle (see toggleAllGroups/toggleAllThemes/toggleAllStatuses below) would
+  // be more clicks than needed.
+  resetFilters(): void {
+    this.hiddenGroupIds.set(new Set());
+    this.hiddenThemeIds.set(new Set());
+    this.hiddenStatusIds.set(new Set());
+    this._saveHiddenIds(MapComponent._HIDDEN_GROUPS_KEY, this.hiddenGroupIds());
+    this._saveHiddenIds(MapComponent._HIDDEN_THEMES_KEY, this.hiddenThemeIds());
+    this._saveHiddenIds(MapComponent._HIDDEN_STATUSES_KEY, this.hiddenStatusIds());
+    this.recomputeGroupOutlines();
+  }
+
+  isGroupHidden(groupId: string): boolean {
+    return this.hiddenGroupIds().has(groupId);
+  }
+
+  isThemeHidden(themeId: string): boolean {
+    return this.hiddenThemeIds().has(themeId);
+  }
+
+  isStatusHidden(statusId: string): boolean {
+    return this.hiddenStatusIds().has(statusId);
+  }
+
+  toggleGroupVisibility(groupId: string): void {
+    const next = new Set(this.hiddenGroupIds());
+    if (next.has(groupId)) {
+      next.delete(groupId);
+    } else {
+      next.add(groupId);
+    }
+    this.hiddenGroupIds.set(next);
+    this._saveHiddenIds(MapComponent._HIDDEN_GROUPS_KEY, next);
+    this.recomputeGroupOutlines();
+  }
+
+  toggleThemeVisibility(themeId: string): void {
+    const next = new Set(this.hiddenThemeIds());
+    if (next.has(themeId)) {
+      next.delete(themeId);
+    } else {
+      next.add(themeId);
+    }
+    this.hiddenThemeIds.set(next);
+    this._saveHiddenIds(MapComponent._HIDDEN_THEMES_KEY, next);
+    this.recomputeGroupOutlines();
+  }
+
+  toggleStatusVisibility(statusId: string): void {
+    const next = new Set(this.hiddenStatusIds());
+    if (next.has(statusId)) {
+      next.delete(statusId);
+    } else {
+      next.add(statusId);
+    }
+    this.hiddenStatusIds.set(next);
+    this._saveHiddenIds(MapComponent._HIDDEN_STATUSES_KEY, next);
+    this.recomputeGroupOutlines();
+  }
+
+  // Per-category show-all/hide-all toggles (see the eye icon next to each section header in the
+  // template) - each scoped to just its own category, unlike the single all-or-nothing footer
+  // button this replaced. Whenever anything in the category is currently hidden, the toggle shows
+  // everything back; only once the category is fully visible does it offer to hide it all.
+  hasHiddenGroups(): boolean {
+    return this.hiddenGroupIds().size > 0;
+  }
+
+  hasHiddenThemes(): boolean {
+    return this.hiddenThemeIds().size > 0;
+  }
+
+  hasHiddenStatuses(): boolean {
+    return this.hiddenStatusIds().size > 0;
+  }
+
+  toggleAllGroups(): void {
+    const next = this.hasHiddenGroups() ? new Set<string>() : new Set([...this._questGroupService.questGroups().map(g => g.id), NO_GROUP_KEY]);
+    this.hiddenGroupIds.set(next);
+    this._saveHiddenIds(MapComponent._HIDDEN_GROUPS_KEY, next);
+    this.recomputeGroupOutlines();
+  }
+
+  toggleAllThemes(): void {
+    const next = this.hasHiddenThemes() ? new Set<string>() : new Set([...this._themeService.themes().map(t => t.id), NO_THEME_KEY]);
+    this.hiddenThemeIds.set(next);
+    this._saveHiddenIds(MapComponent._HIDDEN_THEMES_KEY, next);
+    this.recomputeGroupOutlines();
+  }
+
+  toggleAllStatuses(): void {
+    const next = this.hasHiddenStatuses() ? new Set<string>() : new Set(this.allStatuses.map(s => s.id));
+    this.hiddenStatusIds.set(next);
+    this._saveHiddenIds(MapComponent._HIDDEN_STATUSES_KEY, next);
+    this.recomputeGroupOutlines();
+  }
+
+  isHexFiltered(hex: Hex): boolean {
+    if (!hex.quest) return false;
+    return (
+      this.isGroupHidden(hex.quest.questGroupId ?? NO_GROUP_KEY) ||
+      this.isThemeHidden(hex.quest.themeId ?? NO_THEME_KEY) ||
+      this.isStatusHidden(hex.quest.statusId)
+    );
+  }
+
+  // See HexDragHost.isHexBlockedForDrop - a filtered hex is still really occupied, just not
+  // rendered, so a single-hex drag must never be allowed to swap onto it.
+  isHexBlockedForDrop(hex: Hex): boolean {
+    return this.isHexFiltered(hex);
+  }
+
+  openFilterPanel(): void {
+    this.filterPanelVisible = true;
+  }
+
+  // Per-section collapse state for the filter panel (see .filter-section-header/-chevron in the
+  // template) - purely a UI convenience, deliberately not persisted like the hidden-id sets
+  // above, matching how the quest list page's own category collapse (isCategoryCollapsed in
+  // quest-sorted-list.component.ts) also resets every time the page is (re)opened.
+  private _collapsedFilterSections = signal<ReadonlySet<'status' | 'group' | 'theme'>>(new Set());
+
+  isFilterSectionCollapsed(section: 'status' | 'group' | 'theme'): boolean {
+    return this._collapsedFilterSections().has(section);
+  }
+
+  toggleFilterSection(section: 'status' | 'group' | 'theme'): void {
+    const next = new Set(this._collapsedFilterSections());
+    if (next.has(section)) {
+      next.delete(section);
+    } else {
+      next.add(section);
+    }
+    this._collapsedFilterSections.set(next);
+  }
+
+  private static readonly _FILTER_SECTIONS: readonly ('status' | 'group' | 'theme')[] = ['status', 'group', 'theme'];
+
+  areAllFilterSectionsCollapsed(): boolean {
+    return MapComponent._FILTER_SECTIONS.every(s => this.isFilterSectionCollapsed(s));
+  }
+
+  toggleCollapseAllFilterSections(): void {
+    this._collapsedFilterSections.set(this.areAllFilterSectionsCollapsed() ? new Set() : new Set(MapComponent._FILTER_SECTIONS));
+  }
+
+  // Unassigns every finished quest from its hex in one go (the same per-hex unassignment
+  // deleteQuestFromHex above does, just for all of them at once) - the quests themselves aren't
+  // touched, only freed off the map so their hexes can be reused; they stay visible in the
+  // "Quêtes accomplies" list. Each unassignment is independent (its own DELETE call), so one
+  // failing doesn't stop the rest - failures are caught individually and reported as a count
+  // rather than aborting the whole batch. Lives in the filter panel's Statuts section since it's
+  // the bulk, permanent counterpart to toggling the "Terminée" status filter off temporarily.
+  clearCompletedQuestsFromMap(): void {
+    if (this._connectivity.isOffline()) return;
+
+    const completedHexes = this.hexes.filter(h => h.quest?.statusId === this._questService.statusDoneId);
+    if (completedHexes.length === 0) {
+      this._messageService.add({
+        severity: 'info',
+        summary: 'Rien à faire',
+        detail: "Aucune quête accomplie n'était sur la carte.",
+        life: 2000,
+      });
+      return;
+    }
+
+    // Closed first rather than left open behind the confirmation: nesting a second p-dialog
+    // (the confirm) inside this already-open one risked the confirm rendering behind the filter
+    // panel's own mask depending on z-index stacking, which read as "the button does nothing".
+    this.filterPanelVisible = false;
+
+    this._confirmationService.confirm({
+      message: `Retirer les ${completedHexes.length} quête(s) terminée(s) de la carte ?`,
+      acceptLabel: 'Retirer',
+      rejectLabel: 'Annuler',
+      closable: true,
+      closeOnEscape: true,
+      accept: () => {
+        forkJoin(
+          completedHexes.map(hex =>
+            this._questAssignment.deleteQuestFromHex(hex).pipe(
+              map(() => true),
+              catchError(err => {
+                console.error('Failed to remove completed quest from hex:', err);
+                return of(false);
+              })
+            )
+          )
+        ).subscribe(results => {
+          this.recomputeGroupOutlines();
+          const failedCount = results.filter(ok => !ok).length;
+          if (failedCount > 0) {
+            this._messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: `${failedCount} quête(s) n'ont pas pu être retirées de la carte.`,
+              life: 3000,
+            });
+          } else {
+            this._messageService.add({
+              severity: 'success',
+              summary: 'Carte nettoyée',
+              detail: `${results.length} quête(s) terminée(s) retirée(s) de la carte.`,
+              life: 2000,
+            });
+          }
         });
       },
     });
@@ -736,6 +1013,14 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
       return;
     }
 
+    // Filtered out (see isHexFiltered) - looks and reads exactly like an empty hex (see
+    // getHexColor/getHexStrokeColor/getHexAriaLabel), but really isn't one, so clicking it must
+    // stay fully inert rather than opening the hidden quest or, worse, offering to assign a new
+    // one on top of it.
+    if (this.isHexFiltered(hex)) {
+      return;
+    }
+
     // A group is selected and this click landed outside it (its outline/label already handle
     // their own click via selectGroup, with stopPropagation) - deselect and swallow the click
     // instead of opening whatever's under it.
@@ -777,7 +1062,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   }
 
   getHexAriaLabel(hex: Hex): string {
-    if (hex.quest) {
+    if (hex.quest && !this.isHexFiltered(hex)) {
       const statusText = hex.quest.statusId === this._questService.statusDoneId ? 'terminée' : 'en cours';
       return `Hexagone avec quête: ${hex.quest.title}, ${statusText}. Niveau ${hex.level}`;
     } else {
@@ -900,8 +1185,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
 
   getHexColor(hex: Hex): string {
     // Empty hexes are transparent (the map's own black background shows through) rather than a
-    // solid grey fill - getHexStrokeColor below gives them a thin colored perimeter instead.
-    if (!hex.quest) return 'transparent';
+    // solid grey fill - getHexStrokeColor below gives them a thin colored perimeter instead. A
+    // filtered-out hex (see isHexFiltered) gets the exact same treatment - it needs to be
+    // indistinguishable from a genuinely empty one, not just dimmed.
+    if (!hex.quest || this.isHexFiltered(hex)) return 'transparent';
     if (hex.quest.statusId === this._questService.statusDoneId) {
       return 'var(--dark-theme-color)';
     }
@@ -911,7 +1198,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit, HexDragHo
   // Thin perimeter color for the base hex polygon: a subtle theme color on empty hexes,
   // plain black on occupied ones so it doesn't compete with the quest's own fill.
   getHexStrokeColor(hex: Hex): string {
-    return hex.quest ? 'black' : 'var(--base-hex-color)';
+    return hex.quest && !this.isHexFiltered(hex) ? 'black' : 'var(--base-hex-color)';
   }
 
   isOnHold(hex: Hex | null): boolean {
