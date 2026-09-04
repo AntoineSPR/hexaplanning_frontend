@@ -7,6 +7,7 @@ import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { QuestUpdateDTO } from '../models/quest.model';
 import { HexAssignment } from '../models/hexAssignment.model';
 import { ConnectivityService } from './connectivity.service';
+import { MapFilterService } from './map-filter.service';
 
 export interface HexMove {
   fromHex: Hex;
@@ -27,6 +28,7 @@ export class QuestAssignmentService {
   private readonly _questService = inject(QuestService);
   private readonly _mapGrid = inject(MapGridService);
   private readonly _connectivity = inject(ConnectivityService);
+  private readonly _mapFilter = inject(MapFilterService);
 
   // Snapshot of the last successfully resolved assignments, so a load triggered while offline
   // (e.g. navigating back to the map, or a full page reload) can still show the map read-only
@@ -286,14 +288,18 @@ export class QuestAssignmentService {
   // Compute the moved hex's occupied neighbors' distinct group ids and auto-attach/detach/move
   // the moved quest accordingly:
   // - the sole member of its own group -> no change (see below)
-  // - still adjacent to its own group -> no change
-  // - adjacent to exactly one distinct OTHER group (whether it was grouped or not) -> attach to
-  //   that group - this is what lets a drag move a quest straight from one group to another, not
-  //   just detach it and leave it stranded
-  // - was grouped, no longer adjacent to that group, and no single other group to replace it
-  //   with -> detach
-  // - otherwise (ungrouped with 0 or 2+ distinct neighboring groups) -> no change, left for the
-  //   quest-details panel's own "Rejoindre <group>" buttons to resolve the ambiguity manually
+  // - still physically adjacent to its own group -> no change, even if the member that keeps it
+  //   adjacent happens to be hidden by a map filter (see below) - nothing about the group's real
+  //   shape changed, so nothing should silently update just because visibility did
+  // - adjacent to exactly one distinct OTHER, VISIBLE group (whether it was grouped or not) ->
+  //   attach to that group - this is what lets a drag move a quest straight from one group to
+  //   another, not just detach it and leave it stranded. A neighbor hidden by a map filter (see
+  //   MapFilterService) is never counted here: the user can't see or verify that neighbor's group,
+  //   so a drag landing next to one must never silently join it.
+  // - was grouped, no longer adjacent to that group, and no single other visible group to replace
+  //   it with -> detach
+  // - otherwise (ungrouped with 0 or 2+ distinct visible neighboring groups) -> no change, left
+  //   for the quest-details panel's own "Rejoindre <group>" buttons to resolve manually
   private reconcileGroupMembership(movedHex: Hex, allHexes: Hex[], size: number): Observable<void> {
     const quest = movedHex.quest;
     if (!quest) return of(void 0);
@@ -310,28 +316,34 @@ export class QuestAssignmentService {
       if (memberCount <= 1) return of(void 0);
     }
 
-    const neighborGroupIds = new Set<string>();
-    for (const n of this._mapGrid.neighborsOf(movedHex, size)) {
-      const neighborHex = allHexes.find(h => h.q === n.q && h.r === n.r && h.s === n.s);
-      if (neighborHex?.quest?.questGroupId) {
-        neighborGroupIds.add(neighborHex.quest.questGroupId);
-      }
-    }
+    const neighborHexes = this._mapGrid
+      .neighborsOf(movedHex, size)
+      .map(n => allHexes.find(h => h.q === n.q && h.r === n.r && h.s === n.s))
+      .filter((h): h is Hex => !!h?.quest);
 
     const currentGroupId = quest.questGroupId;
-    if (currentGroupId && neighborGroupIds.has(currentGroupId)) {
+    if (currentGroupId && neighborHexes.some(h => h.quest!.questGroupId === currentGroupId)) {
       return of(void 0); // still adjacent to its own group - no change
     }
 
+    const visibleNeighborGroupIds = new Set<string>();
+    for (const h of neighborHexes) {
+      const neighborGroupId = h.quest!.questGroupId;
+      if (neighborGroupId && !this._mapFilter.isQuestFiltered(h.quest!)) {
+        visibleNeighborGroupIds.add(neighborGroupId);
+      }
+    }
+
     let nextGroupId: string | undefined;
-    if (neighborGroupIds.size === 1) {
-      // Exactly one distinct neighboring group - and, per the check above, never its own group -
-      // so this covers both a plain attach (was ungrouped) and a move into a different group.
-      nextGroupId = [...neighborGroupIds][0];
+    if (visibleNeighborGroupIds.size === 1) {
+      // Exactly one distinct visible neighboring group - and, per the check above, never its own
+      // group - so this covers both a plain attach (was ungrouped) and a move into a different
+      // group.
+      nextGroupId = [...visibleNeighborGroupIds][0];
     } else if (currentGroupId) {
-      nextGroupId = undefined; // detach - no longer adjacent to its own group, nothing unambiguous to join instead
+      nextGroupId = undefined; // detach - no longer adjacent to its own group, nothing unambiguous+visible to join instead
     } else {
-      return of(void 0); // was ungrouped, still 0 or 2+ distinct neighboring groups - no change
+      return of(void 0); // was ungrouped, still 0 or 2+ distinct visible neighboring groups - no change
     }
 
     const updatedQuest: QuestUpdateDTO = { ...quest, questGroupId: nextGroupId };
